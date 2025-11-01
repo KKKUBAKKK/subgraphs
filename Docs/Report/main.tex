@@ -22,7 +22,7 @@
 \newtheorem{definition}{Definicja}
 \begin{document}
 
-\title{%
+\title{
   \textbf{Teoria algorytmów i obliczeń} \\
   \large Projekt zaliczeniowy}
 
@@ -53,8 +53,58 @@
 \tableofcontents
 \pagebreak
 
+% ---------------- WSTĘP ---------------- %
 \section{Wstęp}
+\label{sec:wstep} % Etykieta do późniejszych odwołań, np. \ref{sec:wstep}
+
+Niniejsza praca stanowi sprawozdanie z projektu zrealizowanego w ramach przedmiotu \textbf{Teoria algorytmów i obliczeń}. Przedmiotem badań są algorytmy operujące na multigrafach, ze szczególnym uwzględnieniem problematyki izomorfizmu podgrafów oraz minimalnych rozszerzeń grafów.
+
+Głównym celem projektu jest opracowanie, analiza teoretyczna oraz implementacja algorytmów rozwiązujących dwa ściśle powiązane problemy. Pierwszym z nich jest weryfikacja, czy dany multigraf $H$ jest izomorficzny z podgrafem multigrafu $G$. Drugim, kluczowym zagadnieniem, jest wyznaczenie \emph{minimalnego rozszerzenia} multigrafu $G$ do postaci $G'$, która zawiera co najmniej jeden podgraf izomorficzny z $H$.
+
+Realizacja powyższych celów wymagała formalnego zdefiniowania oraz uzasadnienia kilku fundamentalnych pojęć. W pracy zaproponowano autorskie lub bazujące na literaturze definicje:
+\begin{itemize}
+    \item \emph{rozmiaru multigrafu},
+    \item \emph{metryki} w zbiorze multigrafów,
+    \item \emph{minimalnego rozszerzenia} multigrafu.
+\end{itemize}
+Pojęcia te stanowią podstawę do dalszej analizy algorytmicznej oraz oceny kosztu operacji.
+
+W ramach pracy przeprowadzono analizę złożoności obliczeniowej opracowanych algorytmów. Zgodnie z założeniami projektu, w przypadku gdy algorytmy dokładne charakteryzują się złożonością wykładniczą, przedstawiono również propozycje algorytmów aproksymacyjnych o złożoności wielomianowej.
+
+Niniejszy raport, oprócz formalnych definicji i analizy algorytmów, zawiera także opis przeprowadzonych testów obliczeniowych, dokumentację techniczną implementacji oraz wnioski końcowe.
+
+\pagebreak
+% ---------------- WSTĘP ---------------- %
+
+% ---------------- DEFINICJE ---------------- %
 \section{Definicje pojęć}
+\label{sec:definicje}
+
+% Definicje grafu, multigrafu, izomorfizmu, podgrafu izomorficznego, macierzy sąsiedztwa
+
+\begin{definition}[Graf]
+    Grafem nazywamy parę $G = (V, E)$, gdzie $V$ jest zbiorem wierzchołków, a $E \subseteq V \times V = \{(u, v) : u, v \in V \land u \neq v \}$ jest zbiorem krawędzi. Dla każdej pary wierzchołków $u, v \in V$ istnieje co najwyżej jedna krawędź łącząca wierzchołki $u$ i $v$.
+\end{definition}
+
+\begin{definition}[Multigraf]
+    Multigrafem nazywamy graf, w którym pomiędzy dowolnymi dwoma różnymi wierzchołkami $u, v \in V$ może istnieć więcej niż jedna krawędź.
+\end{definition}
+
+\begin{definition}[Izomorfizm grafów]
+    Dwa grafy $G_1 = (V_1, E_1)$ i $G_2 = (V_2, E_2)$ są izomorficzne, wtedy i tylko wtedy, gdy istnieje bijekcja $f: V_1 \to V_2$, taka że dla każdej krawędzi $(u, v) \in E_1$ zachodzi $(f(u), f(v)) \in E_2$. Definicja ta jest analogiczna dla multigrafów.
+\end{definition}
+
+\begin{definition}[Podgraf]
+    Graf $H = (V_H, E_H)$ nazywamy podgrafem grafu $G = (V_G, E_G)$, wtedy i tylko wtedy, gdy $V_H \subseteq V_G$ oraz $E_H \subseteq E_G$. Definicja ta jest analogiczna dla multigrafów.
+\end{definition}
+
+\begin{definition}[Macierz sąsiedztwa]
+    Macierzą sąsiedztwa multigrafu $G = (V, E)$ nazywamy macierz $A$, której pole $A_{uv} = k$, wtedy i tylko wtedy, gdy istnieje $k$ krawędzi $(u, v) \in E$. W przypadku gdy nie istnieje żadna krawędź pomiędzy wierzchołkami $u$ i $v$, to $A_{uv} = 0$. Dla zwykłych grafów, macierz sąsiedztwa jest macierzą binarną.
+\end{definition}
+
+\pagebreak
+% ---------------- DEFINICJE ---------------- %
+
 \section{Rozmiar multigrafu}
 \section{Odległość multigrafów}
 \section{Minimalne rozszerzenie multigrafu}
