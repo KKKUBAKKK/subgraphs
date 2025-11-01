@@ -17,6 +17,7 @@
 \usepackage{indentfirst}
 \usepackage{verbatim}
 \usepackage{amsthm}
+\usepackage{amsfonts}
 \usepackage{thmtools}
 \theoremstyle{definition}
 \newtheorem{definition}{Definicja}
@@ -98,6 +99,10 @@ Niniejszy raport, oprócz formalnych definicji i analizy algorytmów, zawiera ta
     Graf $H = (V_H, E_H)$ nazywamy podgrafem grafu $G = (V_G, E_G)$, wtedy i tylko wtedy, gdy $V_H \subseteq V_G$ oraz $E_H \subseteq E_G$. Definicja ta jest analogiczna dla multigrafów.
 \end{definition}
 
+\begin{definition}[Graf atrybutowy]
+    Graf $G = (V, E, f)$ nazywamy grafem atrybutowym, gdzie $V$ jest zbiorem wierzchołków, a $E \subseteq V \times V = \{(u, v) : u, v \in V \land u \neq v \}$ jest zbiorem krawędzi. Dla każdej pary wierzchołków $u, v \in V$ istnieje co najwyżej jedna krawędź łącząca wierzchołki $u$ i $v$. $f: E \to \Sigma_E $ jest funkcją, przypisującą etykiety wszystkim krawędziom w grafie $G$. 
+\end{definition}
+
 \begin{definition}[Macierz sąsiedztwa]
     Macierzą sąsiedztwa multigrafu $G = (V, E)$ nazywamy macierz $A$, której pole $A_{uv} = k$, wtedy i tylko wtedy, gdy istnieje $k$ krawędzi $(u, v) \in E$. W przypadku gdy nie istnieje żadna krawędź pomiędzy wierzchołkami $u$ i $v$, to $A_{uv} = 0$. Dla zwykłych grafów, macierz sąsiedztwa jest macierzą binarną.
 \end{definition}
@@ -108,6 +113,41 @@ Niniejszy raport, oprócz formalnych definicji i analizy algorytmów, zawiera ta
 \section{Rozmiar multigrafu}
 \section{Odległość multigrafów}
 \section{Minimalne rozszerzenie multigrafu}
+
+\subsection{Algorytm aproksymacyjny do problemu izomorfizmu podgrafu}
+Do problemu można zastosować algorytm LeRP (Length-R Paths) opracowany przez Freda W DePiero oraz Davida Krouta \cite{lerp_algorithm}. Autorzy bezpośrednio stwierdzają, że nie zajmują się multigrafami. Zaznaczają natomiast, że multigrafy nie są ograniczeniem, ponieważ można stworzyć reprezentację multigrafu opisującą istnienie równoległych krawędzi za pomocą schematu kolorowania krawędzi. Zatem kompletny algorytm aproksymacyjny będzie składał się z dwóch kroków:
+\begin{enumerate}
+    \item Redukcja: Transfomacja multigrafów wejściowych $G_1$ oraz $G_2$ na grafy atrybutowe $G'_1$ oraz $G'_2$.
+    \item Aproksymacja: Wykorzystanie algorytmu LeRP (który obsługuje grafy atrybutowe) do stwierdzenia, czy graf $G_1$ jest izomorficzny z pewnym podgrafem $P$ grafu $G_2$.
+\end{enumerate}
+
+\subsubsection{Transformacja multigrafu}
+Niech $G_1$ i $G_2$ będą multigrafami. Odpowiadające im grafy atrybutowe $G'_1$ i $G'_2$ konstruowane są w następujący sposób:
+\begin{itemize}
+    \item Zbiory wierzchołków pozostają bez zmian ($V'_1 = V_1, V'_2 = V_2$).
+    \item Dla każdej pary wierzchołków $(u, v)$ w $G_1$ (i analogicznie w $G_2$): Jeśli między $u$ a $v$ w $G_1$ istnieje $k$ równoległych krawędzi, to w $G'_1$ tworzona jest pojedyncza krawędź $(u, v)$ z atrybutem $k \in \mathbb{N^+}$.
+\end{itemize}
+
+\subsubsection{Aproksymacja algorytmem LeRP}
+Fundamentalna zasada LeRP różni się od algorytmów backtrackingu (przykładowo algorytm Ullmanna). Zamiast próbować dopasować pełną strukturę sąsiedztwa krok po kroku, LeRP opiera się na założeniu, że o podobieństwie strukturalnym dwóch wierzchołków można wnioskować na podstawie porównania liczby ścieżek (\textit{sygnatur}) o różnej długości ($r$ - parametr algorytmu) w ich sąsiedztwie. Działanie algorytmu LeRP można podzielić na kilka etapów, realizowanych na grafach atrybutowych $G'_1$ i $G'_2$. 
+\begin{enumerate}
+    \item Obliczanie liczby ścieżek (pre-processing) \\
+    Dla obu grafów $G'_1$ i $G'_2$ obliczane są potęgi ich macierzy sąsiedztwa, odpowiednio $A^r$ i $B^r$ aż do maksymalnej długości $R$. Wartość $A_{ij}^r$ w macierzy $A^r$ reprezentuje liczbę ścieżek o długości dokładnie $r$ z wierzchołka $i$ do wierzchołka $j$. W kontekście omówionej transformacji, macierz $A$ jest macierzą, gdzie $A_{ij}$ przechowuje atrybut $k$ - liczbę równoległych krawędzi wcześniejszego multigrafu $G_1$. Obliczenie $A^r$ polega na $r$-krotnym mnożeniu macierzy.
+    \item Porównanie strukturalne \\
+    Dla każdej pary wierzchołków $g_{1i} \in G'_1$ i $g_{2k} \in G'_2$ algorytm porównuje ich struktury: sprawdza, do jakiej długości ścieżki ($r = 1, ..., R$) grafy wyglądają tak samo. Im dłużej są podobne, tym wyższy wynik podobieństwa $r_{max}$.
+    \item Mapping \\
+    Algorytm zaczyna od pojedynczego ziarna mapowania - wstępnie przypisuje wierzchołek $g_{1i}$ do wierzchołka $g_{2k}$. Następnie iteracyjnie dodaje do tego mapowania sąsiadów już zamapowanych wierzchołków, wybierając te, które maksymalizują wskaźnik podobieństwa i są spójne ze znalezionymi wcześniej. 
+\end{enumerate}
+LeRP opiera się na założeniu, że dopasowanie sygnatur ścieżek (taka sama liczba ścieżek o długości $1, 2, ..., R$ jest wystarczającym dowodem podobieństwa, aby utworzyć mapowanie. \\ \\ 
+Złożoność pesymistyczna algorytmu LeRP jest wielomianowa i wynosi $O(N^3 \cdot D^2 \cdot R)$, gdzie:
+\begin{itemize}
+    \item $N$ to liczba wierzchołków w grafach (zakładając, że oba grafy mają rozmiar rzędu $N$).
+    \item $D$ to średni stopień wierzchołków w grafach.
+    \item $R$ to maksymalna długość ścieżki brana pod uwagę. 
+\end{itemize}
+Uzasadnienie złożoności: porównanie par wierzchołków wymaga $N^2$ porównań. Każdy wierzchołek ma średnio $D$ sąsiadów, więc daje to $D^2$ dodatkowych operacji. Analiza różnych długości ścieżek to czynnik $R$. Podczas budowania dopasowania, algorytm jeszcze raz przechodzi po wszystkich kandydatach, a więc $N$ jest kolejnym czynnikiem. \\ \\
+W kontekście tego algorytmu aproksymacyjnego nie rozważano formalnego dowodu poprawności. Dostarczono empiryczną gwarancję jakości - algorytm testowano na dużych zbiorach danych, wykazując, że algorytm konsekwentnie zwraca wyniki bliskie optimum w praktyce. 
+
 \section{Testy}
 \section{Podsumowanie}
 \section{Bibliografia}
