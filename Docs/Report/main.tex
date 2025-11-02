@@ -110,10 +110,43 @@ Niniejszy raport, oprócz formalnych definicji i analizy algorytmów, zawiera ta
 \pagebreak
 % ---------------- DEFINICJE ---------------- %
 
+% ---------------- ROZMIAR MULTIGRAFU ---------------- %
 \section{Rozmiar multigrafu}
-\section{Odległość multigrafów}
-\section{Minimalne rozszerzenie multigrafu}
+\label{sec:rozmiar}
 
+\begin{definition}[Rozmiar multigrafu]
+    Rozmiarem $S$ multigrafu $G = (V, E)$ nazywamy sumę liczby wierzchołków $|V|$ oraz liczby krawędzi $|E|$ grafu $G$:
+    \[ S(G) = |V| + |E| \]
+\end{definition}
+
+\begin{definition}[Porządek w zbiorze wszystkich multigrafów]
+    Niech $G_1$ i $G_2$ będą dwoma multigrafami. Mówimy, że $G_1$ jest mniejszy, lub równy $G_2$ wtedy i tylko wtedy, gdy suma liczb wierzchołków i krawędzi grafu $G_1$ jest mniejsza, lub równa sumie liczb wierzchołków i krawędzi grafu $G_2$, czyli $S(G_1) \leq S(G_2)$.
+\end{definition}
+
+Żeby udowodnić poprawność powyższej definicji porządku wykazujemy, że spełnia ona trzy wymagane własności:
+\begin{itemize}
+    \item \textbf{Zwrotność}: \\
+    Dla każdego multigrafu $G$, $S(G) = S(G)$. Jest to prawda, ponieważ suma liczby wierzchołków i krawędzi multigrafu $G$ jest równa samej sobie.
+    \item \textbf{Przechodniość}: \\
+    Dla dowolnych multigrafów $G_1$, $G_2$ oraz $G_3$, jeśli $S(G_1) \leq S(G_2)$ oraz $S(G_2) \leq S(G_3)$, to $S(G_1) \leq S(G_3)$. Jest to oczywiście prawda.
+    \item \textbf{Antysymetryczność}: Dla dowolnych multigrafów $G_1$ oraz $G_2$, jeśli $S(G_1) \leq S(G_2)$ oraz $S(G_2) \leq S(G_1)$, to $G_1$ jest równy w sensie wcześniej zdefiniowanego rozmiaru z $G_2$, czyli $S(G_1) = S(G_2)$.
+\end{itemize}
+
+\pagebreak
+% ---------------- ROZMIAR MULTIGRAFU ---------------- %
+
+% ---------------- METRYKA W ZBIORZE WSZYSTKICH MULTIGRAFÓW ---------------- %
+\section{Metryka w zbiorze wszystkich multigrafów}
+\label{sec:metryka}
+
+\pagebreak
+% ---------------- METRYKA W ZBIORZE WSZYSTKICH MULTIGRAFÓW ---------------- %
+
+% ---------------- MINIMALNE ROZSZERZENIE MULTIGRAFU ---------------- %
+\section{Minimalne rozszerzenie multigrafu}
+\label{sec:minimalne_rozszerzenie}
+
+% ALGORYTM APROKSYMACYJNY DO PROBLEMU IZOMORFIZMU PODGRAFU
 \subsection{Algorytm aproksymacyjny do problemu izomorfizmu podgrafu}
 Do problemu można zastosować algorytm LeRP (Length-R Paths) opracowany przez Freda W DePiero oraz Davida Krouta \cite{lerp_algorithm}. Autorzy bezpośrednio stwierdzają, że nie zajmują się multigrafami. Zaznaczają natomiast, że multigrafy nie są ograniczeniem, ponieważ można stworzyć reprezentację multigrafu opisującą istnienie równoległych krawędzi za pomocą schematu kolorowania krawędzi. Zatem kompletny algorytm aproksymacyjny będzie składał się z dwóch kroków:
 \begin{enumerate}
@@ -147,9 +180,13 @@ Złożoność pesymistyczna algorytmu LeRP jest wielomianowa i wynosi $O(N^3 \cd
 \end{itemize}
 Uzasadnienie złożoności: porównanie par wierzchołków wymaga $N^2$ porównań. Każdy wierzchołek ma średnio $D$ sąsiadów, więc daje to $D^2$ dodatkowych operacji. Analiza różnych długości ścieżek to czynnik $R$. Podczas budowania dopasowania, algorytm jeszcze raz przechodzi po wszystkich kandydatach, a więc $N$ jest kolejnym czynnikiem. \\ \\
 W kontekście tego algorytmu aproksymacyjnego nie rozważano formalnego dowodu poprawności. Dostarczono empiryczną gwarancję jakości - algorytm testowano na dużych zbiorach danych, wykazując, że algorytm konsekwentnie zwraca wyniki bliskie optimum w praktyce. 
+% ALGORYTM APROKSYMACYJNY DO PROBLEMU IZOMORFIZMU PODGRAFU
 
-\section{Testy}
-\section{Podsumowanie}
+\pagebreak
+% ---------------- MINIMALNE ROZSZERZENIE MULTIGRAFU ---------------- %
+
+% \section{Testy}
+% \section{Podsumowanie}
 \section{Bibliografia}
 
 \bibliographystyle{plain}
