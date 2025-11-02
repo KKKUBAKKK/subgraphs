@@ -56,7 +56,7 @@
 
 % ---------------- WSTĘP ---------------- %
 \section{Wstęp}
-\label{sec:wstep} % Etykieta do późniejszych odwołań, np. \ref{sec:wstep}
+\label{sec:wstep}
 
 Niniejsza praca stanowi sprawozdanie z projektu zrealizowanego w ramach przedmiotu \textbf{Teoria algorytmów i obliczeń}. Przedmiotem badań są algorytmy operujące na multigrafach, ze szczególnym uwzględnieniem problematyki izomorfizmu podgrafów oraz minimalnych rozszerzeń grafów.
 
@@ -80,8 +80,6 @@ Niniejszy raport, oprócz formalnych definicji i analizy algorytmów, zawiera ta
 % ---------------- DEFINICJE ---------------- %
 \section{Definicje pojęć}
 \label{sec:definicje}
-
-% Definicje grafu, multigrafu, izomorfizmu, podgrafu izomorficznego, macierzy sąsiedztwa
 
 \begin{definition}[Graf]
     Grafem nazywamy parę $G = (V, E)$, gdzie $V$ jest zbiorem wierzchołków, a $E \subseteq V \times V = \{(u, v) : u, v \in V \land u \neq v \}$ jest zbiorem krawędzi. Dla każdej pary wierzchołków $u, v \in V$ istnieje co najwyżej jedna krawędź łącząca wierzchołki $u$ i $v$.
@@ -119,6 +117,8 @@ Niniejszy raport, oprócz formalnych definicji i analizy algorytmów, zawiera ta
     \[ S(G) = |V| + |E| \]
 \end{definition}
 
+Zakładamy, ze liczby wierzchołków i krawędzi są zapisanymi wcześniej stałymi, więc obliczenie rozmiaru multigrafów jest operacją o złożoności czasowej $O(1)$.
+
 \begin{definition}[Porządek w zbiorze wszystkich multigrafów]
     Niech $G_1$ i $G_2$ będą dwoma multigrafami. Mówimy, że $G_1$ jest mniejszy, lub równy $G_2$ wtedy i tylko wtedy, gdy suma liczb wierzchołków i krawędzi grafu $G_1$ jest mniejsza, lub równa sumie liczb wierzchołków i krawędzi grafu $G_2$, czyli $S(G_1) \leq S(G_2)$.
 \end{definition}
@@ -138,6 +138,23 @@ Niniejszy raport, oprócz formalnych definicji i analizy algorytmów, zawiera ta
 % ---------------- METRYKA W ZBIORZE WSZYSTKICH MULTIGRAFÓW ---------------- %
 \section{Metryka w zbiorze wszystkich multigrafów}
 \label{sec:metryka}
+
+\begin{definition}[Metryka w zbiorze multigrafów]
+    Niech $\mathcal{G}$ będzie zbiorem wszystkich multigrafów. \textbf{Metryką} w zbiorze $\mathcal{G}$ nazywamy funkcję:
+    \[d: \mathcal{G} \times \mathcal{G} \to \mathbb{N}_0\]
+    Wartość $d(G_1, G_2)$ nazywamy \textbf{odległością} między multigrafami $G_1$ i $G_2$, a definiujemy ją, jako \textbf{minimalną} liczbę operacji dodawania lub usuwania pojedynczej krawędzi lub wierzchołka, za pomocą których można przekształcić graf $G_1$ w graf izomorficzny z $G_2$.
+\end{definition}
+
+% TODO: Sprawdzić i ewentualnie rozpisać dowody własności metryki
+Powyższa definicja spełnia następujące własności metryki:
+\begin{itemize}
+    \item \textbf{Identyczność nierozróżnialnych}: \\
+    Dla dowolnych multigrafów $G_1$ oraz $G_2$, $d(G_1, G_2) = 0$ wtedy i tylko wtedy, gdy $G_1$ jest izomorficzny z $G_2$. Wynika to bezpośrednio z definicji naszej metryki.
+    \item \textbf{Symetria}: \\
+    Dla dowolnych multigrafów $G_1$ oraz $G_2$, $d(G_1, G_2) = d(G_2, G_1)$. Dodawanie i usuwanie krawędzi lub wierzchołków jest operacją odwracalną, więc liczba operacji potrzebnych do przekształcenia $G_1$ w $G_2$ jest równa liczbie odwrotnych operacji potrzebnych do przekształcenia $G_2$ w $G_1$.
+    \item \textbf{Nierówność trójkąta}: \\
+    Dla dowolnych multigrafów $G_1$, $G_2$ oraz $G_3$, $d(G_1, G_3) \leq d(G_1, G_2) + d(G_2, G_3)$. Oznacza to, że najkrótsza droga między dwoma multigrafami nie może być dłuższa niż droga przechodząca przez trzeci multigraf. Jest to prawda, ponieważ każda sekwencja operacji przekształcających $G_1$ w $G_2$ oraz $G_2$ w $G_3$ może być złożona w jedną sekwencję przekształcającą $G_1$ w $G_3$.
+\end{itemize}
 
 \pagebreak
 % ---------------- METRYKA W ZBIORZE WSZYSTKICH MULTIGRAFÓW ---------------- %
