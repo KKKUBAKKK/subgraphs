@@ -201,7 +201,7 @@ Zauważmy, że inicjalizacja $mozliwe\_dopasowania$ w taki sposób, że dla każ
 
 
 \pagebreak
-\section{Aproksymacyjne minimalne rozszerzenie multigrafu}
+\subsection{Aproksymacyjne minimalne rozszerzenie multigrafu}
 \label{sec:minimalne_rozszerzenie_approx}
 
 \noindent
@@ -211,7 +211,7 @@ Oznaczmy przez $H$ najlepszy wspólny podgraf $G_1$ oraz $G_2$. Do multigrafu $H
 Następnie usuwamy z początkowego grafu $G_2$ wierzchołki podgrafu $H$ i powtarzamy proces dla grafów $G_1$ i $G'_2 = (V_2-V_H, E_2)$, aby znaleźć $k$ rozdzielnych kopii $G_1$ w grafie $G_2$.
 
 
-\subsection{Opis algorytmu}
+\subsubsection{Opis algorytmu}
 \noindent
 Algorytm można podzielić na kilka etapów.
 
@@ -226,6 +226,8 @@ Algorytm można podzielić na kilka etapów.
     \item Następnie iteracyjnie, algorytm porównuje sąsiadów wierzchołków $g_{1i}$ i $g_{2k}$. Do następnego mapowania, wybiera tych sąsiadów, do których liczba ścieżek o długości co najwyżej $R$ jest największa i jest równa dla obu wierzchołków z dwóch grafów. Algorytm sprawdza również, czy wybrane wierzchołki nie zostały już zmapowane. 
     \item Zmapowane wierzchołki w grafie $G'_2$ są usuwane, tworząc nowy graf $G''_2$ i proces jest powtarzany dla grafów $G'_1$ oraz $G''_2$. W ten sposób znajdowane jest $k$ rozdzielnych kopii. 
 \end{enumerate}
+
+\subsubsection{Złożoność obliczeniowa}
 Złożoność pesymistyczna algorytmu LeRP (i omówionej modyfikacji jest wielomianowa i wynosi $O(N^3 \cdot D^2 \cdot R \cdot k)$, gdzie:
 \begin{itemize}
     \item $N$ to liczba wierzchołków w grafach (zakładając, że oba grafy mają rozmiar rzędu $N$).
