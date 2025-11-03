@@ -199,44 +199,49 @@ Zauważmy, że inicjalizacja $mozliwe\_dopasowania$ w taki sposób, że dla każ
  W każdej takiej pętli wykonujemy sprawdzenie, czy struktura grafu się zgadza, (krok 4). Zauważmy, że wykonamy tam $i^2$ porównań, gdzie i to indeks aktualnie obliczanego wierzchołka. Wiemy że $i < n_H$, zatem możemy ograniczyć tę operację: $i^2 < n_H^2$. W sumie możemy stwierdzić, że złożoność tego algorytmu wyniesie $O(n_G^{n_H}n_H^2)$
 
 
-% ALGORYTM APROKSYMACYJNY DO PROBLEMU IZOMORFIZMU PODGRAFU
-\subsection{Algorytm aproksymacyjny do problemu izomorfizmu podgrafu}
-Do problemu można zastosować algorytm LeRP (Length-R Paths) opracowany przez Freda W DePiero oraz Davida Krouta \cite{lerp_algorithm}. Autorzy bezpośrednio stwierdzają, że nie zajmują się multigrafami. Zaznaczają natomiast, że multigrafy nie są ograniczeniem, ponieważ można stworzyć reprezentację multigrafu opisującą istnienie równoległych krawędzi za pomocą schematu kolorowania krawędzi. Zatem kompletny algorytm aproksymacyjny będzie składał się z dwóch kroków:
+
+\pagebreak
+\subsection{Aproksymacyjne minimalne rozszerzenie multigrafu}
+\label{sec:minimalne_rozszerzenie_approx}
+
+\noindent
+Do problemu można zastosować pewną modyfikację algorytmu LeRP (Length-R Paths), opracowanego przez Freda W DePiero oraz Davida Krouta \cite{lerp_algorithm}. Algorytm opiera się na założeniu, że o podobieństwie strukturalnym dwóch wierzchołków można wnioskować na podstawie porównania liczby ścieżek (\textit{sygnatur}) o długości $r$ w ich sąsiedztwie. \\ \\ 
+Modyfikacja algorytmu jako argumenty przyjmuje dwa multigrafy $G_1$ i $G_2$, maksymalną długość ścieżki $R$ oraz liczbę szukanych kopii grafu $k$. Im większa długość ścieżki $R$, tym algorytm jest dokładniejszy. Zwraca natomiast przekształcenie $f(g_{1i}) = g_{2k}$, gdzie $g_{1i} \in G_1$ i $g_{2k} \in G_2$, które opisuje najlepszy (w rozumieniu aproksymacji) wspólny podgraf $G_1$ oraz $G_2$. \\
+Oznaczmy przez $H$ najlepszy wspólny podgraf $G_1$ oraz $G_2$. Do multigrafu $H$ należy dołożyć zbiór krawędzi $X$, tak aby grafy $G_1$ oraz $H' = (V_H, E_H \cup X)$ były izomorficzne. Wówczas multigraf $G_3 =(V_2, E_2\cup X)$ będzie minimalnym rozszerzeniem $G_2$, aby ten zawierał $G_1$ jako podgraf. Przez minimalne rozszerzenie, rozumie się minimalną liczbę dodanych krawędzi do grafu. \\ 
+Następnie usuwamy z początkowego grafu $G_2$ wierzchołki podgrafu $H$ i powtarzamy proces dla grafów $G_1$ i $G'_2 = (V_2-V_H, E_2)$, aby znaleźć $k$ rozdzielnych kopii $G_1$ w grafie $G_2$.
+
+
+\subsubsection{Opis algorytmu}
+\noindent
+Algorytm można podzielić na kilka etapów.
+
 \begin{enumerate}
-    \item Redukcja: Transfomacja multigrafów wejściowych $G_1$ oraz $G_2$ na grafy atrybutowe $G'_1$ oraz $G'_2$.
-    \item Aproksymacja: Wykorzystanie algorytmu LeRP (który obsługuje grafy atrybutowe) do stwierdzenia, czy graf $G_1$ jest izomorficzny z pewnym podgrafem $P$ grafu $G_2$.
+    \item W pierwszym kroku, należy wykonać transformację multigrafów wejściowych $G_1$ oraz $G_2$ na grafy atrybutowe $G'_1$ oraz $G'_2$. Transformacja przebiega w następujący sposób:
+    \begin{itemize}
+        \item Zbiory wierzchołków pozostają bez zmian ($V'_1 = V_1, V'_2 = V_2$).
+        \item Dla każdej pary wierzchołków $(u, v)$ w $G_1$ (i analogicznie w $G_2$): Jeśli między $u$ a $v$ w $G_1$ istnieje $k$ równoległych krawędzi, to w $G'_1$ tworzona jest pojedyncza krawędź $(u, v)$ z atrybutem $k \in \mathbb{N^+}$.
+    \end{itemize}
+    \item W etapie drugim, dla obu grafów $G'_1$ i $G'_2$ obliczane są potęgi ich macierzy sąsiedztwa, odpowiednio $A^r$ i $B^r$ aż do maksymalnej długości $R$. Wartość $A_{ij}^r$ w macierzy $A^r$ reprezentuje liczbę ścieżek o długości dokładnie $r$ z wierzchołka $i$ do wierzchołka $j$ (na ścieżkach mogą się powtarzać wierzchołki i krawędzie). W kontekście omówionej transformacji, macierz $A$ jest macierzą, gdzie $A_{ij}$ przechowuje atrybut $k$ - liczbę równoległych krawędzi między wierzchołkami $i$ i $j$ w multigrafie $G_1$.
+    \item Każdy wierzchołek $g_{1i} \in G'_1$ można porównać z każdym wierzchołkiem $g_{2k} \in G'_2$, stosując przykładowo podobieństwo cosinusowe między histogramem wartości w wierszu macierzy $A^r_i$ a histogramem wartości w wierszu macierzy $B^r_i$. Następnie tworzymy macierz z wartościami podobieństw między wierzchołkami. Wierzchołki najbardziej podobne zostają ziarnem mapowania. 
+    \item Następnie iteracyjnie, algorytm porównuje sąsiadów wierzchołków $g_{1i}$ i $g_{2k}$. Do następnego mapowania, wybiera tych sąsiadów, do których liczba ścieżek o długości co najwyżej $R$ jest największa i jest równa dla obu wierzchołków z dwóch grafów. Algorytm sprawdza również, czy wybrane wierzchołki nie zostały już zmapowane. 
+    \item Zmapowane wierzchołki w grafie $G'_2$ są usuwane, tworząc nowy graf $G''_2$ i proces jest powtarzany dla grafów $G'_1$ oraz $G''_2$. W ten sposób znajdowane jest $k$ rozdzielnych kopii. 
 \end{enumerate}
 
-\subsubsection{Transformacja multigrafu}
-Niech $G_1$ i $G_2$ będą multigrafami. Odpowiadające im grafy atrybutowe $G'_1$ i $G'_2$ konstruowane są w następujący sposób:
-\begin{itemize}
-    \item Zbiory wierzchołków pozostają bez zmian ($V'_1 = V_1, V'_2 = V_2$).
-    \item Dla każdej pary wierzchołków $(u, v)$ w $G_1$ (i analogicznie w $G_2$): Jeśli między $u$ a $v$ w $G_1$ istnieje $k$ równoległych krawędzi, to w $G'_1$ tworzona jest pojedyncza krawędź $(u, v)$ z atrybutem $k \in \mathbb{N^+}$.
-\end{itemize}
-
-\subsubsection{Aproksymacja algorytmem LeRP}
-Fundamentalna zasada LeRP różni się od algorytmów backtrackingu (przykładowo algorytm Ullmanna). Zamiast próbować dopasować pełną strukturę sąsiedztwa krok po kroku, LeRP opiera się na założeniu, że o podobieństwie strukturalnym dwóch wierzchołków można wnioskować na podstawie porównania liczby ścieżek (\textit{sygnatur}) o różnej długości ($r$ - parametr algorytmu) w ich sąsiedztwie. Działanie algorytmu LeRP można podzielić na kilka etapów, realizowanych na grafach atrybutowych $G'_1$ i $G'_2$. 
-\begin{enumerate}
-    \item Obliczanie liczby ścieżek (pre-processing) \\
-    Dla obu grafów $G'_1$ i $G'_2$ obliczane są potęgi ich macierzy sąsiedztwa, odpowiednio $A^r$ i $B^r$ aż do maksymalnej długości $R$. Wartość $A_{ij}^r$ w macierzy $A^r$ reprezentuje liczbę ścieżek o długości dokładnie $r$ z wierzchołka $i$ do wierzchołka $j$. W kontekście omówionej transformacji, macierz $A$ jest macierzą, gdzie $A_{ij}$ przechowuje atrybut $k$ - liczbę równoległych krawędzi wcześniejszego multigrafu $G_1$. Obliczenie $A^r$ polega na $r$-krotnym mnożeniu macierzy.
-    \item Porównanie strukturalne \\
-    Dla każdej pary wierzchołków $g_{1i} \in G'_1$ i $g_{2k} \in G'_2$ algorytm porównuje ich struktury: sprawdza, do jakiej długości ścieżki ($r = 1, ..., R$) grafy wyglądają tak samo. Im dłużej są podobne, tym wyższy wynik podobieństwa $r_{max}$.
-    \item Mapping \\
-    Algorytm zaczyna od pojedynczego ziarna mapowania - wstępnie przypisuje wierzchołek $g_{1i}$ do wierzchołka $g_{2k}$. Następnie iteracyjnie dodaje do tego mapowania sąsiadów już zamapowanych wierzchołków, wybierając te, które maksymalizują wskaźnik podobieństwa i są spójne ze znalezionymi wcześniej. 
-\end{enumerate}
-LeRP opiera się na założeniu, że dopasowanie sygnatur ścieżek (taka sama liczba ścieżek o długości $1, 2, ..., R$ jest wystarczającym dowodem podobieństwa, aby utworzyć mapowanie. \\ \\ 
-Złożoność pesymistyczna algorytmu LeRP jest wielomianowa i wynosi $O(N^3 \cdot D^2 \cdot R)$, gdzie:
+\subsubsection{Złożoność obliczeniowa}
+Złożoność pesymistyczna algorytmu LeRP (i omówionej modyfikacji jest wielomianowa i wynosi $O(N^3 \cdot D^2 \cdot R \cdot k)$, gdzie:
 \begin{itemize}
     \item $N$ to liczba wierzchołków w grafach (zakładając, że oba grafy mają rozmiar rzędu $N$).
     \item $D$ to średni stopień wierzchołków w grafach.
     \item $R$ to maksymalna długość ścieżki brana pod uwagę. 
+    \item $k$ to liczba szukanych kopii w minimalnym rozszerzeniu
 \end{itemize}
-Uzasadnienie złożoności: porównanie par wierzchołków wymaga $N^2$ porównań. Każdy wierzchołek ma średnio $D$ sąsiadów, więc daje to $D^2$ dodatkowych operacji. Analiza różnych długości ścieżek to czynnik $R$. Podczas budowania dopasowania, algorytm jeszcze raz przechodzi po wszystkich kandydatach, a więc $N$ jest kolejnym czynnikiem. \\ \\
-W kontekście tego algorytmu aproksymacyjnego nie rozważano formalnego dowodu poprawności. Dostarczono empiryczną gwarancję jakości - algorytm testowano na dużych zbiorach danych, wykazując, że algorytm konsekwentnie zwraca wyniki bliskie optimum w praktyce. 
-% ALGORYTM APROKSYMACYJNY DO PROBLEMU IZOMORFIZMU PODGRAFU
+Uzasadnienie złożoności: porównanie par wierzchołków wymaga $N^2$ porównań. Każdy wierzchołek ma średnio $D$ sąsiadów, więc porównywanie sąsiadów daje $D^2$ dodatkowych operacji. Analiza różnych długości ścieżek to czynnik $R$. Podczas budowania dopasowania, algorytm jeszcze raz przechodzi po wszystkich kandydatach, a więc $N$ jest kolejnym czynnikiem. Czynnik $k$ odpowiada za znalezienie $k$ kopii mniejszego multigrafu $G_1$.\\ \\
+W kontekście tego algorytmu aproksymacyjnego nie rozważano formalnego dowodu poprawności. Dostarczono empiryczną gwarancję jakości - algorytm testowano na dużych zbiorach danych, wykazując, że algorytm konsekwentnie zwraca wyniki bliskie optimum w praktyce.
 
-\pagebreak
+
 % ---------------- MINIMALNE ROZSZERZENIE MULTIGRAFU ---------------- %
+ 
+
 
 % \section{Testy}
 % \section{Podsumowanie}
