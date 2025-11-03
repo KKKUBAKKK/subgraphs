@@ -113,6 +113,41 @@ Niniejszy raport, oprócz formalnych definicji i analizy algorytmów, zawiera ta
 \section{Rozmiar multigrafu}
 \section{Odległość multigrafów}
 \section{Minimalne rozszerzenie multigrafu}
+\subsection{Algorytm dokładny dla problemu izomorfizmu podgrafu}
+Mając dane dwa grafy G i H, chcemy znaleźć podgrafy G izomorficzne do H. Do rozwiązania tego problemu posłuży nam algorytm, który wykorzystuje procedurę Backtrackingu do sprawdzania struktury grafów. \\
+Przed przejściem do algorytmu, zdefiniujmy sobie struktury przydatne nam do implementacji. Niech $n_G = |V(G)|$ - ilość wierzchołków w grafie G oraz $n_H = |V(H)|$ - ilość wierzchołków w Grafie H. \\ \\
+\textbf{Opis algorytmu:}
+\begin{enumerate}
+    \item Inicjalizacja macierzy sąsiedztwa grafów G i H odpowiednio $S_G \in \mathbb{N}^{n_G  \times  n_G}$ i $S_H \in \mathbb{N}^{n_H  \times  n_H}$. Wartość $S[i,j]$, to ilość krawędzi pomiędzy i-tym, a j-tym wierzchołkiem dla danego grafu.
+    \item Inicjalizacja kandydatów - Zdefiniujmy sobie listę $mozliwe\_dopasowania$, \\ $len(mozliwe\_dopasowania) = n_H$, gdzie pod i-tym indeksem, będziemy mieli listę możliwych dopasowań dla wierzchołka $i \in V(H)$. \\
+    Algorytm Ullmana dla grafów prostych zakłada inicjalizację: \\
+    $u\in V(G),  u \in mozliwe\_dopasowania[i] \iff deg_G(u) \ge deg_H(i) $ \\
+    Jest ona działającą inicjalizacją dla multigrafów, jednak w celach optymalizacji algorytmu, możemy zmienić tę inicjalizację tak, aby zmniejszyć liczbę potencjalnych dopasowań, a co za tym idzie zmniejszyć liczbę gałęzi, które będzie musiał przejść algorytm. Możemy zauważyć, że w macierzach sąsiedztwa na głównej przekątnej pod indeksami $[i,i]$ znajduje się liczba pętli danego wierzchołka, zatem naszym warunkiem będzie także $S_G[i,i] \ge S_H[i,i]$. Biorąc to wszystko razem, otrzymujemy \\
+    $u \in mozliwe\_dopasowania[i] \iff (deg_G(u) \ge deg_H(i)) \land  (S_G[i,i] \ge S_H[i,i]))$
+    \item 
+    Dla każdej krawędzi, która istnieje między już dopasowanymi wierzchołkami z H, sprawdź czy istnieje krawędź między ich dopasowaniami z G i czy ilość krawędzi między dopasowaniami jest większa lub równa niż ilość krawędzi między wierzchołkami. Można to osiągnąć przez przejrzenie wszystkich par już dopasowanych wierzchołków i krawędzi między nimi. Jeśli nie, zwróć False
+    \item 
+    Sprawdź, czy wszystkie wierzchołki nie zostały już dopasowane. Jeśli tak, zwróć True.
+    \item 
+    Dla każdego wierzchołka $v \in mozliwe\_dopasowania[i]$, jeśli $v$ $not$ $in$ $dopasowania$, przypisz $dopasowania[i] = v$ oraz wywołaj funkcję ponownie dla następnego wierzchołka $\in V(H)$ z przekazaną kopią. W przypadku wyniku True z tej funkcji, zwróć True, w przypadku False, $dopasowania[i] = null$  i przejdź do następnego kroku tej pętli.
+    \item W przypadku niedopasowania po wszystkich iteracjach pętli, zwróć False.
+    
+\end{enumerate}
+
+\subsubsection{Dowód poprawności}
+Najpierw zbadajmy, czy algorytm dobrze inicjalizuje $mozliwe\_dopasowania$. W tym celu rozbijmy wszystkie 3 warunki. Pierwszy warunek mówi o tym, że potencjalne dopasowanie $v$ dla wierzchołka $u$, musi mieć stopień co najmniej równy stopniowi wierzchołka $u$. Gdyby tak nie było, w grafie $G$ nie istniałaby co najmniej jedna krawędź wychodząca z $v$, która istniałaby w H i wychodziłaby z $u$, zatem $v$ nie mogłoby być dopasowaniem dla $u$. 
+Drugi warunek mówi o tym, że liczba pętli dla $v$ musi być co najmniej równa liczbie pętli dla $u$. Idea jest taka sama jak warunku pierwszego, gdyby warunek nie był spełniony, nie istniałaby co najmniej jedna pętla da danego wierzchołka, a co za tym idzie, nie mógłby on być dopasowaniem dla $u$.
+
+Dalej w algorytmie, przechodzimy po kolei po wierzchołkach z H. Najpierw sprawdzamy, czy struktura się zgadza dla tych wierzchołków, do których znaleźliśmy już dopasowania. Jeśli choć 1 krawędź istniejąca w $H$ pomiędzy dwoma wierzchołkami nie będzie istnieć między ich dopasowaniami w $G$, algorytm wychodzi z tej ścieżki dopasowań i szuka innych, zatem działa poprawnie. 
+
+Następnie sprawdzamy wszystkie z możliwych dopasowań dla danego wierzchołka, zatem sprawdzając tak wszystkie wierzchołki, mamy pewność, że przejdziemy po wszystkich możliwych permutacjach.
+
+\subsubsection{Złożoność obliczeniowa}
+Zauważmy, że inicjalizacja $mozliwe\_dopasowania$ w taki sposób, że dla każdego wierzchołka $u \in V(H)$ możliwym dopasowaniem są wszystkie $v \in V(G)$, to algorytm przejdzie po wszystkich poddrzewach, zatem w przypadku pesymistycznym do 1 wierzchołka wykona $n_G$ potencjalnych dopasowań, do drugiego $n_G - 1$, ..., a do $n_H$-tego, $(n_G - n_H + 1)$ dopasowań. Zatem mamy \[
+\underbrace{(n_G)(n_G - 1)\dots(n_G - n_H + 1)}_{n_H\ \text{razy}} \le n_G^{n_H}
+\]
+ W każdej takiej pętli wykonujemy sprawdzenie, czy struktura grafu się zgadza, (krok 4). Zauważmy, że wykonamy tam $i^2$ porównań, gdzie i to indeks aktualnie obliczanego wierzchołka. Wiemy że $i < n_H$, zatem możemy ograniczyć tę operację: $i^2 < n_H^2$. W sumie możemy stwierdzić, że złożoność tego algorytmu wyniesie $O(n_G^{n_H}n_H^2)$
+
 
 \subsection{Algorytm aproksymacyjny do problemu izomorfizmu podgrafu}
 Do problemu można zastosować algorytm LeRP (Length-R Paths) opracowany przez Freda W DePiero oraz Davida Krouta \cite{lerp_algorithm}. Autorzy bezpośrednio stwierdzają, że nie zajmują się multigrafami. Zaznaczają natomiast, że multigrafy nie są ograniczeniem, ponieważ można stworzyć reprezentację multigrafu opisującą istnienie równoległych krawędzi za pomocą schematu kolorowania krawędzi. Zatem kompletny algorytm aproksymacyjny będzie składał się z dwóch kroków:
