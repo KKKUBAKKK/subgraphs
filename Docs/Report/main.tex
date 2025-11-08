@@ -60,7 +60,7 @@
 
 Niniejsza praca stanowi sprawozdanie z projektu zrealizowanego w ramach przedmiotu \textbf{Teoria algorytmów i obliczeń}. Przedmiotem badań są algorytmy operujące na multigrafach, ze szczególnym uwzględnieniem problematyki izomorfizmu podgrafów oraz minimalnych rozszerzeń grafów.
 
-Głównym celem projektu jest opracowanie, analiza teoretyczna oraz implementacja algorytmów rozwiązujących dwa ściśle powiązane problemy. Pierwszym z nich jest weryfikacja, czy dany multigraf $H$ jest izomorficzny z podgrafem multigrafu $G$. Drugim, kluczowym zagadnieniem, jest wyznaczenie \emph{minimalnego rozszerzenia} multigrafu $G$ do postaci $G'$, która zawiera co najmniej jeden podgraf izomorficzny z $H$.
+Głównym celem projektu jest opracowanie, analiza teoretyczna oraz implementacja algorytmów rozwiązujących dwa ściśle powiązane problemy. Pierwszym z nich jest weryfikacja, czy dany multigraf $H$ jest izomorficzny z $n$ podgrafami multigrafu $G$. Drugim, kluczowym zagadnieniem, jest wyznaczenie \emph{minimalnego rozszerzenia} multigrafu $G$ do postaci $G'$, która zawiera co najmniej $n$ podgrafów izomorficznych z $H$.
 
 Realizacja powyższych celów wymagała formalnego zdefiniowania oraz uzasadnienia kilku fundamentalnych pojęć. W pracy zaproponowano autorskie lub bazujące na literaturze definicje:
 \begin{itemize}
@@ -72,7 +72,7 @@ Pojęcia te stanowią podstawę do dalszej analizy algorytmicznej oraz oceny kos
 
 W ramach pracy przeprowadzono analizę złożoności obliczeniowej opracowanych algorytmów. Zgodnie z założeniami projektu, w przypadku gdy algorytmy dokładne charakteryzują się złożonością wykładniczą, przedstawiono również propozycje algorytmów aproksymacyjnych o złożoności wielomianowej.
 
-Niniejszy raport, oprócz formalnych definicji i analizy algorytmów, zawiera także opis przeprowadzonych testów obliczeniowych, dokumentację techniczną implementacji oraz wnioski końcowe.
+% Niniejszy raport, oprócz formalnych definicji i analizy algorytmów, zawiera także opis przeprowadzonych testów obliczeniowych, dokumentację techniczną implementacji oraz wnioski końcowe.
 
 \pagebreak
 % ---------------- WSTĘP ---------------- %
@@ -89,12 +89,16 @@ Niniejszy raport, oprócz formalnych definicji i analizy algorytmów, zawiera ta
     Multigrafem nazywamy graf, w którym pomiędzy dowolnymi dwoma różnymi wierzchołkami $u, v \in V$ może istnieć więcej niż jedna krawędź.
 \end{definition}
 
+\begin{definition}[Graf skierowany]
+    Grafem skierowanym nazywamy parę $G = (V, E)$, gdzie $V$ jest zbiorem wierzchołków, a $E \subseteq V \times V = \{(u, v) : u, v \in V \land u \neq v \}$ jest zbiorem krawędzi. Krawędzie w grafie skierowanym mają określony kierunek, co oznacza, że krawędź $(u, v)$ jest różna od krawędzi $(v, u)$. Definicja jest analogiczna dla multigrafów.
+\end{definition}
+
 \begin{definition}[Izomorfizm grafów]
-    Dwa grafy $G_1 = (V_1, E_1)$ i $G_2 = (V_2, E_2)$ są izomorficzne, wtedy i tylko wtedy, gdy istnieje bijekcja $f: V_1 \to V_2$, taka że dla każdej krawędzi $(u, v) \in E_1$ zachodzi $(f(u), f(v)) \in E_2$. Definicja ta jest analogiczna dla multigrafów.
+    Dwa grafy $G_1 = (V_1, E_1)$ i $G_2 = (V_2, E_2)$ są izomorficzne, wtedy i tylko wtedy, gdy istnieje bijekcja $f: V_1 \to V_2$, taka że dla każdej krawędzi $(u, v) \in E_1$ zachodzi $(f(u), f(v)) \in E_2$. Definicja ta jest analogiczna dla multigrafów i grafów skierowanych.
 \end{definition}
 
 \begin{definition}[Podgraf]
-    Graf $H = (V_H, E_H)$ nazywamy podgrafem grafu $G = (V_G, E_G)$, wtedy i tylko wtedy, gdy $V_H \subseteq V_G$ oraz $E_H \subseteq E_G$. Definicja ta jest analogiczna dla multigrafów.
+    Graf $H = (V_H, E_H)$ nazywamy podgrafem grafu $G = (V_G, E_G)$, wtedy i tylko wtedy, gdy $V_H \subseteq V_G$ oraz $E_H \subseteq E_G$. Definicja ta jest analogiczna dla multigrafów i grafów skierowanych.
 \end{definition}
 
 \begin{definition}[Graf atrybutowy]
@@ -102,7 +106,7 @@ Niniejszy raport, oprócz formalnych definicji i analizy algorytmów, zawiera ta
 \end{definition}
 
 \begin{definition}[Macierz sąsiedztwa]
-    Macierzą sąsiedztwa multigrafu $G = (V, E)$ nazywamy macierz $A$, której pole $A_{uv} = k$, wtedy i tylko wtedy, gdy istnieje $k$ krawędzi $(u, v) \in E$. W przypadku gdy nie istnieje żadna krawędź pomiędzy wierzchołkami $u$ i $v$, to $A_{uv} = 0$. Dla zwykłych grafów, macierz sąsiedztwa jest macierzą binarną.
+    Macierzą sąsiedztwa multigrafu $G = (V, E)$ nazywamy macierz $A$, której pole $A_{uv} = k$, wtedy i tylko wtedy, gdy istnieje $k$ krawędzi $(u, v) \in E$. W przypadku gdy nie istnieje żadna krawędź pomiędzy wierzchołkami $u$ i $v$, to $A_{uv} = 0$.
 \end{definition}
 
 \pagebreak
@@ -113,23 +117,44 @@ Niniejszy raport, oprócz formalnych definicji i analizy algorytmów, zawiera ta
 \label{sec:rozmiar}
 
 \begin{definition}[Rozmiar multigrafu]
-    Rozmiarem $S$ multigrafu $G = (V, E)$ nazywamy sumę liczby wierzchołków $|V|$ oraz liczby krawędzi $|E|$ grafu $G$:
-    \[ S(G) = |V| + |E| \]
+    Rozmiarem $S(G)$ multigrafu $G = (V, E)$ nazywamy parę liczb naturalnych $(|V|, |E|)$, gdzie $|V|$ oznacza liczbę wierzchołków, a $|E|$ liczbę krawędzi w multigrafie $G$.
 \end{definition}
 
-Zakładamy, ze liczby wierzchołków i krawędzi są zapisanymi wcześniej stałymi, więc obliczenie rozmiaru multigrafów jest operacją o złożoności czasowej $O(1)$.
+Zakładamy, że liczby wierzchołków i krawędzi są zapisanymi wcześniej stałymi, więc obliczenie rozmiaru multigrafów jest operacją o złożoności czasowej $O(1)$.
 
 \begin{definition}[Porządek w zbiorze wszystkich multigrafów]
-    Niech $G_1$ i $G_2$ będą dwoma multigrafami. Mówimy, że $G_1$ jest mniejszy, lub równy $G_2$ wtedy i tylko wtedy, gdy suma liczb wierzchołków i krawędzi grafu $G_1$ jest mniejsza, lub równa sumie liczb wierzchołków i krawędzi grafu $G_2$, czyli $S(G_1) \leq S(G_2)$.
+    Niech $G_1$ i $G_2$ będą dwoma multigrafami. Mówimy, że $G_1$ jest mniejszy, lub równy $G_2$ wtedy i tylko wtedy, gdy:
+    \[ |V_1| < |V_2| \lor (|V_1| = |V_2| \land |E_1| \leq |E_2|) \]
 \end{definition}
 
 Żeby udowodnić poprawność powyższej definicji porządku wykazujemy, że spełnia ona trzy wymagane własności:
 \begin{itemize}
-    \item \textbf{Zwrotność}: \\
-    Dla każdego multigrafu $G$, $S(G) = S(G)$. Jest to prawda, ponieważ suma liczby wierzchołków i krawędzi multigrafu $G$ jest równa samej sobie.
-    \item \textbf{Przechodniość}: \\
-    Dla dowolnych multigrafów $G_1$, $G_2$ oraz $G_3$, jeśli $S(G_1) \leq S(G_2)$ oraz $S(G_2) \leq S(G_3)$, to $S(G_1) \leq S(G_3)$. Jest to oczywiście prawda.
-    \item \textbf{Antysymetryczność}: Dla dowolnych multigrafów $G_1$ oraz $G_2$, jeśli $S(G_1) \leq S(G_2)$ oraz $S(G_2) \leq S(G_1)$, to $G_1$ jest równy w sensie wcześniej zdefiniowanego rozmiaru z $G_2$, czyli $S(G_1) = S(G_2)$.
+    \item \textbf{Zwrotność}: 
+    \[S(G) \leq S(G)\]
+    Dla dowolnego multigrafu $G = (V, E)$, zachodzi $|V| = |V| \land |E| = |E|$. Więc w szczególności spełnia on warunek $|V| = |V| \land |E| \leq |E|$ z definicji porządku. Stąd $S(G) \leq S(G)$.
+    \item \textbf{Przechodniość}:
+    \[S(G_1) \leq S(G_2) \land S(G_2) \leq S(G_3) \Rightarrow S(G_1) \leq S(G_3)\]
+    Weźmy dowolne trzy multigrafy $G_1 = (V_1, E_1)$, $G_2 = (V_2, E_2)$ oraz $G_3 = (V_3, E_3)$ takie, że $S(G_1) \leq S(G_2)$ oraz $S(G_2) \leq S(G_3)$. 
+    
+    Załóżmy, że $S(G_1) \geq S(G_3)$. Z definicji to implikuje, że $|V_1| > |V_3| \lor (|V_1| = |V_3| \land |E_1| > |E_3|)$. 
+    
+    Z założeń wiemy też, że $|V_2| > |V_1|$, lub $|V_2| = |V_1| \land |E_2| \geq |E_1|$. 
+    
+    W pierwszym przypadku z założeń wynika, ze $|V_2| > |V_3|$, co stoi w sprzeczności z $S(G_2) \leq S(G_3)$. 
+    
+    W drugim przypadku, z założeń wynika, że $|V_2| = |V_3|$ oraz $|E_2| > |E_3|$, co również stoi w sprzeczności z $S(G_2) \leq S(G_3)$. 
+    
+    W obu przypadkach dochodzimy do sprzeczności, więc nasze początkowe założenie było fałszywe. Stąd $S(G_1) \leq S(G_3)$.
+    \item \textbf{Antysymetryczność}: 
+    \[S(G_1) \leq S(G_2) \land S(G_2) \leq S(G_1) \Rightarrow S(G_1) = S(G_2)\]
+    Weźmy dowolne dwa multigrafy $G_1 = (V_1, E_1)$ oraz $G_2 = (V_2, E_2)$ takie, że $S(G_1) \leq S(G_2)$ oraz $S(G_2) \leq S(G_1)$. Z definicji porządku, z pierwszego założenia wynika, że $|V_1| < |V_2| \lor (|V_1| = |V_2| \land |E_1| \leq |E_2|)$. Z drugiego założenia wynika, że $|V_2| < |V_1| \lor (|V_2| = |V_1| \land |E_2| \leq |E_1|)$.
+
+    Jeśli $|V_1| < |V_2|$, to z drugiego założenia wynika, że $|V_2| < |V_1|$, co jest sprzeczne. Analogicznie, jeśli $|V_2| < |V_1|$, to z pierwszego założenia wynika, że $|V_1| < |V_2|$, co również jest sprzeczne. Zatem musi zachodzić $|V_1| = |V_2|$.
+    
+    Wtedy z pierwszego założenia wynika, że $|E_1| \leq |E_2|$, a z drugiego, że $|E_2| \leq |E_1|$. Stąd $|E_1| = |E_2|$.
+    
+    W rezultacie mamy $S(G_1) = S(G_2)$.
+
 \end{itemize}
 
 \pagebreak
