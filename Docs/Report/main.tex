@@ -3,13 +3,13 @@
 \usepackage[T1]{fontenc}
 \usepackage[polish]{babel}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{geometry}
 \usepackage{float}
 \usepackage{hyperref}
 \usepackage{polski}
 \usepackage[utf8]{inputenc}
 \usepackage{gensymb}
-\usepackage{geometry}
 \usepackage{longtable}
 \usepackage{array} % required for text wrapping in tables
 \usepackage{algpseudocode}
@@ -21,259 +21,1099 @@
 \usepackage{thmtools}
 \theoremstyle{definition}
 \newtheorem{definition}{Definicja}
+\theoremstyle{plain}
+\newtheorem{theorem}{Twierdzenie}
 \begin{document}
 
-\title{
-  \textbf{Teoria algorytmów i obliczeń} \\
-  \large Projekt zaliczeniowy}
+    \title{
+        \textbf{Teoria algorytmów i obliczeń} \\
+        \large Projekt zaliczeniowy}
 
-\author
-{
-    Piotr Jacak \\
-    Jakub Kindracki \\
-    Wiktor Kobielski \\
-    Ernest Mołczan \\
-    \\
-    Koordynator: prof. dr hab. inż. Władysław Homenda
-    \\
-    \\
-}
+    \author
+    {
+        Piotr Jacak \\
+        Jakub Kindracki \\
+        Wiktor Kobielski \\
+        Ernest Mołczan \\
+        \\
+        Koordynator: prof. dr hab. inż. Władysław Homenda
+        \\
+        \\
+    }
 
-\date{Semestr zimowy 2025/2026}
+    \date{Semestr zimowy 2025/2026}
 
 
 
-\begin{figure}
-    \centering
-    \includegraphics[width=1\linewidth]{mini.png}
-\end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics[width=1\linewidth]{mini.png}
+    \end{figure}
 
-\maketitle
+    \maketitle
 
-\pagebreak
-\tableofcontents
-\pagebreak
+    \pagebreak
+    \tableofcontents
+    \pagebreak
 
 % ---------------- WSTĘP ---------------- %
-\section{Wstęp}
-\label{sec:wstep}
 
-Niniejsza praca stanowi sprawozdanie z projektu zrealizowanego w ramach przedmiotu \textbf{Teoria algorytmów i obliczeń}. Przedmiotem badań są algorytmy operujące na multigrafach, ze szczególnym uwzględnieniem problematyki izomorfizmu podgrafów oraz minimalnych rozszerzeń grafów.
 
-Głównym celem projektu jest opracowanie, analiza teoretyczna oraz implementacja algorytmów rozwiązujących dwa ściśle powiązane problemy. Pierwszym z nich jest weryfikacja, czy dany multigraf $H$ jest izomorficzny z $n$ podgrafami multigrafu $G$. Drugim, kluczowym zagadnieniem, jest wyznaczenie \emph{minimalnego rozszerzenia} multigrafu $G$ do postaci $G'$, która zawiera co najmniej $n$ podgrafów izomorficznych z $H$.
+    \section{Wstęp}
+    \label{sec:wstep}
 
-Realizacja powyższych celów wymagała formalnego zdefiniowania oraz uzasadnienia kilku fundamentalnych pojęć. W pracy zaproponowano autorskie lub bazujące na literaturze definicje:
-\begin{itemize}
-    \item \emph{rozmiaru multigrafu},
-    \item \emph{metryki} w zbiorze multigrafów,
-    \item \emph{minimalnego rozszerzenia} multigrafu.
-\end{itemize}
-Pojęcia te stanowią podstawę do dalszej analizy algorytmicznej oraz oceny kosztu operacji.
+    Niniejsza praca stanowi sprawozdanie z projektu zrealizowanego w ramach przedmiotu \textbf{Teoria algorytmów i obliczeń}. Przedmiotem badań są algorytmy operujące na multigrafach, ze szczególnym uwzględnieniem problematyki izomorfizmu podgrafów oraz minimalnych rozszerzeń grafów.
 
-W ramach pracy przeprowadzono analizę złożoności obliczeniowej opracowanych algorytmów. Zgodnie z założeniami projektu, w przypadku gdy algorytmy dokładne charakteryzują się złożonością wykładniczą, przedstawiono również propozycje algorytmów aproksymacyjnych o złożoności wielomianowej.
+    Głównym celem projektu jest opracowanie, analiza teoretyczna oraz implementacja algorytmów rozwiązujących dwa ściśle powiązane problemy. Pierwszym z nich jest weryfikacja, czy dany multigraf $H$ jest izomorficzny z $n$ podgrafami multigrafu $G$. Drugim, kluczowym zagadnieniem, jest wyznaczenie \emph{minimalnego rozszerzenia} multigrafu $G$ do postaci $G'$, która zawiera co najmniej $n$ podgrafów izomorficznych z $H$.
+
+    Realizacja powyższych celów wymagała formalnego zdefiniowania oraz uzasadnienia kilku fundamentalnych pojęć. W pracy zaproponowano autorskie lub bazujące na literaturze definicje:
+    \begin{itemize}
+        \item \emph{rozmiaru multigrafu},
+        \item \emph{metryki} w zbiorze multigrafów,
+        \item \emph{minimalnego rozszerzenia} multigrafu.
+    \end{itemize}
+    Pojęcia te stanowią podstawę do dalszej analizy algorytmicznej oraz oceny kosztu operacji.
+
+    W ramach pracy przeprowadzono analizę złożoności obliczeniowej opracowanych algorytmów. Zgodnie z założeniami projektu, w przypadku gdy algorytmy dokładne charakteryzują się złożonością wykładniczą, przedstawiono również propozycje algorytmów aproksymacyjnych o złożoności wielomianowej.
 
 % Niniejszy raport, oprócz formalnych definicji i analizy algorytmów, zawiera także opis przeprowadzonych testów obliczeniowych, dokumentację techniczną implementacji oraz wnioski końcowe.
 
-\pagebreak
+    \pagebreak
 % ---------------- WSTĘP ---------------- %
 
 % ---------------- DEFINICJE ---------------- %
-\section{Definicje pojęć}
-\label{sec:definicje}
 
-\begin{definition}[Graf]
-    Grafem nazywamy parę $G = (V, E)$, gdzie $V$ jest zbiorem wierzchołków, a $E \subseteq V \times V = \{(u, v) : u, v \in V \land u \neq v \}$ jest zbiorem krawędzi. Dla każdej pary wierzchołków $u, v \in V$ istnieje co najwyżej jedna krawędź łącząca wierzchołki $u$ i $v$.
-\end{definition}
 
-\begin{definition}[Multigraf]
-    Multigrafem nazywamy graf, w którym pomiędzy dowolnymi dwoma różnymi wierzchołkami $u, v \in V$ może istnieć więcej niż jedna krawędź.
-\end{definition}
+    \section{Definicje pojęć}
+    \label{sec:definicje}
 
-\begin{definition}[Graf skierowany]
-    Grafem skierowanym nazywamy parę $G = (V, E)$, gdzie $V$ jest zbiorem wierzchołków, a $E \subseteq V \times V = \{(u, v) : u, v \in V \land u \neq v \}$ jest zbiorem krawędzi. Krawędzie w grafie skierowanym mają określony kierunek, co oznacza, że krawędź $(u, v)$ jest różna od krawędzi $(v, u)$. Definicja jest analogiczna dla multigrafów.
-\end{definition}
+    \begin{definition}[Graf]
+        Grafem nazywamy parę $G = (V, E)$, gdzie $V$ jest zbiorem wierzchołków, a $E \subseteq V \times V = \{(u, v) : u, v \in V \land u \neq v \}$ jest zbiorem krawędzi. Dla każdej pary wierzchołków $u, v \in V$ istnieje co najwyżej jedna krawędź łącząca wierzchołki $u$ i $v$.
+    \end{definition}
 
-\begin{definition}[Izomorfizm grafów]
-    Dwa grafy $G_1 = (V_1, E_1)$ i $G_2 = (V_2, E_2)$ są izomorficzne, wtedy i tylko wtedy, gdy istnieje bijekcja $f: V_1 \to V_2$, taka że dla każdej krawędzi $(u, v) \in E_1$ zachodzi $(f(u), f(v)) \in E_2$. Definicja ta jest analogiczna dla multigrafów i grafów skierowanych.
-\end{definition}
+    \begin{definition}[Multigraf]
+        Multigrafem nazywamy graf, w którym pomiędzy dowolnymi dwoma różnymi wierzchołkami $u, v \in V$ może istnieć więcej niż jedna krawędź.
+    \end{definition}
 
-\begin{definition}[Podgraf]
-    Graf $H = (V_H, E_H)$ nazywamy podgrafem grafu $G = (V_G, E_G)$, wtedy i tylko wtedy, gdy $V_H \subseteq V_G$ oraz $E_H \subseteq E_G$. Definicja ta jest analogiczna dla multigrafów i grafów skierowanych.
-\end{definition}
+    \begin{definition}[Graf skierowany]
+        Grafem skierowanym nazywamy parę $G = (V, E)$, gdzie $V$ jest zbiorem wierzchołków, a $E \subseteq V \times V = \{(u, v) : u, v \in V \land u \neq v \}$ jest zbiorem krawędzi. Krawędzie w grafie skierowanym mają określony kierunek, co oznacza, że krawędź $(u, v)$ jest różna od krawędzi $(v, u)$. Definicja jest analogiczna dla multigrafów.
+    \end{definition}
 
-\begin{definition}[Graf atrybutowy]
-    Graf $G = (V, E, f)$ nazywamy grafem atrybutowym, gdzie $V$ jest zbiorem wierzchołków, a $E \subseteq V \times V = \{(u, v) : u, v \in V \land u \neq v \}$ jest zbiorem krawędzi. Dla każdej pary wierzchołków $u, v \in V$ istnieje co najwyżej jedna krawędź łącząca wierzchołki $u$ i $v$. $f: E \to \Sigma_E $ jest funkcją, przypisującą etykiety wszystkim krawędziom w grafie $G$. 
-\end{definition}
+    \begin{definition}[Izomorfizm grafów]
+        Dwa grafy $G_1 = (V_1, E_1)$ i $G_2 = (V_2, E_2)$ są izomorficzne, wtedy i tylko wtedy, gdy istnieje bijekcja $f: V_1 \to V_2$, taka że dla każdej krawędzi $(u, v) \in E_1$ zachodzi $(f(u), f(v)) \in E_2$. Definicja ta jest analogiczna dla multigrafów i grafów skierowanych.
+    \end{definition}
 
-\begin{definition}[Macierz sąsiedztwa]
-    Macierzą sąsiedztwa multigrafu $G = (V, E)$ nazywamy macierz $A$, której pole $A_{uv} = k$, wtedy i tylko wtedy, gdy istnieje $k$ krawędzi $(u, v) \in E$. W przypadku gdy nie istnieje żadna krawędź pomiędzy wierzchołkami $u$ i $v$, to $A_{uv} = 0$.
-\end{definition}
+    \begin{definition}[Podgraf]
+        Graf $H = (V_H, E_H)$ nazywamy podgrafem grafu $G = (V_G, E_G)$, wtedy i tylko wtedy, gdy $V_H \subseteq V_G$ oraz $E_H \subseteq E_G$. Definicja ta jest analogiczna dla multigrafów i grafów skierowanych.
+    \end{definition}
 
-\pagebreak
+    \begin{definition}[Graf atrybutowy]
+        Graf $G = (V, E, f)$ nazywamy grafem atrybutowym, gdzie $V$ jest zbiorem wierzchołków, a $E \subseteq V \times V = \{(u, v) : u, v \in V \land u \neq v \}$ jest zbiorem krawędzi. Dla każdej pary wierzchołków $u, v \in V$ istnieje co najwyżej jedna krawędź łącząca wierzchołki $u$ i $v$. $f: E \to \Sigma_E $ jest funkcją, przypisującą etykiety wszystkim krawędziom w grafie $G$.
+    \end{definition}
+
+    \begin{definition}[Macierz sąsiedztwa]
+        Macierzą sąsiedztwa multigrafu $G = (V, E)$ nazywamy macierz $A$, której pole $A_{uv} = k$, wtedy i tylko wtedy, gdy istnieje $k$ krawędzi $(u, v) \in E$. W przypadku gdy nie istnieje żadna krawędź pomiędzy wierzchołkami $u$ i $v$, to $A_{uv} = 0$.
+    \end{definition}
+
+    \pagebreak
 % ---------------- DEFINICJE ---------------- %
 
 % ---------------- ROZMIAR MULTIGRAFU ---------------- %
-\section{Rozmiar multigrafu}
-\label{sec:rozmiar}
 
-\begin{definition}[Rozmiar multigrafu]
-    Rozmiarem $S(G)$ multigrafu $G = (V, E)$ nazywamy parę liczb naturalnych $(|V|, |E|)$, gdzie $|V|$ oznacza liczbę wierzchołków, a $|E|$ liczbę krawędzi w multigrafie $G$.
-\end{definition}
 
-Zakładamy, że liczby wierzchołków i krawędzi są zapisanymi wcześniej stałymi, więc obliczenie rozmiaru multigrafów jest operacją o złożoności czasowej $O(1)$.
+    \section{Rozmiar multigrafu}
+    \label{sec:rozmiar}
 
-\begin{definition}[Porządek w zbiorze wszystkich multigrafów]
-    Niech $G_1$ i $G_2$ będą dwoma multigrafami. Mówimy, że $G_1$ jest mniejszy, lub równy $G_2$ wtedy i tylko wtedy, gdy:
-    \[ |V_1| < |V_2| \lor (|V_1| = |V_2| \land |E_1| \leq |E_2|) \]
-\end{definition}
+    \begin{definition}[Rozmiar multigrafu]
+        Rozmiarem $S(G)$ multigrafu $G = (V, E)$ nazywamy parę liczb naturalnych $(|V|, |E|)$, gdzie $|V|$ oznacza liczbę wierzchołków, a $|E|$ liczbę krawędzi w multigrafie $G$.
+    \end{definition}
 
-Żeby udowodnić poprawność powyższej definicji porządku wykazujemy, że spełnia ona trzy wymagane własności:
-\begin{itemize}
-    \item \textbf{Zwrotność}: 
-    \[S(G) \leq S(G)\]
-    Dla dowolnego multigrafu $G = (V, E)$, zachodzi $|V| = |V| \land |E| = |E|$. Więc w szczególności spełnia on warunek $|V| = |V| \land |E| \leq |E|$ z definicji porządku. Stąd $S(G) \leq S(G)$.
-    \item \textbf{Przechodniość}:
-    \[S(G_1) \leq S(G_2) \land S(G_2) \leq S(G_3) \Rightarrow S(G_1) \leq S(G_3)\]
-    Weźmy dowolne trzy multigrafy $G_1 = (V_1, E_1)$, $G_2 = (V_2, E_2)$ oraz $G_3 = (V_3, E_3)$ takie, że $S(G_1) \leq S(G_2)$ oraz $S(G_2) \leq S(G_3)$. 
-    
-    Załóżmy, że $S(G_1) \geq S(G_3)$. Z definicji to implikuje, że $|V_1| > |V_3| \lor (|V_1| = |V_3| \land |E_1| > |E_3|)$. 
-    
-    Z założeń wiemy też, że $|V_2| > |V_1|$, lub $|V_2| = |V_1| \land |E_2| \geq |E_1|$. 
-    
-    W pierwszym przypadku z założeń wynika, ze $|V_2| > |V_3|$, co stoi w sprzeczności z $S(G_2) \leq S(G_3)$. 
-    
-    W drugim przypadku, z założeń wynika, że $|V_2| = |V_3|$ oraz $|E_2| > |E_3|$, co również stoi w sprzeczności z $S(G_2) \leq S(G_3)$. 
-    
-    W obu przypadkach dochodzimy do sprzeczności, więc nasze początkowe założenie było fałszywe. Stąd $S(G_1) \leq S(G_3)$.
-    \item \textbf{Antysymetryczność}: 
-    \[S(G_1) \leq S(G_2) \land S(G_2) \leq S(G_1) \Rightarrow S(G_1) = S(G_2)\]
-    Weźmy dowolne dwa multigrafy $G_1 = (V_1, E_1)$ oraz $G_2 = (V_2, E_2)$ takie, że $S(G_1) \leq S(G_2)$ oraz $S(G_2) \leq S(G_1)$. Z definicji porządku, z pierwszego założenia wynika, że $|V_1| < |V_2| \lor (|V_1| = |V_2| \land |E_1| \leq |E_2|)$. Z drugiego założenia wynika, że $|V_2| < |V_1| \lor (|V_2| = |V_1| \land |E_2| \leq |E_1|)$.
+    Zakładamy, że liczby wierzchołków i krawędzi są zapisanymi wcześniej stałymi, więc obliczenie rozmiaru multigrafów jest operacją o złożoności czasowej $O(1)$.
 
-    Jeśli $|V_1| < |V_2|$, to z drugiego założenia wynika, że $|V_2| < |V_1|$, co jest sprzeczne. Analogicznie, jeśli $|V_2| < |V_1|$, to z pierwszego założenia wynika, że $|V_1| < |V_2|$, co również jest sprzeczne. Zatem musi zachodzić $|V_1| = |V_2|$.
-    
-    Wtedy z pierwszego założenia wynika, że $|E_1| \leq |E_2|$, a z drugiego, że $|E_2| \leq |E_1|$. Stąd $|E_1| = |E_2|$.
-    
-    W rezultacie mamy $S(G_1) = S(G_2)$.
+    \begin{definition}[Porządek w zbiorze wszystkich multigrafów]
+        Niech $G_1$ i $G_2$ będą dwoma multigrafami. Mówimy, że $G_1$ jest mniejszy, lub równy $G_2$ wtedy i tylko wtedy, gdy:
+        \[ |V_1| < |V_2| \lor (|V_1| = |V_2| \land |E_1| \leq |E_2|) \]
+    \end{definition}
 
-\end{itemize}
+    Żeby udowodnić poprawność powyższej definicji porządku wykazujemy, że spełnia ona trzy wymagane własności:
+    \begin{itemize}
+        \item \textbf{Zwrotność}:
+        \[S(G) \leq S(G)\]
+        Dla dowolnego multigrafu $G = (V, E)$, zachodzi $|V| = |V| \land |E| = |E|$. Więc w szczególności spełnia on warunek $|V| = |V| \land |E| \leq |E|$ z definicji porządku. Stąd $S(G) \leq S(G)$.
+        \item \textbf{Przechodniość}:
+        \[S(G_1) \leq S(G_2) \land S(G_2) \leq S(G_3) \Rightarrow S(G_1) \leq S(G_3)\]
+        Weźmy dowolne trzy multigrafy $G_1 = (V_1, E_1)$, $G_2 = (V_2, E_2)$ oraz $G_3 = (V_3, E_3)$ takie, że $S(G_1) \leq S(G_2)$ oraz $S(G_2) \leq S(G_3)$.
 
-\pagebreak
+        Załóżmy, że $S(G_1) \geq S(G_3)$. Z definicji to implikuje, że $|V_1| > |V_3| \lor (|V_1| = |V_3| \land |E_1| > |E_3|)$.
+
+        Z założeń wiemy też, że $|V_2| > |V_1|$, lub $|V_2| = |V_1| \land |E_2| \geq |E_1|$.
+
+        W pierwszym przypadku z założeń wynika, ze $|V_2| > |V_3|$, co stoi w sprzeczności z $S(G_2) \leq S(G_3)$.
+
+        W drugim przypadku, z założeń wynika, że $|V_2| = |V_3|$ oraz $|E_2| > |E_3|$, co również stoi w sprzeczności z $S(G_2) \leq S(G_3)$.
+
+        W obu przypadkach dochodzimy do sprzeczności, więc nasze początkowe założenie było fałszywe. Stąd $S(G_1) \leq S(G_3)$.
+        \item \textbf{Antysymetryczność}:
+        \[S(G_1) \leq S(G_2) \land S(G_2) \leq S(G_1) \Rightarrow S(G_1) = S(G_2)\]
+        Weźmy dowolne dwa multigrafy $G_1 = (V_1, E_1)$ oraz $G_2 = (V_2, E_2)$ takie, że $S(G_1) \leq S(G_2)$ oraz $S(G_2) \leq S(G_1)$. Z definicji porządku, z pierwszego założenia wynika, że $|V_1| < |V_2| \lor (|V_1| = |V_2| \land |E_1| \leq |E_2|)$. Z drugiego założenia wynika, że $|V_2| < |V_1| \lor (|V_2| = |V_1| \land |E_2| \leq |E_1|)$.
+
+        Jeśli $|V_1| < |V_2|$, to z drugiego założenia wynika, że $|V_2| < |V_1|$, co jest sprzeczne. Analogicznie, jeśli $|V_2| < |V_1|$, to z pierwszego założenia wynika, że $|V_1| < |V_2|$, co również jest sprzeczne. Zatem musi zachodzić $|V_1| = |V_2|$.
+
+        Wtedy z pierwszego założenia wynika, że $|E_1| \leq |E_2|$, a z drugiego, że $|E_2| \leq |E_1|$. Stąd $|E_1| = |E_2|$.
+
+        W rezultacie mamy $S(G_1) = S(G_2)$.
+
+    \end{itemize}
+
+    \pagebreak
 % ---------------- ROZMIAR MULTIGRAFU ---------------- %
 
 % ---------------- METRYKA W ZBIORZE WSZYSTKICH MULTIGRAFÓW ---------------- %
-\section{Metryka w zbiorze wszystkich multigrafów}
-\label{sec:metryka}
 
-\begin{definition}[Metryka w zbiorze multigrafów]
-    Niech $\mathcal{G}$ będzie zbiorem wszystkich multigrafów. \textbf{Metryką} w zbiorze $\mathcal{G}$ nazywamy funkcję:
-    \[d: \mathcal{G} \times \mathcal{G} \to \mathbb{N}_0\]
-    Wartość $d(G_1, G_2)$ nazywamy \textbf{odległością} między multigrafami $G_1$ i $G_2$, a definiujemy ją, jako \textbf{minimalną} liczbę operacji dodawania lub usuwania pojedynczej krawędzi lub wierzchołka, za pomocą których można przekształcić graf $G_1$ w graf izomorficzny z $G_2$.
-\end{definition}
+
+    \section{Metryka w zbiorze wszystkich multigrafów}
+    \label{sec:metryka}
+
+    \begin{definition}[Metryka w zbiorze multigrafów]
+        Niech $\mathcal{G}$ będzie zbiorem wszystkich multigrafów. \textbf{Metryką} w zbiorze $\mathcal{G}$ nazywamy funkcję:
+        \[d: \mathcal{G} \times \mathcal{G} \to \mathbb{N}_0\]
+        Wartość $d(G_1, G_2)$ nazywamy \textbf{odległością} między multigrafami $G_1$ i $G_2$, a definiujemy ją, jako \textbf{minimalną} liczbę operacji dodawania lub usuwania pojedynczej krawędzi lub wierzchołka, za pomocą których można przekształcić graf $G_1$ w graf izomorficzny z $G_2$.
+    \end{definition}
 
 % TODO: Sprawdzić i ewentualnie rozpisać dowody własności metryki
-Powyższa definicja spełnia następujące własności metryki:
-\begin{itemize}
-    \item \textbf{Identyczność nierozróżnialnych}: \\
-    Dla dowolnych multigrafów $G_1$ oraz $G_2$, $d(G_1, G_2) = 0$ wtedy i tylko wtedy, gdy $G_1$ jest izomorficzny z $G_2$. Wynika to bezpośrednio z definicji naszej metryki.
-    \item \textbf{Symetria}: \\
-    Dla dowolnych multigrafów $G_1$ oraz $G_2$, $d(G_1, G_2) = d(G_2, G_1)$. Dodawanie i usuwanie krawędzi lub wierzchołków jest operacją odwracalną, więc liczba operacji potrzebnych do przekształcenia $G_1$ w $G_2$ jest równa liczbie odwrotnych operacji potrzebnych do przekształcenia $G_2$ w $G_1$.
-    \item \textbf{Nierówność trójkąta}: \\
-    Dla dowolnych multigrafów $G_1$, $G_2$ oraz $G_3$, $d(G_1, G_3) \leq d(G_1, G_2) + d(G_2, G_3)$. Oznacza to, że najkrótsza droga między dwoma multigrafami nie może być dłuższa niż droga przechodząca przez trzeci multigraf. Jest to prawda, ponieważ każda sekwencja operacji przekształcających $G_1$ w $G_2$ oraz $G_2$ w $G_3$ może być złożona w jedną sekwencję przekształcającą $G_1$ w $G_3$.
-\end{itemize}
+    Powyższa definicja spełnia następujące własności metryki:
+    \begin{itemize}
+        \item \textbf{Identyczność nierozróżnialnych}: \\
+        Dla dowolnych multigrafów $G_1$ oraz $G_2$, $d(G_1, G_2) = 0$ wtedy i tylko wtedy, gdy $G_1$ jest izomorficzny z $G_2$. Wynika to bezpośrednio z definicji naszej metryki.
+        \item \textbf{Symetria}: \\
+        Dla dowolnych multigrafów $G_1$ oraz $G_2$, $d(G_1, G_2) = d(G_2, G_1)$. Dodawanie i usuwanie krawędzi lub wierzchołków jest operacją odwracalną, więc liczba operacji potrzebnych do przekształcenia $G_1$ w $G_2$ jest równa liczbie odwrotnych operacji potrzebnych do przekształcenia $G_2$ w $G_1$.
+        \item \textbf{Nierówność trójkąta}: \\
+        Dla dowolnych multigrafów $G_1$, $G_2$ oraz $G_3$, $d(G_1, G_3) \leq d(G_1, G_2) + d(G_2, G_3)$. Oznacza to, że najkrótsza droga między dwoma multigrafami nie może być dłuższa niż droga przechodząca przez trzeci multigraf. Jest to prawda, ponieważ każda sekwencja operacji przekształcających $G_1$ w $G_2$ oraz $G_2$ w $G_3$ może być złożona w jedną sekwencję przekształcającą $G_1$ w $G_3$.
+    \end{itemize}
 
-\pagebreak
+    \pagebreak
 % ---------------- METRYKA W ZBIORZE WSZYSTKICH MULTIGRAFÓW ---------------- %
 
 % ---------------- MINIMALNE ROZSZERZENIE MULTIGRAFU ---------------- %
-\section{Minimalne rozszerzenie multigrafu}
-\label{sec:minimalne_rozszerzenie}
-
-\subsection{Algorytm dokładny dla problemu izomorfizmu podgrafu}
-Mając dane dwa grafy G i H, chcemy znaleźć podgrafy G izomorficzne do H. Do rozwiązania tego problemu posłuży nam algorytm, który wykorzystuje procedurę Backtrackingu do sprawdzania struktury grafów. \\
-Przed przejściem do algorytmu, zdefiniujmy sobie struktury przydatne nam do implementacji. Niech $n_G = |V(G)|$ - ilość wierzchołków w grafie G oraz $n_H = |V(H)|$ - ilość wierzchołków w Grafie H. \\ \\
-\textbf{Opis algorytmu:}
-\begin{enumerate}
-    \item Inicjalizacja macierzy sąsiedztwa grafów G i H odpowiednio $S_G \in \mathbb{N}^{n_G  \times  n_G}$ i $S_H \in \mathbb{N}^{n_H  \times  n_H}$. Wartość $S[i,j]$, to ilość krawędzi pomiędzy i-tym, a j-tym wierzchołkiem dla danego grafu.
-    \item Inicjalizacja kandydatów - Zdefiniujmy sobie listę $mozliwe\_dopasowania$, \\ $len(mozliwe\_dopasowania) = n_H$, gdzie pod i-tym indeksem, będziemy mieli listę możliwych dopasowań dla wierzchołka $i \in V(H)$. \\
-    Algorytm Ullmana dla grafów prostych zakłada inicjalizację: \\
-    $u\in V(G),  u \in mozliwe\_dopasowania[i] \iff deg_G(u) \ge deg_H(i) $ \\
-    Jest ona działającą inicjalizacją dla multigrafów, jednak w celach optymalizacji algorytmu, możemy zmienić tę inicjalizację tak, aby zmniejszyć liczbę potencjalnych dopasowań, a co za tym idzie zmniejszyć liczbę gałęzi, które będzie musiał przejść algorytm. Możemy zauważyć, że w macierzach sąsiedztwa na głównej przekątnej pod indeksami $[i,i]$ znajduje się liczba pętli danego wierzchołka, zatem naszym warunkiem będzie także $S_G[i,i] \ge S_H[i,i]$. Biorąc to wszystko razem, otrzymujemy \\
-    $u \in mozliwe\_dopasowania[i] \iff (deg_G(u) \ge deg_H(i)) \land  (S_G[i,i] \ge S_H[i,i]))$
-    \item 
-    Dla każdej krawędzi, która istnieje między już dopasowanymi wierzchołkami z H, sprawdź czy istnieje krawędź między ich dopasowaniami z G i czy ilość krawędzi między dopasowaniami jest większa lub równa niż ilość krawędzi między wierzchołkami. Można to osiągnąć przez przejrzenie wszystkich par już dopasowanych wierzchołków i krawędzi między nimi. Jeśli nie, zwróć False
-    \item 
-    Sprawdź, czy wszystkie wierzchołki nie zostały już dopasowane. Jeśli tak, zwróć True.
-    \item 
-    Dla każdego wierzchołka $v \in mozliwe\_dopasowania[i]$, jeśli $v$ $not$ $in$ $dopasowania$, przypisz $dopasowania[i] = v$ oraz wywołaj funkcję ponownie dla następnego wierzchołka $\in V(H)$ z przekazaną kopią. W przypadku wyniku True z tej funkcji, zwróć True, w przypadku False, $dopasowania[i] = null$  i przejdź do następnego kroku tej pętli.
-    \item W przypadku niedopasowania po wszystkich iteracjach pętli, zwróć False.
-    
-\end{enumerate}
-
-\subsubsection{Dowód poprawności}
-Najpierw zbadajmy, czy algorytm dobrze inicjalizuje $mozliwe\_dopasowania$. W tym celu rozbijmy wszystkie 3 warunki. Pierwszy warunek mówi o tym, że potencjalne dopasowanie $v$ dla wierzchołka $u$, musi mieć stopień co najmniej równy stopniowi wierzchołka $u$. Gdyby tak nie było, w grafie $G$ nie istniałaby co najmniej jedna krawędź wychodząca z $v$, która istniałaby w H i wychodziłaby z $u$, zatem $v$ nie mogłoby być dopasowaniem dla $u$. 
-Drugi warunek mówi o tym, że liczba pętli dla $v$ musi być co najmniej równa liczbie pętli dla $u$. Idea jest taka sama jak warunku pierwszego, gdyby warunek nie był spełniony, nie istniałaby co najmniej jedna pętla da danego wierzchołka, a co za tym idzie, nie mógłby on być dopasowaniem dla $u$.
-
-Dalej w algorytmie, przechodzimy po kolei po wierzchołkach z H. Najpierw sprawdzamy, czy struktura się zgadza dla tych wierzchołków, do których znaleźliśmy już dopasowania. Jeśli choć 1 krawędź istniejąca w $H$ pomiędzy dwoma wierzchołkami nie będzie istnieć między ich dopasowaniami w $G$, algorytm wychodzi z tej ścieżki dopasowań i szuka innych, zatem działa poprawnie. 
-
-Następnie sprawdzamy wszystkie z możliwych dopasowań dla danego wierzchołka, zatem sprawdzając tak wszystkie wierzchołki, mamy pewność, że przejdziemy po wszystkich możliwych permutacjach.
-
-\subsubsection{Złożoność obliczeniowa}
-Zauważmy, że inicjalizacja $mozliwe\_dopasowania$ w taki sposób, że dla każdego wierzchołka $u \in V(H)$ możliwym dopasowaniem są wszystkie $v \in V(G)$, to algorytm przejdzie po wszystkich poddrzewach, zatem w przypadku pesymistycznym do 1 wierzchołka wykona $n_G$ potencjalnych dopasowań, do drugiego $n_G - 1$, ..., a do $n_H$-tego, $(n_G - n_H + 1)$ dopasowań. Zatem mamy \[
-\underbrace{(n_G)(n_G - 1)\dots(n_G - n_H + 1)}_{n_H\ \text{razy}} \le n_G^{n_H}
-\]
- W każdej takiej pętli wykonujemy sprawdzenie, czy struktura grafu się zgadza, (krok 4). Zauważmy, że wykonamy tam $i^2$ porównań, gdzie i to indeks aktualnie obliczanego wierzchołka. Wiemy że $i < n_H$, zatem możemy ograniczyć tę operację: $i^2 < n_H^2$. W sumie możemy stwierdzić, że złożoność tego algorytmu wyniesie $O(n_G^{n_H}n_H^2)$
 
 
+    \section{Minimalne rozszerzenie multigrafu}
+    \label{sec:minimalne_rozszerzenie}
 
-\pagebreak
-\subsection{Aproksymacyjne minimalne rozszerzenie multigrafu}
-\label{sec:minimalne_rozszerzenie_approx}
+    \subsection{Algorytm dokładny dla problemu izomorfizmu podgrafu}
+    Mając dane dwa grafy G i H, chcemy znaleźć podgrafy G izomorficzne do H. Do rozwiązania tego problemu posłuży nam algorytm, który wykorzystuje procedurę Backtrackingu do sprawdzania struktury grafów. \\
+    Przed przejściem do algorytmu, zdefiniujmy sobie struktury przydatne nam do implementacji. Niech $n_G = |V(G)|$ - ilość wierzchołków w grafie G oraz $n_H = |V(H)|$ - ilość wierzchołków w Grafie H. \\ \\
+    \textbf{Opis algorytmu:}
+    \begin{enumerate}
+        \item Inicjalizacja macierzy sąsiedztwa grafów G i H odpowiednio $S_G \in \mathbb{N}^{n_G  \times  n_G}$ i $S_H \in \mathbb{N}^{n_H  \times  n_H}$. Wartość $S[i,j]$, to ilość krawędzi pomiędzy i-tym, a j-tym wierzchołkiem dla danego grafu.
+        \item Inicjalizacja kandydatów - Zdefiniujmy sobie listę $mozliwe\_dopasowania$, \\ $len(mozliwe\_dopasowania) = n_H$, gdzie pod i-tym indeksem, będziemy mieli listę możliwych dopasowań dla wierzchołka $i \in V(H)$. \\
+        Algorytm Ullmana dla grafów prostych zakłada inicjalizację: \\
+        $u\in V(G),  u \in mozliwe\_dopasowania[i] \iff deg_G(u) \ge deg_H(i) $ \\
+        Jest ona działającą inicjalizacją dla multigrafów, jednak w celach optymalizacji algorytmu, możemy zmienić tę inicjalizację tak, aby zmniejszyć liczbę potencjalnych dopasowań, a co za tym idzie zmniejszyć liczbę gałęzi, które będzie musiał przejść algorytm. Możemy zauważyć, że w macierzach sąsiedztwa na głównej przekątnej pod indeksami $[i,i]$ znajduje się liczba pętli danego wierzchołka, zatem naszym warunkiem będzie także $S_G[i,i] \ge S_H[i,i]$. Biorąc to wszystko razem, otrzymujemy \\
+        $u \in mozliwe\_dopasowania[i] \iff (deg_G(u) \ge deg_H(i)) \land  (S_G[i,i] \ge S_H[i,i]))$
+        \item
+        Dla każdej krawędzi, która istnieje między już dopasowanymi wierzchołkami z H, sprawdź czy istnieje krawędź między ich dopasowaniami z G i czy ilość krawędzi między dopasowaniami jest większa lub równa niż ilość krawędzi między wierzchołkami. Można to osiągnąć przez przejrzenie wszystkich par już dopasowanych wierzchołków i krawędzi między nimi. Jeśli nie, zwróć False
+        \item
+        Sprawdź, czy wszystkie wierzchołki nie zostały już dopasowane. Jeśli tak, zwróć True.
+        \item
+        Dla każdego wierzchołka $v \in mozliwe\_dopasowania[i]$, jeśli $v$ $not$ $in$ $dopasowania$, przypisz $dopasowania[i] = v$ oraz wywołaj funkcję ponownie dla następnego wierzchołka $\in V(H)$ z przekazaną kopią. W przypadku wyniku True z tej funkcji, zwróć True, w przypadku False, $dopasowania[i] = null$  i przejdź do następnego kroku tej pętli.
+        \item W przypadku niedopasowania po wszystkich iteracjach pętli, zwróć False.
 
-\noindent
-Do problemu można zastosować pewną modyfikację algorytmu LeRP (Length-R Paths), opracowanego przez Freda W DePiero oraz Davida Krouta \cite{lerp_algorithm}. Algorytm opiera się na założeniu, że o podobieństwie strukturalnym dwóch wierzchołków można wnioskować na podstawie porównania liczby ścieżek (\textit{sygnatur}) o długości $r$ w ich sąsiedztwie. \\ \\ 
-Modyfikacja algorytmu jako argumenty przyjmuje dwa multigrafy $G_1 = (V_1, E_1)$ i $G_2 = (V_2, E_2)$, maksymalną długość ścieżki $R$ oraz liczbę szukanych kopii grafu $k$. Im większa długość ścieżki $R$, tym algorytm jest dokładniejszy. Zwraca natomiast przekształcenie $f(g_{1i}) = g_{2k}$, gdzie $g_{1i} \in G_1$ i $g_{2k} \in G_2$, które opisuje najlepszy (w rozumieniu aproksymacji) wspólny podgraf $G_1$ oraz $G_2$. \\
-Oznaczmy przez $H = (V_H, E_H)$ najlepszy wspólny podgraf $G_1$ oraz $G_2$. Do multigrafu $H$ należy dołożyć zbiór krawędzi $X$, tak aby grafy $G_1$ oraz $H' = (V_H, E_H \cup X)$ były izomorficzne. Wówczas multigraf $G_3 =(V_2, E_2\cup X)$ będzie minimalnym rozszerzeniem $G_2$, aby ten zawierał $G_1$ jako podgraf. Przez minimalne rozszerzenie, rozumie się minimalną liczbę dodanych krawędzi do grafu. \\ 
-Następnie usuwamy z początkowego grafu $G_2$ wierzchołki podgrafu $H$ i powtarzamy proces dla grafów $G_1$ i $G'_2 = (V_2-V_H, E_2')$, aby znaleźć $k$ rozdzielnych kopii $G_1$ w grafie $G_2$.
+    \end{enumerate}
+
+    \subsubsection{Dowód poprawności}
+    Najpierw zbadajmy, czy algorytm dobrze inicjalizuje $mozliwe\_dopasowania$. W tym celu rozbijmy wszystkie 3 warunki. Pierwszy warunek mówi o tym, że potencjalne dopasowanie $v$ dla wierzchołka $u$, musi mieć stopień co najmniej równy stopniowi wierzchołka $u$. Gdyby tak nie było, w grafie $G$ nie istniałaby co najmniej jedna krawędź wychodząca z $v$, która istniałaby w H i wychodziłaby z $u$, zatem $v$ nie mogłoby być dopasowaniem dla $u$.
+    Drugi warunek mówi o tym, że liczba pętli dla $v$ musi być co najmniej równa liczbie pętli dla $u$. Idea jest taka sama jak warunku pierwszego, gdyby warunek nie był spełniony, nie istniałaby co najmniej jedna pętla da danego wierzchołka, a co za tym idzie, nie mógłby on być dopasowaniem dla $u$.
+
+    Dalej w algorytmie, przechodzimy po kolei po wierzchołkach z H. Najpierw sprawdzamy, czy struktura się zgadza dla tych wierzchołków, do których znaleźliśmy już dopasowania. Jeśli choć 1 krawędź istniejąca w $H$ pomiędzy dwoma wierzchołkami nie będzie istnieć między ich dopasowaniami w $G$, algorytm wychodzi z tej ścieżki dopasowań i szuka innych, zatem działa poprawnie.
+
+    Następnie sprawdzamy wszystkie z możliwych dopasowań dla danego wierzchołka, zatem sprawdzając tak wszystkie wierzchołki, mamy pewność, że przejdziemy po wszystkich możliwych permutacjach.
+
+    \subsubsection{Złożoność obliczeniowa}
+    Zauważmy, że inicjalizacja $mozliwe\_dopasowania$ w taki sposób, że dla każdego wierzchołka $u \in V(H)$ możliwym dopasowaniem są wszystkie $v \in V(G)$, to algorytm przejdzie po wszystkich poddrzewach, zatem w przypadku pesymistycznym do 1 wierzchołka wykona $n_G$ potencjalnych dopasowań, do drugiego $n_G - 1$, ..., a do $n_H$-tego, $(n_G - n_H + 1)$ dopasowań. Zatem mamy \[
+                                                                                                                                                                                                                                                                                                                                                                                                \underbrace{(n_G)(n_G - 1)\dots(n_G - n_H + 1)}_{n_H\ \text{razy}} \le n_G^{n_H}
+    \]
+    W każdej takiej pętli wykonujemy sprawdzenie, czy struktura grafu się zgadza, (krok 4). Zauważmy, że wykonamy tam $i^2$ porównań, gdzie i to indeks aktualnie obliczanego wierzchołka. Wiemy że $i < n_H$, zatem możemy ograniczyć tę operację: $i^2 < n_H^2$. W sumie możemy stwierdzić, że złożoność tego algorytmu wyniesie $O(n_G^{n_H}n_H^2)$
 
 
-\subsubsection{Opis algorytmu}
-\noindent
-Algorytm można podzielić na kilka etapów.
 
-\begin{enumerate}
-    \item W pierwszym kroku, należy wykonać transformację multigrafów wejściowych $G_1 = (V_1, E_1)$ oraz $G_2 = (V_2, E_2)$ na grafy atrybutowe $G'_1$ oraz $G'_2$. Transformacja przebiega w następujący sposób:
+    \pagebreak
+
+    \subsection{Aproksymacyjne minimalne rozszerzenie multigrafu}
+    \label{sec:minimalne_rozszerzenie_approx}
+
+    \noindent
+    Do problemu można zastosować pewną modyfikację algorytmu LeRP (Length-R Paths), opracowanego przez Freda W DePiero oraz Davida Krouta \cite{lerp_algorithm}. Algorytm opiera się na założeniu, że o podobieństwie strukturalnym dwóch wierzchołków można wnioskować na podstawie porównania liczby ścieżek (\textit{sygnatur}) o długości $r$ w ich sąsiedztwie. \\ \\
+    Modyfikacja algorytmu jako argumenty przyjmuje dwa multigrafy $G_1 = (V_1, E_1)$ i $G_2 = (V_2, E_2)$, maksymalną długość ścieżki $R$ oraz liczbę szukanych kopii grafu $k$. Im większa długość ścieżki $R$, tym algorytm jest dokładniejszy. Zwraca natomiast przekształcenie $f(g_{1i}) = g_{2k}$, gdzie $g_{1i} \in G_1$ i $g_{2k} \in G_2$, które opisuje najlepszy (w rozumieniu aproksymacji) wspólny podgraf $G_1$ oraz $G_2$. \\
+    Oznaczmy przez $H = (V_H, E_H)$ najlepszy wspólny podgraf $G_1$ oraz $G_2$. Do multigrafu $H$ należy dołożyć zbiór krawędzi $X$, tak aby grafy $G_1$ oraz $H' = (V_H, E_H \cup X)$ były izomorficzne. Wówczas multigraf $G_3 =(V_2, E_2\cup X)$ będzie minimalnym rozszerzeniem $G_2$, aby ten zawierał $G_1$ jako podgraf. Przez minimalne rozszerzenie, rozumie się minimalną liczbę dodanych krawędzi do grafu. \\
+    Następnie usuwamy z początkowego grafu $G_2$ wierzchołki podgrafu $H$ i powtarzamy proces dla grafów $G_1$ i $G'_2 = (V_2-V_H, E_2')$, aby znaleźć $k$ rozdzielnych kopii $G_1$ w grafie $G_2$.
+
+    \subsubsection{Opis algorytmu}
+    \noindent
+    Algorytm można podzielić na kilka etapów.
+
+    \begin{enumerate}
+        \item W pierwszym kroku, należy wykonać transformację multigrafów wejściowych $G_1 = (V_1, E_1)$ oraz $G_2 = (V_2, E_2)$ na grafy atrybutowe $G'_1$ oraz $G'_2$. Transformacja przebiega w następujący sposób:
+        \begin{itemize}
+            \item Zbiory wierzchołków pozostają bez zmian ($V'_1 = V_1, V'_2 = V_2$).
+            \item Dla każdej pary wierzchołków $(u, v)$ w $G_1$ (i analogicznie w $G_2$): Jeśli między $u$ a $v$ w $G_1$ istnieje $k$ równoległych krawędzi, to w $G'_1$ tworzona jest pojedyncza krawędź $(u, v)$ z atrybutem $k \in \mathbb{N^+}$.
+        \end{itemize}
+        \item W etapie drugim, dla obu grafów $G'_1$ i $G'_2$ obliczane są potęgi ich macierzy sąsiedztwa, odpowiednio $A^r$ i $B^r$ aż do maksymalnej długości $R$. Wartość $A_{ij}^r$ w macierzy $A^r$ reprezentuje liczbę ścieżek o długości dokładnie $r$ z wierzchołka $i$ do wierzchołka $j$ (na ścieżkach mogą się powtarzać wierzchołki i krawędzie). W kontekście omówionej transformacji, macierz $A$ jest macierzą, gdzie $A_{ij}$ przechowuje atrybut $k$ - liczbę równoległych krawędzi między wierzchołkami $i$ i $j$ w multigrafie $G_1$.
+        \item Każdy wierzchołek $g_{1i} \in G'_1$ można porównać z każdym wierzchołkiem $g_{2k} \in G'_2$, stosując przykładowo podobieństwo cosinusowe między histogramem wartości w wierszu macierzy $A^r_i$ a histogramem wartości w wierszu macierzy $B^r_k$. Następnie tworzymy macierz z wartościami podobieństw między wierzchołkami. Wierzchołki najbardziej podobne zostają ziarnem mapowania.
+        \item Następnie iteracyjnie (przykładowo DFS), algorytm porównuje sąsiadów wierzchołków zmapowanych. Do następnego mapowania, wybiera tych sąsiadów, do których liczba ścieżek o długości co najwyżej $R$ jest największa i jest równa dla obu wierzchołków z dwóch grafów. Algorytm sprawdza również, czy wybrane wierzchołki nie zostały już zmapowane.
+        \item Zmapowane wierzchołki w grafie $G'_2$ są usuwane, tworząc nowy graf $G''_2$ i proces jest powtarzany dla grafów $G'_1$ oraz $G''_2$. W ten sposób znajdowane jest $k$ rozdzielnych kopii $G_1$ w minimalnym rozszerzeniu $G_2$.
+    \end{enumerate}
+
+    \subsubsection{Złożoność obliczeniowa}
+    Złożoność pesymistyczna omówionej modyfikacji algorytmu LeRP jest wielomianowa i wynosi $O(N^2 \cdot(N+E) \cdot D^2 \cdot R \cdot k)$, gdzie:
     \begin{itemize}
-        \item Zbiory wierzchołków pozostają bez zmian ($V'_1 = V_1, V'_2 = V_2$).
-        \item Dla każdej pary wierzchołków $(u, v)$ w $G_1$ (i analogicznie w $G_2$): Jeśli między $u$ a $v$ w $G_1$ istnieje $k$ równoległych krawędzi, to w $G'_1$ tworzona jest pojedyncza krawędź $(u, v)$ z atrybutem $k \in \mathbb{N^+}$.
+        \item $N$ to liczba wierzchołków w grafach (zakładając, że oba grafy mają rozmiar rzędu $N$).
+        \item $E$ to liczba krawędzi w grafach (zakładając, że oba grafy mają liczbę krawędzi rzędu $N$).
+        \item $D$ to średni stopień wierzchołków w grafach.
+        \item $R$ to maksymalna długość ścieżki brana pod uwagę.
+        \item $k$ to liczba szukanych kopii w minimalnym rozszerzeniu
     \end{itemize}
-    \item W etapie drugim, dla obu grafów $G'_1$ i $G'_2$ obliczane są potęgi ich macierzy sąsiedztwa, odpowiednio $A^r$ i $B^r$ aż do maksymalnej długości $R$. Wartość $A_{ij}^r$ w macierzy $A^r$ reprezentuje liczbę ścieżek o długości dokładnie $r$ z wierzchołka $i$ do wierzchołka $j$ (na ścieżkach mogą się powtarzać wierzchołki i krawędzie). W kontekście omówionej transformacji, macierz $A$ jest macierzą, gdzie $A_{ij}$ przechowuje atrybut $k$ - liczbę równoległych krawędzi między wierzchołkami $i$ i $j$ w multigrafie $G_1$.
-    \item Każdy wierzchołek $g_{1i} \in G'_1$ można porównać z każdym wierzchołkiem $g_{2k} \in G'_2$, stosując przykładowo podobieństwo cosinusowe między histogramem wartości w wierszu macierzy $A^r_i$ a histogramem wartości w wierszu macierzy $B^r_k$. Następnie tworzymy macierz z wartościami podobieństw między wierzchołkami. Wierzchołki najbardziej podobne zostają ziarnem mapowania. 
-    \item Następnie iteracyjnie (przykładowo DFS), algorytm porównuje sąsiadów wierzchołków zmapowanych. Do następnego mapowania, wybiera tych sąsiadów, do których liczba ścieżek o długości co najwyżej $R$ jest największa i jest równa dla obu wierzchołków z dwóch grafów. Algorytm sprawdza również, czy wybrane wierzchołki nie zostały już zmapowane. 
-    \item Zmapowane wierzchołki w grafie $G'_2$ są usuwane, tworząc nowy graf $G''_2$ i proces jest powtarzany dla grafów $G'_1$ oraz $G''_2$. W ten sposób znajdowane jest $k$ rozdzielnych kopii $G_1$ w minimalnym rozszerzeniu $G_2$. 
-\end{enumerate}
-
-\subsubsection{Złożoność obliczeniowa}
-Złożoność pesymistyczna omówionej modyfikacji algorytmu LeRP jest wielomianowa i wynosi $O(N^2 \cdot(N+E) \cdot D^2 \cdot R \cdot k)$, gdzie:
-\begin{itemize}
-    \item $N$ to liczba wierzchołków w grafach (zakładając, że oba grafy mają rozmiar rzędu $N$).
-    \item $E$ to liczba krawędzi w grafach (zakładając, że oba grafy mają liczbę krawędzi rzędu $N$).
-    \item $D$ to średni stopień wierzchołków w grafach.
-    \item $R$ to maksymalna długość ścieżki brana pod uwagę. 
-    \item $k$ to liczba szukanych kopii w minimalnym rozszerzeniu
-\end{itemize}
-Uzasadnienie złożoności: porównanie par wierzchołków wymaga $N^2$ porównań. Każdy wierzchołek ma średnio $D$ sąsiadów, więc porównywanie sąsiadów daje $D^2$ dodatkowych operacji. Analiza różnych długości ścieżek to czynnik $R$. Podczas budowania dopasowania, algorytm iteracyjny ma złożoność $(N+E)$. Czynnik $k$ odpowiada za znalezienie $k$ kopii mniejszego multigrafu $G_1$.\\ \\
-W kontekście tego algorytmu aproksymacyjnego nie rozważano formalnego dowodu poprawności. Dostarczono empiryczną gwarancję jakości - algorytm testowano na dużych zbiorach danych, wykazując, że algorytm konsekwentnie zwraca wyniki bliskie optimum w praktyce.
+    Uzasadnienie złożoności: porównanie par wierzchołków wymaga $N^2$ porównań. Każdy wierzchołek ma średnio $D$ sąsiadów, więc porównywanie sąsiadów daje $D^2$ dodatkowych operacji. Analiza różnych długości ścieżek to czynnik $R$. Podczas budowania dopasowania, algorytm iteracyjny ma złożoność $(N+E)$. Czynnik $k$ odpowiada za znalezienie $k$ kopii mniejszego multigrafu $G_1$.\\ \\
+    W kontekście tego algorytmu aproksymacyjnego nie rozważano formalnego dowodu poprawności. Dostarczono empiryczną gwarancję jakości - algorytm testowano na dużych zbiorach danych, wykazując, że algorytm konsekwentnie zwraca wyniki bliskie optimum w praktyce.
 
 
 % ---------------- MINIMALNE ROZSZERZENIE MULTIGRAFU ---------------- %
- 
 
+    \pagebreak
+
+% ---------------- MINIMALNE ROZSZERZENIE ZAWIERAJĄCE M KOPII ---------------- %
+
+
+    \section{Minimalne rozszerzenie multigrafu zawierającego m kopii podgrafu P}
+    \label{sec:minimalne_rozszerzenie_m_kopii}
+
+    \subsection{Motywacja i sformułowanie problemu}
+    \label{subsec:motywacja_m_kopii}
+
+    W poprzednich sekcjach zajmowaliśmy się problemem weryfikacji istnienia pojedynczego podgrafu izomorficznego z danym wzorcem. W praktycznych zastosowaniach często pojawia się jednak bardziej ogólne zagadnienie: jak minimalnie rozszerzyć graf $G$, aby zawierał on $m$ różnych kopii grafu wzorcowego $P$?
+
+    Problem ten ma istotne zastosowania w dziedzinach takich jak:
+    \begin{itemize}
+        \item \textbf{Projektowanie sieci}: Zapewnienie redundancji przez istnienie wielu izomorficznych podsieci
+        \item \textbf{Analiza struktur molekularnych}: Identyfikacja powtarzających się motywów strukturalnych
+        \item \textbf{Analiza sieci społecznych}: Wykrywanie grup o podobnej strukturze relacji
+        \item \textbf{Optymalizacja grafów}: Minimalne modyfikacje zachowujące pożądane właściwości strukturalne
+    \end{itemize}
+
+    \noindent\textbf{Formalne sformułowanie problemu:}
+
+    \noindent\textit{Dane:}
+    \begin{itemize}
+        \item Multigraf skierowany $G = (V_G, E_G)$ o $n$ wierzchołkach (graf "duży")
+        \item Multigraf skierowany $P = (V_P, E_P)$ o $k$ wierzchołkach, gdzie $k \leq n$ (graf "mały", wzorzec)
+        \item Liczba naturalna $m \geq 1$ - wymagana liczba kopii
+    \end{itemize}
+
+    \noindent\textit{Zadanie:}
+    \begin{itemize}
+        \item Znaleźć minimalny zbiór krawędzi $E_{add}$ taki, że graf $G' = (V_G, E_G \cup E_{add})$ zawiera co najmniej $m$ podgrafów izomorficznych z $P$, przy czym każde dwa podgrafy różnią się przynajmniej jednym wierzchołkiem
+    \end{itemize}
+
+    \subsection{Definicje formalne}
+    \label{subsec:definicje_m_kopii}
+
+    \begin{definition}[Rozszerzenie multigrafu]
+        \label{def:rozszerzenie}
+        Niech $G = (V_G, E_G)$ i $G' = (V_{G'}, E_{G'})$ będą multigrafami. Mówimy, że $G'$ jest \textbf{rozszerzeniem} $G$, jeśli:
+        \begin{enumerate}
+            \item $V_G \subseteq V_{G'}$ (zbiór wierzchołków $G$ jest podzbiorem wierzchołków $G'$)
+            \item $E_G \subseteq E_{G'}$ (zbiór krawędzi $G$ jest podzbiorem krawędzi $G'$)
+        \end{enumerate}
+    \end{definition}
+
+    \noindent\textbf{Uzasadnienie:} Definicja jest naturalna i oparta na relacji inkluzji zbiorów. Zgodna z intuicją, że rozszerzenie grafu polega na dodaniu nowych wierzchołków i/lub krawędzi przy zachowaniu struktury oryginalnego grafu. Jest spójna z definicją podgrafu ($G$ jest podgrafem $G'$).
+
+    \begin{definition}[Koszt rozszerzenia]
+        \label{def:koszt_rozszerzenia}
+        Niech $G = (V_G, E_G)$ i $G' = (V_{G'}, E_{G'})$ będą multigrafami takimi, że $G'$ jest rozszerzeniem $G$. \textbf{Kosztem rozszerzenia} $\gamma(G, G')$ nazywamy parę liczb naturalnych:
+        \[
+            \gamma(G, G') = (|V_{G'} \setminus V_G|, |E_{G'} \setminus E_G|)
+        \]
+        gdzie:
+        \begin{itemize}
+            \item $|V_{G'} \setminus V_G|$ to liczba dodanych wierzchołków
+            \item $|E_{G'} \setminus E_G|$ to liczba dodanych krawędzi
+        \end{itemize}
+    \end{definition}
+
+    \noindent\textbf{Uzasadnienie:} Koszt uwzględnia dwie podstawowe operacje rozszerzania grafu. W kontekście naszego algorytmu skupiamy się głównie na dodawaniu krawędzi, zakładając stałą liczbę wierzchołków ($V_G = V_{G'}$).
+
+    \begin{definition}[Porządek leksykograficzny na kosztach]
+        \label{def:porzadek_kosztow}
+        Dla dwóch kosztów $(v_1, e_1)$ i $(v_2, e_2)$ definiujemy porządek leksykograficzny:
+        \[
+            (v_1, e_1) < (v_2, e_2) \iff v_1 < v_2 \lor (v_1 = v_2 \land e_1 < e_2)
+        \]
+    \end{definition}
+
+    \noindent\textbf{Uzasadnienie:} Porządek leksykograficzny priorytetyzuje minimalizację liczby dodanych wierzchołków, a następnie krawędzi.
+
+    \begin{definition}[Osadzenie k-wierzchołkowe]
+        \label{def:osadzenie_k}
+        \textbf{Osadzenie k-wierzchołkowe} grafu $P$ w grafie $G$ definiujemy przez parę $(C, \pi)$, gdzie:
+        \begin{enumerate}
+            \item $C \subseteq V_G$ jest \textbf{k-kombinacją} - podzbiorem wierzchołków takim, że $|C| = k = |V_P|$
+            \item $\pi: V_P \to C$ jest \textbf{k-permutacją} - bijekcją mapującą wierzchołki $P$ na wierzchołki $C$
+        \end{enumerate}
+        Para $(C, \pi)$ definiuje potencjalne osadzenie $P$ w $G$ poprzez podgraf indukowany przez $C$ z odpowiednim mapowaniem wierzchołków.
+    \end{definition}
+
+    \noindent\textbf{Uzasadnienie:} Formalizuje procedurę przeszukiwania przestrzeni możliwych osadzeń. Bezpośrednio odpowiada implementacji (kombinacje i permutacje w kodzie). Liczba możliwych osadzeń wynosi $\binom{n}{k} \times k!$.
+
+    \begin{definition}[Brakujące krawędzie dla osadzenia]
+        \label{def:brakujace_krawedzie}
+        Niech $G = (V_G, E_G)$ i $P = (V_P, E_P)$ będą multigrafami, gdzie $|V_P| = k \leq |V_G| = n$. Niech $(C, \pi)$ będzie osadzeniem k-wierzchołkowym $P$ w $G$. \textbf{Zbiorem brakujących krawędzi} dla osadzenia $(C, \pi)$ nazywamy multizbiór:
+        \[
+            \Delta((C, \pi), G, P) = \{(\pi(u), \pi(v)) : u, v \in V_P\}
+        \]
+        z krotnościami:
+        \[
+            \text{mult}_\Delta(\pi(u), \pi(v)) = \max(0, A_P[u][v] - A_G[\pi(u)][\pi(v)])
+        \]
+        gdzie $A_P$, $A_G$ są macierzami sąsiedztwa odpowiednio grafów $P$ i $G$.
+    \end{definition}
+
+    \noindent\textbf{Uzasadnienie:} Umożliwia kwantyfikację odległości między potencjalnym osadzeniem a rzeczywistym izomorfizmem. Stanowi podstawę algorytmu konstrukcji minimalnego rozszerzenia. Uwzględnia krotności krawędzi (multigrafowość).
+
+    \begin{definition}[Minimalne rozszerzenie zawierające m kopii podgrafu P]
+        \label{def:minimalne_rozszerzenie_m}
+        Niech $G = (V_G, E_G)$ i $P = (V_P, E_P)$ będą multigrafami, gdzie $|V_P| \leq |V_G|$, oraz niech $m \geq 1$ będzie liczbą naturalną. \textbf{Minimalnym rozszerzeniem} $G$ zawierającym $m$ kopii $P$ nazywamy multigraf $G' = (V_{G'}, E_{G'})$ spełniający następujące warunki:
+
+        \begin{enumerate}
+            \item $G'$ jest rozszerzeniem $G$ (tj. $V_G \subseteq V_{G'}$, $E_G \subseteq E_{G'}$)
+            \item $G'$ zawiera co najmniej $m$ podgrafów izomorficznych z $P$, przy czym każde dwa podgrafy różnią się przynajmniej jednym wierzchołkiem (tzn. dla dowolnych dwóch podgrafów $H_i$, $H_j$ zachodzi $V_{H_i} \neq V_{H_j}$)
+            \item Koszt rozszerzenia $\gamma(G, G')$ jest minimalny w sensie porządku leksykograficznego wśród wszystkich rozszerzeń spełniających warunki 1 i 2
+        \end{enumerate}
+    \end{definition}
+
+    \noindent\textbf{Uzasadnienie:} Warunek $V_{H_i} \neq V_{H_j}$ zapewnia, że kopie są rzeczywiście różne (nie są tym samym podgrafem), ale dopuszcza częściowe pokrywanie się zbiorów wierzchołków. Jest to słabsze wymaganie niż pełna rozłączność wierzchołkowa, ale wystarczające do sensownego policzenia $m$ różnych kopii grafu $P$. W implementacji zakładamy $V_G = V_{G'}$ (nie dodajemy wierzchołków), więc minimalizujemy tylko liczbę dodanych krawędzi. Definicja jest operacyjna i pozwala na konstrukcję algorytmów.
+
+    \subsection{Algorytmy pomocnicze}
+    \label{subsec:algorytmy_pomocnicze}
+
+    Algorytm główny wykorzystuje trzy fundamentalne algorytmy kombinatoryczne: generowanie k-kombinacji, generowanie permutacji oraz generowanie produktu kartezjańskiego (m-krotek). W tej sekcji przedstawiamy szczegółowe opisy tych algorytmów wraz z dowodami poprawności i analizą złożoności.
+
+    \subsubsection{Algorytm generowania k-kombinacji}
+    \label{subsubsec:kombinacje}
+
+    \textbf{Problem:} Dla danego zbioru $n$ elementów wygenerować wszystkie jego $k$-elementowe podzbiory (kombinacje).
+
+    \textbf{Właściwości:}
+    \begin{itemize}
+        \item Liczba k-kombinacji ze zbioru n-elementowego: $\binom{n}{k} = \frac{n!}{k!(n-k)!}$
+        \item Kombinacje są nieuporządkowane (zbiory, nie ciągi)
+        \item Kolejność generowania: leksykograficzna według indeksów
+    \end{itemize}
+
+    \begin{algorithm}[H]
+        \caption{GenerateCombinations($items$, $k$)}
+        \label{alg:combinations}
+        \begin{algorithmic}[1]
+            \Require $items$ - lista n elementów, $k$ - rozmiar kombinacji
+            \Ensure Wszystkie k-kombinacje elementów z $items$
+            \If{$k = 0$}
+                \State \textbf{yield} $[\,]$ \Comment{Pusta kombinacja}
+                \State \Return
+            \EndIf
+            \If{$k > n$}
+                \State \Return \Comment{Brak kombinacji}
+            \EndIf
+            \State $c \gets [0, 1, 2, \ldots, k-1]$ \Comment{Początkowa kombinacja indeksów}
+            \While{\textbf{true}}
+                \State \textbf{yield} $[items[c[0]], items[c[1]], \ldots, items[c[k-1]]]$
+                \State $i \gets k - 1$
+                \While{$i \geq 0$ \textbf{and} $c[i] = n - k + i$}
+                    \State $i \gets i - 1$
+                \EndWhile
+                \If{$i < 0$}
+                    \State \textbf{break} \Comment{Wszystkie kombinacje wygenerowane}
+                \EndIf
+                \State $c[i] \gets c[i] + 1$
+                \For{$j \gets i + 1$ \textbf{to} $k - 1$}
+                    \State $c[j] \gets c[j-1] + 1$
+                \EndFor
+            \EndWhile
+        \end{algorithmic}
+    \end{algorithm}
+
+    \textbf{Dowód poprawności:}
+
+    \begin{proof}
+        Algorytm reprezentuje kombinacje jako rosnące ciągi indeksów $c[0] < c[1] < \ldots < c[k-1]$, gdzie $0 \leq c[i] \leq n-1$.
+
+        \textbf{Niezmiennik:} W każdej iteracji głównej pętli, tablica $c$ reprezentuje poprawną k-kombinację (ściśle rosnący ciąg indeksów).
+
+        \textbf{Kompletność:} Algorytm generuje wszystkie kombinacje, ponieważ:
+        \begin{enumerate}
+            \item Rozpoczyna od najmniejszej kombinacji $[0, 1, \ldots, k-1]$
+            \item W każdej iteracji znajduje najbardziej prawy indeks $i$, który można zwiększyć (linie 10-12)
+            \item Zwiększa $c[i]$ i ustawia następne indeksy jako kolejne liczby (linie 16-18)
+            \item To jest standardowy algorytm generowania kombinacji w porządku leksykograficznym
+            \item Kończy gdy nie można zwiększyć żadnego indeksu (największa kombinacja $[n-k, n-k+1, \ldots, n-1]$)
+        \end{enumerate}
+
+        \textbf{Brak duplikatów:} Każda kombinacja jest unikalna, ponieważ algorytm ściśle następuje porządek leksykograficzny i nigdy nie cofa się do wcześniej wygenerowanych kombinacji.
+
+        \textbf{Poprawność struktury:} Niezmiennik $c[0] < c[1] < \ldots < c[k-1]$ jest zachowany w każdej iteracji przez konstrukcję algorytmu (linie 16-18).
+    \end{proof}
+
+    \textbf{Złożoność obliczeniowa:}
+    \begin{itemize}
+        \item \textbf{Liczba iteracji:} $\binom{n}{k}$ (liczba kombinacji do wygenerowania)
+        \item \textbf{Koszt jednej iteracji:} $O(k)$ - wyprodukowanie kombinacji i znalezienie indeksu do zwiększenia
+        \item \textbf{Złożoność czasowa całkowita:} $O\left(\binom{n}{k} \cdot k\right)$
+        \item \textbf{Złożoność pamięciowa:} $O(k)$ - przechowywanie tablicy indeksów
+    \end{itemize}
+
+    \subsubsection{Algorytm generowania permutacji}
+    \label{subsubsec:permutacje}
+
+    \textbf{Problem:} Dla danego zbioru $n$ elementów wygenerować wszystkie jego permutacje (uporządkowania).
+
+    \textbf{Właściwości:}
+    \begin{itemize}
+        \item Liczba permutacji zbioru n-elementowego: $n!$
+        \item Wykorzystujemy algorytm Heapa - minimalizuje liczbę zamian elementów
+        \item Generowanie w miejscu (in-place)
+    \end{itemize}
+
+    \begin{algorithm}[H]
+        \caption{GeneratePermutations($items$)}
+        \label{alg:permutations}
+        \begin{algorithmic}[1]
+            \Require $items$ - lista n elementów
+            \Ensure Wszystkie permutacje elementów z $items$
+            \State $n \gets |items|$
+            \If{$n \leq 1$}
+                \State \textbf{yield} $items$
+                \State \Return
+            \EndIf
+            \State $a \gets$ kopia $items$ \Comment{Praca na kopii}
+            \State $c \gets [0, 0, \ldots, 0]$ \Comment{Liczniki dla algorytmu Heapa, długość n}
+            \State \textbf{yield} kopia $a$ \Comment{Pierwsza permutacja}
+            \State $i \gets 0$
+            \While{$i < n$}
+                \If{$c[i] < i$}
+                    \If{$i$ mod $2 = 0$}
+                        \State swap($a[0]$, $a[i]$)
+                    \Else
+                        \State swap($a[c[i]]$, $a[i]$)
+                    \EndIf
+                    \State \textbf{yield} kopia $a$
+                    \State $c[i] \gets c[i] + 1$
+                    \State $i \gets 0$
+                \Else
+                    \State $c[i] \gets 0$
+                    \State $i \gets i + 1$
+                \EndIf
+            \EndWhile
+        \end{algorithmic}
+    \end{algorithm}
+
+    \textbf{Dowód poprawności:}
+
+    \begin{proof}
+        Algorytm Heapa wykorzystuje nierekurencyjną implementację z licznikami $c[i]$ reprezentującymi stan rekurencji.
+
+        \textbf{Kompletność:} Algorytm generuje dokładnie $n!$ permutacji, ponieważ:
+        \begin{enumerate}
+            \item Dla każdego $i$ wartość $c[i]$ przyjmuje wartości od $0$ do $i-1$, co daje $i$ możliwości
+            \item Całkowita liczba stanów: $1 \cdot 2 \cdot 3 \cdots n = n!$
+            \item Każdemu stanowi odpowiada unikalna permutacja
+        \end{enumerate}
+
+        \textbf{Brak duplikatów:} Każda kombinacja wartości liczników $c$ występuje dokładnie raz, co gwarantuje unikalność permutacji.
+
+        \textbf{Minimalna liczba zamian:} Algorytm Heapa minimalizuje liczbę zamian - średnio około $1$ zamiany na permutację (znacznie lepiej niż $O(n)$ w algorytmach naiwnych).
+    \end{proof}
+
+    \textbf{Złożoność obliczeniowa:}
+    \begin{itemize}
+        \item \textbf{Liczba iteracji:} $n!$ (liczba permutacji)
+        \item \textbf{Koszt jednej iteracji:} $O(1)$ - zamiany elementów i kopiowanie
+        \item \textbf{Koszt kopiowania permutacji:} $O(n)$ na permutację
+        \item \textbf{Złożoność czasowa całkowita:} $O(n! \cdot n)$
+        \item \textbf{Złożoność pamięciowa:} $O(n)$ - tablice $a$ i $c$
+    \end{itemize}
+
+    \subsubsection{Algorytm generowania produktu kartezjańskiego}
+    \label{subsubsec:produkt_kartezjanski}
+
+    \textbf{Problem:} Dla danego zbioru $items$ i liczby $m$ wygenerować wszystkie $m$-krotki (sekwencje długości $m$) złożone z elementów $items$ (z powtórzeniami).
+
+    \textbf{Właściwości:}
+    \begin{itemize}
+        \item Liczba $m$-krotek ze zbioru k-elementowego: $k^m$
+        \item Odpowiada produktowi kartezjańskiemu $items^m = items \times items \times \cdots \times items$
+        \item Generowanie w porządku leksykograficznym
+    \end{itemize}
+
+    \begin{algorithm}[H]
+        \caption{ProductSequences($items$, $m$)}
+        \label{alg:product}
+        \begin{algorithmic}[1]
+            \Require $items$ - lista k elementów, $m$ - długość sekwencji
+            \Ensure Wszystkie m-krotki elementów z $items$
+            \State $k \gets |items|$
+            \If{$m = 0$}
+                \State \textbf{yield} $[\,]$
+                \State \Return
+            \EndIf
+            \If{$k = 0$}
+                \State \Return \Comment{Brak sekwencji}
+            \EndIf
+            \State $digits \gets [0, 0, \ldots, 0]$ \Comment{Tablica m cyfr w systemie bazy k}
+            \While{\textbf{true}}
+                \State \textbf{yield} $[items[digits[0]], items[digits[1]], \ldots, items[digits[m-1]]]$
+                \State $i \gets 0$ \Comment{Inkrementacja licznika w systemie bazy k}
+                \While{$i < m$}
+                    \If{$digits[i] + 1 < k$}
+                        \State $digits[i] \gets digits[i] + 1$
+                        \State \textbf{break}
+                    \Else
+                        \State $digits[i] \gets 0$
+                        \State $i \gets i + 1$
+                    \EndIf
+                \EndWhile
+                \If{$i = m$}
+                    \State \textbf{break} \Comment{Przepełnienie - wszystkie sekwencje wygenerowane}
+                \EndIf
+            \EndWhile
+        \end{algorithmic}
+    \end{algorithm}
+
+    \textbf{Dowód poprawności:}
+
+    \begin{proof}
+        Algorytm traktuje sekwencje jako liczby w systemie pozycyjnym o podstawie $k$.
+
+        \textbf{Reprezentacja:} Każda $m$-krotka odpowiada liczbie w systemie bazy $k$:
+        \[
+            \text{number} = digits[0] + digits[1] \cdot k + digits[2] \cdot k^2 + \cdots + digits[m-1] \cdot k^{m-1}
+        \]
+        gdzie $0 \leq digits[i] < k$.
+
+        \textbf{Kompletność:} Algorytm generuje wszystkie liczby od $0$ do $k^m - 1$:
+        \begin{enumerate}
+            \item Rozpoczyna od $[0, 0, \ldots, 0]$ (liczba 0)
+            \item W każdej iteracji inkrementuje liczbę o 1 (linie 13-20)
+            \item Kończy przy przepełnieniu (liczba $k^m$, co odpowiada stanowi po ostatniej sekwencji)
+            \item Każdej liczbie odpowiada unikalna $m$-krotka
+        \end{enumerate}
+
+        \textbf{Brak duplikatów:} Ponieważ algorytm ściśle liczy od 0 do $k^m - 1$, każda sekwencja jest wygenerowana dokładnie raz.
+
+        \textbf{Poprawność inkrementacji:} Linie 13-20 implementują standardową inkrementację w systemie pozycyjnym z propagacją przeniesienia (carry).
+    \end{proof}
+
+    \textbf{Złożoność obliczeniowa:}
+    \begin{itemize}
+        \item \textbf{Liczba iteracji:} $k^m$ (liczba $m$-krotek)
+        \item \textbf{Koszt jednej iteracji:} $O(m)$ w najgorszym przypadku (propagacja przeniesienia przez wszystkie pozycje)
+        \item \textbf{Średni koszt iteracji:} $O(1)$ (przeniesienie rzadko propaguje daleko)
+        \item \textbf{Złożoność czasowa całkowita:} $O(k^m \cdot m)$ (pesymistyczna), $O(k^m)$ (średnia)
+        \item \textbf{Złożoność pamięciowa:} $O(m)$ - tablica $digits$
+    \end{itemize}
+
+    \textbf{Porównanie z innymi metodami:}
+    \begin{itemize}
+        \item \textbf{Rekurencja:} Intuicyjna, ale wymaga $O(m)$ stosu dla każdej sekwencji
+        \item \textbf{Podejście iteracyjne:} Używane tutaj - wydajniejsze pamięciowo, $O(m)$ bez nadmiarowych wywołań
+    \end{itemize}
+
+    \subsection{Algorytm dokładny}
+    \label{subsec:algorytm_dokladny_m}
+
+    \subsubsection{Przegląd algorytmu}
+    \label{subsubsec:przeglad_algorytmu}
+
+    Algorytm oparty jest na pełnym przeszukiwaniu przestrzeni rozwiązań. Strategia polega na:
+    \begin{enumerate}
+        \item Wygenerowaniu wszystkich możliwych osadzeń grafu $P$ w grafie $G$
+        \item Obliczeniu brakujących krawędzi dla każdego osadzenia
+        \item Rozważeniu wszystkich możliwych m-krotnych osadzeń dla $m$ kopii
+        \item Wybraniu osadzenia minimalizującego liczbę dodanych krawędzi
+    \end{enumerate}
+
+    Algorytm składa się z dwóch głównych faz:
+    \begin{itemize}
+        \item \textbf{Faza 1:} Generowanie osadzeń i macierzy brakujących krawędzi
+        \item \textbf{Faza 2:} Znajdowanie minimalnego rozszerzenia dla $m$ kopii
+    \end{itemize}
+
+    \subsubsection{Szczegółowy opis algorytmu}
+    \label{subsubsec:szczegolowy_opis}
+
+    \textbf{Faza 1: Generowanie osadzeń i macierzy brakujących krawędzi}
+
+    \noindent\textbf{Krok 1: Generowanie k-kombinacji wierzchołków G}
+
+    Dla grafu $G$ o $n$ wierzchołkach generujemy wszystkie możliwe $k$-kombinacje wierzchołków, gdzie $k = |V_P|$. Każda kombinacja $C_j \subseteq V_G$ reprezentuje potencjalny zbiór wierzchołków, na które można zmapować graf $P$.
+
+    \begin{itemize}
+        \item \textit{Wejście:} $G = (V_G, E_G)$, $|V_G| = n$, $k = |V_P|$
+        \item \textit{Wyjście:} Zbiór wszystkich $k$-kombinacji $\{C_1, C_2, \ldots, C_N\}$, gdzie $N = \binom{n}{k}$
+        \item \textit{Implementacja:} Algorytm \ref{alg:combinations} (GenerateCombinations) - szczegóły w sekcji \ref{subsubsec:kombinacje}
+        \item \textit{Złożoność:} $O\left(\binom{n}{k} \times k\right)$
+    \end{itemize}
+
+    \noindent\textbf{Krok 2: Generowanie permutacji wierzchołków P}
+
+    Dla grafu $P$ o $k$ wierzchołkach generujemy wszystkie możliwe permutacje. Każda permutacja $\pi_i: V_P \to V_P$ reprezentuje potencjalne uporządkowane mapowanie wierzchołków $P$ na wierzchołki kombinacji $C_j$.
+
+    \begin{itemize}
+        \item \textit{Wejście:} $P = (V_P, E_P)$, $|V_P| = k$
+        \item \textit{Wyjście:} Zbiór wszystkich permutacji $\{\pi_1, \pi_2, \ldots, \pi_M\}$, gdzie $M = k!$
+        \item \textit{Implementacja:} Algorytm \ref{alg:permutations} (GeneratePermutations, algorytm Heapa) - szczegóły w sekcji \ref{subsubsec:permutacje}
+        \item \textit{Złożoność:} $O(k! \times k)$
+    \end{itemize}
+
+    \noindent\textbf{Krok 3: Obliczanie brakujących krawędzi}
+
+    Dla każdej pary $(C_j, \pi_i)$ obliczamy listę krawędzi, które należy dodać do $G$, aby podgraf indukowany przez $C_j$ z mapowaniem $\pi_i$ był izomorficzny z $P$.
+
+    Dla każdej pary wierzchołków $(u, v) \in V_P \times V_P$:
+    \begin{itemize}
+        \item Obliczamy obrazy: $u' = C_j[\pi_i(u)]$, $v' = C_j[\pi_i(v)]$
+        \item Liczba krawędzi w $P$: $e_P = A_P[\pi_i(u)][\pi_i(v)]$
+        \item Liczba krawędzi w $G$: $e_G = A_G[u'][v']$
+        \item Brakujące krawędzie: $\Delta = \max(0, e_P - e_G)$
+        \item Dodajemy $\Delta$ kopii krawędzi $(u', v')$ do listy brakujących krawędzi
+    \end{itemize}
+
+    Wynik zapisujemy w macierzy $\text{missingEdgesMatrix}[i][j]$ jako listę brakujących krawędzi dla permutacji $i$ i kombinacji $j$.
+
+    \begin{itemize}
+        \item \textit{Złożoność pojedynczego obliczenia:} $O(k^2)$
+        \item \textit{Całkowita złożoność:} $O\left(\binom{n}{k} \times k! \times k^2\right)$
+        \item \textit{Pamięć:} $O\left(\binom{n}{k} \times k! \times k^2\right)$ w najgorszym przypadku
+    \end{itemize}
+
+    \textbf{Faza 2: Znajdowanie minimalnego rozszerzenia dla m kopii}
+
+    \noindent\textbf{Krok 4: Generowanie m-kombinacji osadzeń}
+
+    \noindent\textbf{Krok 4: Generowanie m-kombinacji osadzeń}
+
+    Generujemy wszystkie możliwe sposoby wyboru $m$ różnych kombinacji wierzchołków spośród $N = \binom{n}{k}$ dostępnych kombinacji. Każda taka $m$-kombinacja reprezentuje wybór $m$ różnych podzbiorów dla $m$ kopii grafu $P$. Ponieważ są to kombinacje (a nie permutacje z powtórzeniami), każde dwa podzbiory w wybranej $m$-krotce są różne, co zapewnia, że odpowiadające im kopie różnią się przynajmniej jednym wierzchołkiem.
+
+    \begin{itemize}
+        \item \textit{Liczba $m$-kombinacji:} $\binom{\binom{n}{k}}{m}$
+        \item \textit{Złożoność:} $O\left(\binom{\binom{n}{k}}{m} \times m\right)$
+    \end{itemize}
+
+    \noindent\textbf{Krok 5: Generowanie m-krotek permutacji}
+
+    Dla każdej $m$-kombinacji podzbiorów, generujemy wszystkie możliwe $m$-krotki permutacji. Każda $m$-krotka $(i_1, i_2, \ldots, i_m)$ określa, jaką permutację stosujemy dla każdej z $m$ kopii.
+
+    \begin{itemize}
+        \item \textit{Liczba $m$-krotek:} $(k!)^m$
+        \item \textit{Implementacja:} Algorytm \ref{alg:product} (ProductSequences) - szczegóły w sekcji \ref{subsubsec:produkt_kartezjanski}
+        \item \textit{Złożoność:} $O((k!)^m \times m)$
+    \end{itemize}
+
+    \noindent\textbf{Krok 6: Obliczanie unii zbiorów krawędzi}
+
+    Dla każdej konfiguracji ($m$-kombinacja podzbiorów, $m$-krotka permutacji) obliczamy minimalny zbiór krawędzi potrzebny do stworzenia $m$ kopii grafu $P$.
+
+    Kluczowa obserwacja: jeśli wielokrotne kopie wymagają tej samej krawędzi $(u, v)$ z krotnościami $k_1, k_2, \ldots, k_m$, wystarczy dodać $\max(k_1, k_2, \ldots, k_m)$ kopii tej krawędzi, ponieważ krawędzie mogą być współdzielone między kopiami.
+
+    Algorytm:
+    \begin{enumerate}
+        \item Inicjalizujemy mapę częstości: \texttt{edgeFrequencyMap = \{\}}
+        \item Dla każdej z $m$ kopii ($t = 1, \ldots, m$):
+        \begin{enumerate}
+            \item Pobieramy brakujące krawędzie dla kopii $t$
+            \item Tworzymy lokalną mapę częstości krawędzi dla tej kopii
+            \item Aktualizujemy globalną mapę: dla każdej krawędzi $e$, ustawiamy \\
+            \texttt{edgeFrequencyMap[e] = max(edgeFrequencyMap[e], localFrequency[e])}
+        \end{enumerate}
+        \item Konwertujemy mapę częstości na listę krawędzi
+        \item Jeśli rozmiar listy jest mniejszy niż dotychczasowe minimum, aktualizujemy rozwiązanie
+    \end{enumerate}
+
+    \begin{itemize}
+        \item \textit{Złożoność:} $O\left(\binom{\binom{n}{k}}{m} \times (k!)^m \times m \times k^2\right)$
+    \end{itemize}
+
+    \subsubsection{Pseudokod algorytmu}
+    \label{subsubsec:pseudokod}
+
+    Algorytm został podzielony na dwie części dla lepszej czytelności: Fazę 1 (generowanie osadzeń i obliczanie brakujących krawędzi) oraz Fazę 2 (znajdowanie minimalnego rozszerzenia dla $m$ kopii).
+
+    \begin{algorithm}[H]
+        \caption{MinimalGraphExtension - Faza 1: Generowanie osadzeń}
+        \label{alg:minimal_extension_phase1}
+        \begin{algorithmic}[1]
+            \Require $G = (V_G, E_G)$ - multigraf "duży", $|V_G| = n$
+            \Require $P = (V_P, E_P)$ - multigraf "mały", $|V_P| = k$
+            \Ensure Macierz $missingEdgesMatrix$ z brakującymi krawędziami
+            \State \textit{// Generuj k-kombinacje wierzchołków G}
+            \State $combinations \gets \text{GenerateCombinations}(V_G, k)$
+            \State $indexToSubset \gets \text{IndexMap}(combinations)$
+            \State \textit{// Generuj permutacje wierzchołków P}
+            \State $permutations \gets \text{GeneratePermutations}(V_P)$
+            \State $indexToPermutation \gets \text{IndexMap}(permutations)$
+            \State $missingEdgesMatrix \gets \text{Array}[|indexToPermutation|][|indexToSubset|]$
+            \For{$i \gets 0$ \textbf{to} $|indexToPermutation| - 1$}
+                \For{$j \gets 0$ \textbf{to} $|indexToSubset| - 1$}
+                    \State $\pi \gets indexToPermutation[i]$; $C \gets indexToSubset[j]$
+                    \State $missingEdgesMatrix[i][j] \gets [\,]$
+                    \For{$u \gets 0$ \textbf{to} $k-1$}
+                        \For{$v \gets 0$ \textbf{to} $k-1$}
+                            \State $u' \gets C[\pi[u]]$; $v' \gets C[\pi[v]]$
+                            \State $\Delta \gets \max(0, A_P[\pi[u]][\pi[v]] - A_G[u'][v'])$
+                            \For{$t \gets 0$ \textbf{to} $\Delta - 1$}
+                                \State $missingEdgesMatrix[i][j].\text{append}((u', v'))$
+                            \EndFor
+                        \EndFor
+                    \EndFor
+                \EndFor
+            \EndFor
+            \State \Return $missingEdgesMatrix$, $indexToSubset$, $indexToPermutation$
+        \end{algorithmic}
+    \end{algorithm}
+
+    \begin{algorithm}[H]
+        \caption{MinimalGraphExtension - Faza 2: Znajdowanie minimalnego rozszerzenia}
+        \label{alg:minimal_extension_phase2}
+        \begin{algorithmic}[1]
+            \Require $missingEdgesMatrix$, $indexToSubset$, $indexToPermutation$, $m$
+            \Ensure Lista krawędzi do dodania do $G$
+            \State $mCombinations \gets \text{GenerateCombinations}(indexToSubset.keys, m)$
+            \State $minimalEdges \gets \text{null}$; $minimalSize \gets \infty$
+            \For{\textbf{each} $\{j_1, \ldots, j_m\}$ \textbf{in} $mCombinations$}
+                \For{\textbf{each} $(i_1, \ldots, i_m)$ \textbf{in} $\text{ProductSeq}(indexToPermutation.keys, m)$}
+                    \State $edgeFreqMap \gets \{\}$
+                    \For{$t \gets 0$ \textbf{to} $m-1$}
+                        \State $missingEdges \gets missingEdgesMatrix[i_t][j_t]$
+                        \State $localFreq \gets \{\}$
+                        \For{\textbf{each} $e$ \textbf{in} $missingEdges$}
+                            \State $localFreq[e] \gets localFreq[e] + 1$
+                        \EndFor
+                        \For{\textbf{each} $(e, freq)$ \textbf{in} $localFreq$}
+                            \State $edgeFreqMap[e] \gets \max(edgeFreqMap[e], freq)$
+                        \EndFor
+                    \EndFor
+                    \State $addedEdges \gets [\,]$
+                    \For{\textbf{each} $(e, freq)$ \textbf{in} $edgeFreqMap$}
+                        \For{$t \gets 0$ \textbf{to} $freq - 1$}
+                            \State $addedEdges.\text{append}(e)$
+                        \EndFor
+                    \EndFor
+                    \If{$|addedEdges| < minimalSize$}
+                        \State $minimalSize \gets |addedEdges|$; $minimalEdges \gets addedEdges$
+                    \EndIf
+                \EndFor
+            \EndFor
+            \State \Return $minimalEdges$
+        \end{algorithmic}
+    \end{algorithm}
+
+    \subsection{Dowód poprawności algorytmu}
+    \label{subsec:dowod_poprawnosci}
+
+    \begin{theorem}[Poprawność algorytmu MinimalGraphExtension]
+        \label{thm:poprawnosc}
+        Algorytm MinimalGraphExtension zwraca minimalną listę krawędzi do dodania do $G$, aby zawierał $m$ różnych kopii $P$ (tzn. kopii różniących się przynajmniej jednym wierzchołkiem).
+    \end{theorem}
+
+    \begin{proof}
+        Dowód podzielimy na trzy części: kompletność, poprawność i minimalność.
+
+        \textbf{Część 1: Kompletność (algorytm znajduje rozwiązanie, jeśli istnieje)}
+
+        Załóżmy, że istnieje rozszerzenie $G'$ grafu $G$ zawierające $m$ różnych kopii $P$ (tzn. kopii różniących się przynajmniej jednym wierzchołkiem), osiągnięte przez dodanie zbioru krawędzi $E_{add}$.
+
+        \begin{enumerate}
+            \item Dla każdej z $m$ kopii $P$ w $G'$ istnieje:
+            \begin{itemize}
+                \item $k$-kombinacja wierzchołków $C_t \subseteq V_G$ ($t = 1, \ldots, m$)
+                \item Permutacja $\pi_t: V_P \to V_P$
+                \item Takie że podgraf $G'$ indukowany przez $C_t$ z odpowiednim mapowaniem jest izomorficzny z $P$
+            \end{itemize}
+
+            \item Kombinacje $C_t$ są różne ($C_i \neq C_j$ dla $i \neq j$), co zapewnia, że kopie różnią się przynajmniej jednym wierzchołkiem
+
+            \item Algorytm generuje wszystkie możliwe $m$-kombinacje $k$-podzbiorów (linia 3 Fazy 2), co gwarantuje, że wybranych $m$ podzbiorów jest parami różnych
+
+            \item Dla każdej $m$-kombinacji, algorytm generuje wszystkie możliwe $m$-krotki permutacji (linia 4 Fazy 2)
+
+            \item Zatem algorytm rozważy kombinację $\{C_1, \ldots, C_m\}$ i krotkę permutacji $(\pi_1, \ldots, \pi_m)$ odpowiadającą rzeczywistemu rozwiązaniu
+
+            \item Dla tej kombinacji i krotki permutacji, algorytm obliczy dokładnie te same krawędzie, które są w $E_{add}$ (linie 5-16 Fazy 2)
+        \end{enumerate}
+
+        \textbf{Część 2: Poprawność (dodane krawędzie są wystarczające)}
+
+        Dla dowolnej $m$-kombinacji podzbiorów i $m$-krotki permutacji rozważanej przez algorytm:
+
+        \begin{enumerate}
+            \item Dla każdej z $m$ kopii (linie 33-42):
+            \begin{itemize}
+                \item Algorytm oblicza brakujące krawędzie zapisane wcześniej w $missingEdgesMatrix$
+                \item Te krawędzie są dokładnie tymi, których brakuje do stworzenia izomorfizmu (z Fazy 1)
+            \end{itemize}
+
+            \item Operacja maksimum na krotnościach (linia 41) zapewnia:
+            \begin{itemize}
+                \item Jeśli wielokrotne kopie potrzebują tej samej krawędzi $(u,v)$ z krotnościami $k_1, k_2, \ldots$, dodajemy $\max(k_1, k_2, \ldots)$ kopii
+                \item To jest \textit{wystarczające}, bo krawędzie mogą być współdzielone między kopiami
+                \item To jest \textit{konieczne}, bo każda kopia wymaga odpowiedniej krotności
+            \end{itemize}
+
+            \item Po dodaniu krawędzi z $addedEdges$ do $G$:
+            \begin{itemize}
+                \item Każda z $m$ kopii ma wystarczającą liczbę krawędzi między każdą parą wierzchołków
+                \item Każda kopia jest izomorficzna z $P$
+            \end{itemize}
+        \end{enumerate}
+
+        \textbf{Część 3: Minimalność (algorytm znajduje minimum)}
+
+        \begin{enumerate}
+            \item Algorytm przeszukuje wszystkie możliwe sposoby osadzenia $m$ kopii $P$ w $G$ (linie 30-31)
+
+            \item Dla każdego sposobu oblicza minimalną liczbę krawędzi potrzebnych do realizacji tego osadzenia (linie 33-48)
+
+            \item Wybiera osadzenie wymagające najmniejszej liczby krawędzi (linie 49-52)
+
+            \item Nie istnieje sposób osadzenia $m$ kopii $P$ w $G$ wymagający mniej krawędzi, bo wszystkie sposoby zostały rozważone
+        \end{enumerate}
+
+        Zatem algorytm jest poprawny - zwraca minimalną liczbę krawędzi wystarczających do stworzenia $m$ różnych kopii $P$ w $G$ (różniących się przynajmniej jednym wierzchołkiem).
+    \end{proof}
+
+    \subsection{Analiza złożoności obliczeniowej}
+    \label{subsec:zlozonosc_obliczeniowa}
+
+    \subsubsection{Złożoność czasowa}
+    \label{subsubsec:zlozonosc_czasowa}
+
+    Oznaczmy:
+    \begin{itemize}
+        \item $n = |V_G|$ - liczba wierzchołków dużego grafu $G$
+        \item $k = |V_P|$ - liczba wierzchołków małego grafu $P$
+        \item $m$ - liczba wymaganych kopii $P$ w $G$
+    \end{itemize}
+
+    \textbf{Rozbicie na fazy:}
+
+    \begin{enumerate}
+        \item \textbf{Faza 1a - Generowanie kombinacji:} $O\left(\binom{n}{k} \times k\right)$
+        \begin{itemize}
+            \item Liczba kombinacji: $\binom{n}{k}$
+            \item Koszt generowania jednej kombinacji: $O(k)$
+        \end{itemize}
+
+        \item \textbf{Faza 1b - Generowanie permutacji:} $O(k! \times k)$
+        \begin{itemize}
+            \item Liczba permutacji: $k!$
+            \item Koszt generowania jednej permutacji: $O(k)$
+        \end{itemize}
+
+        \item \textbf{Faza 1c - Obliczanie missingEdgesMatrix:} $O\left(\binom{n}{k} \times k! \times k^2\right)$
+        \begin{itemize}
+            \item Dla każdej z $\binom{n}{k}$ kombinacji
+            \item Dla każdej z $k!$ permutacji
+            \item Porównanie $k^2$ par krawędzi
+        \end{itemize}
+
+        \item \textbf{Faza 2a - Generowanie m-kombinacji osadzeń:} $O\left(\binom{\binom{n}{k}}{m} \times m\right)$
+        \begin{itemize}
+            \item Liczba $m$-kombinacji: $\binom{\binom{n}{k}}{m}$
+        \end{itemize}
+
+        \item \textbf{Faza 2b - Główna pętla przeszukiwania:}
+        \[
+            O\left(\binom{\binom{n}{k}}{m} \times (k!)^m \times m \times k^2\right)
+        \]
+        \begin{itemize}
+            \item Dla każdej $m$-kombinacji podzbiorów: $\binom{\binom{n}{k}}{m}$
+            \item Dla każdej $m$-krotki permutacji: $(k!)^m$
+            \item Dla każdej z $m$ kopii: $m$
+            \item Obliczanie częstości krawędzi: $O(k^2)$ dla jednej kopii
+        \end{itemize}
+    \end{enumerate}
+
+    \textbf{Całkowita złożoność czasowa:}
+    \[
+        T(n, k, m) = O\left(\binom{n}{k} \times k! \times k^2\right) + O\left(\binom{\binom{n}{k}}{m} \times (k!)^m \times m \times k^2\right)
+    \]
+
+    \textbf{Dominujący składnik} dla małych $m$ (gdy $m \ll \binom{n}{k}$):
+    \[
+        T(n, k, m) = O\left(\binom{n}{k} \times k! \times k^2\right)
+    \]
+
+    \textbf{Dominujący składnik} dla większych $m$:
+    \[
+        T(n, k, m) = O\left(\binom{\binom{n}{k}}{m} \times (k!)^m \times m \times k^2\right)
+    \]
+
+    \textbf{Oszacowania asymptotyczne:}
+    \begin{itemize}
+        \item $\binom{n}{k} = O\left(\frac{n^k}{k!}\right)$ - wielomianowe względem $n$ dla stałego $k$
+        \item $k!$ - silniowe względem $k$
+        \item $\binom{\binom{n}{k}}{m} \approx O((n^k)^m)$ dla dużych $n$
+        \item $(k!)^m$ - wykładnicze względem $m$
+    \end{itemize}
+
+    \subsubsection{Złożoność pamięciowa}
+    \label{subsubsec:zlozonosc_pamieciowa}
+
+    \textbf{Główne struktury danych:}
+
+    \begin{enumerate}
+        \item \textbf{missingEdgesMatrix:} $O\left(\binom{n}{k} \times k! \times k^2\right)$
+        \begin{itemize}
+            \item Tablica 2D o wymiarach $k! \times \binom{n}{k}$
+            \item Każda komórka zawiera listę brakujących krawędzi (w najgorszym $O(k^2)$ krawędzi)
+        \end{itemize}
+
+        \item \textbf{indexToSubset:} $O\left(\binom{n}{k} \times k\right)$
+        \begin{itemize}
+            \item Przechowuje $\binom{n}{k}$ kombinacji, każda długości $k$
+        \end{itemize}
+
+        \item \textbf{indexToPermutation:} $O(k! \times k)$
+        \begin{itemize}
+            \item Przechowuje $k!$ permutacji, każda długości $k$
+        \end{itemize}
+
+        \item \textbf{Zmienne tymczasowe w głównej pętli:} $O(k^2)$
+    \end{enumerate}
+
+    \textbf{Całkowita złożoność pamięciowa:}
+    \[
+        S(n, k, m) = O\left(\binom{n}{k} \times k! \times k^2\right)
+    \]
+
+    \textbf{Uwaga:} Złożoność pamięciowa jest niezależna od $m$ (nie przechowujemy wszystkich $m$-krotek, generujemy je leniwie).
+
+    \subsubsection{Charakterystyka algorytmu}
+    \label{subsubsec:charakterystyka}
+
+    \textbf{Klasa złożoności:}
+    \begin{itemize}
+        \item Problem jest \textbf{NP-trudny} (redukcja z problemu izomorfizmu podgrafów)
+        \item Algorytm dokładny ma złożoność \textbf{wykładniczą} względem $k$ (ze względu na $k!$)
+        \item Algorytm ma złożoność \textbf{wielomianowo-wykładniczą} względem $m$
+    \end{itemize}
+
+    \textbf{Praktyczne ograniczenia:}
+    \begin{itemize}
+        \item Algorytm jest wykonalny dla małych wartości $k$ ($k \leq 6-7$) i $n \leq 20$
+        \item Dla większych wartości $k$ lub $n$ algorytm staje się niepraktyczny
+        \item Wartość $m$ ma mniejszy wpływ na czas wykonania niż $k$ (dla małych $m$)
+    \end{itemize}
+
+    \subsubsection{Heurystyki i algorytmy aproksymacyjne}
+    \label{subsubsec:heurystyki}
+
+    \textbf{1. Algorytm zachłanny (Greedy)}
+
+    \textit{Idea:} Zamiast rozważać wszystkie możliwe $m$-kombinacje osadzeń, wybieraj zachłannie następne najlepsze osadzenie.
+
+    \textit{Algorytm:}
+    \begin{itemize}
+        \item Dla pierwszej kopii $P$: znajdź osadzenie wymagające najmniej krawędzi
+        \item Dodaj te krawędzie do $G$
+        \item Dla kolejnych kopii: znajdź osadzenie wymagające najmniej nowych krawędzi (biorąc pod uwagę już dodane)
+        \item Powtórz $m$ razy
+    \end{itemize}
+
+    \textit{Złożoność:} $O\left(m \times \binom{n}{k} \times k! \times k^2\right)$
+
+    \textit{Jakość:} Nie gwarantuje optymalności, ale może dać dobre przybliżenie w krótszym czasie.
+
+    \textbf{2. Algorytm genetyczny}
+
+    \textit{Idea:} Ewolucyjne poszukiwanie dobrego rozwiązania.
+
+    \textit{Komponenty:}
+    \begin{itemize}
+        \item \textbf{Populacja:} Zbiór kandydatów rozwiązań ($m$-krotki osadzeń)
+        \item \textbf{Funkcja przystosowania:} Liczba krawędzi do dodania (minimalizowana)
+        \item \textbf{Operatory:} Krzyżowanie (wymiana osadzeń między rozwiązaniami), mutacja (losowa zmiana osadzenia)
+        \item \textbf{Selekcja:} Wybór najlepszych rozwiązań do następnego pokolenia
+    \end{itemize}
+
+    \textit{Zalety:} Możliwość znalezienia dobrych rozwiązań dla dużych instancji.
+
+    \textit{Wady:} Brak gwarancji optymalności, wymaga tuningu parametrów.
+
+    \textbf{3. Symulowane wyżarzanie (Simulated Annealing)}
+
+    \textit{Idea:} Iteracyjne ulepszanie rozwiązania z możliwością akceptacji gorszych rozwiązań.
+
+    \textit{Algorytm:}
+    \begin{itemize}
+        \item Start: losowa $m$-krotka osadzeń
+        \item Iteracyjnie: modyfikuj losowo jedno osadzenie
+        \item Akceptuj jeśli poprawia rozwiązanie lub z prawdopodobieństwem zależnym od "temperatury"
+        \item "Temperatura" maleje z czasem, redukując akceptację gorszych rozwiązań
+    \end{itemize}
+
+    \textit{Zalety:} Pozwala na wyjście z lokalnych minimów.
+
+    \textbf{4. Programowanie całkowitoliczbowe (ILP)}
+
+    \textit{Idea:} Sformułuj problem jako program całkowitoliczbowy.
+
+    \textit{Zmienne:}
+    \begin{itemize}
+        \item $x_{ij} \in \{0, 1\}$ - czy osadzenie $i$ jest wybrane dla kopii $j$
+        \item $y_e \in \mathbb{N}_0$ - liczba kopii krawędzi $e$ do dodania
+    \end{itemize}
+
+    \textit{Ograniczenia:}
+    \begin{itemize}
+        \item Każda kopia musi mieć dokładnie jedno osadzenie: $\sum_i x_{ij} = 1$ dla każdego $j$
+        \item Osadzenia muszą być różne (odpowiadać różnym kombinacjom wierzchołków)
+        \item Dla każdej krawędzi $e$: $y_e \geq \max_j \{\Delta_{ij}(e) \cdot x_{ij}\}$ gdzie $\Delta_{ij}(e)$ to krotność $e$ w brakujących krawędziach osadzenia $i$ dla kopii $j$
+    \end{itemize}
+
+    \textit{Cel:} Minimalizuj $\sum_e y_e$
+
+    \textit{Zalety:} Optymalne rozwiązanie (jeśli solver zakończy się w rozsądnym czasie).
+
+    \textit{Wady:} Może być wolne dla dużych instancji.
+
+    \subsection{Podsumowanie}
+    \label{subsec:podsumowanie_m}
+
+    W niniejszej sekcji przedstawiono kompleksowe podejście do problemu minimalnego rozszerzenia multigrafu zawierającego $m$ kopii podgrafu wzorcowego:
+
+    \begin{itemize}
+        \item \textbf{Sformułowano problem} i uzasadniono jego praktyczne znaczenie
+        \item \textbf{Zdefiniowano formalnie} kluczowe pojęcia: rozszerzenie, koszt rozszerzenia, osadzenie k-wierzchołkowe, brakujące krawędzie, minimalne rozszerzenie zawierające $m$ kopii
+        \item \textbf{Opracowano algorytm dokładny} oparty na pełnym przeszukiwaniu przestrzeni rozwiązań
+        \item \textbf{Udowodniono poprawność} algorytmu (kompletność, poprawność, minimalność)
+        \item \textbf{Przeprowadzono szczegółową analizę złożoności}:
+        \begin{itemize}
+            \item Złożoność czasowa: $O\left(\binom{n}{k} \times k! \times k^2 + \binom{\binom{n}{k}}{m} \times (k!)^m \times m \times k^2\right)$
+            \item Złożoność pamięciowa: $O\left(\binom{n}{k} \times k! \times k^2\right)$
+            \item Problem jest NP-trudny
+        \end{itemize}
+        \item \textbf{Zaprezentowano przykład działania} algorytmu na konkretnych danych
+        \item \textbf{Zaproponowano optymalizacje} implementacyjne i algorytmy aproksymacyjne (zachłanny, genetyczny, simulated annealing, ILP)
+    \end{itemize}
+
+    Algorytm dokładny jest praktyczny dla małych wartości $k$ ($k \leq 6-7$) i $n \leq 20$. Dla większych instancji zaleca się stosowanie algorytmów aproksymacyjnych lub heurystyk.
 
 % \section{Testy}
 % \section{Podsumowanie}
-\section{Bibliografia}
 
-\bibliographystyle{plain}
-\bibliography{refs}
+
+    \section{Bibliografia}
+
+    \bibliographystyle{plain}
+    \bibliography{refs}
 
 \end{document}
