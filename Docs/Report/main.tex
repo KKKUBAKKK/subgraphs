@@ -107,10 +107,6 @@
         Graf $H = (V_H, E_H)$ nazywamy podgrafem grafu $G = (V_G, E_G)$, wtedy i tylko wtedy, gdy $V_H \subseteq V_G$ oraz $E_H \subseteq E_G$. Definicja ta jest analogiczna dla multigrafów i grafów skierowanych.
     \end{definition}
 
-    \begin{definition}[Graf atrybutowy]
-        Graf $G = (V, E, f)$ nazywamy grafem atrybutowym, gdzie $V$ jest zbiorem wierzchołków, a $E \subseteq V \times V = \{(u, v) : u, v \in V \land u \neq v \}$ jest zbiorem krawędzi. Dla każdej pary wierzchołków $u, v \in V$ istnieje co najwyżej jedna krawędź łącząca wierzchołki $u$ i $v$. $f: E \to \Sigma_E $ jest funkcją, przypisującą etykiety wszystkim krawędziom w grafie $G$.
-    \end{definition}
-
     \begin{definition}[Macierz sąsiedztwa]
         Macierzą sąsiedztwa multigrafu $G = (V, E)$ nazywamy macierz $A$, której pole $A_{uv} = k$, wtedy i tylko wtedy, gdy istnieje $k$ krawędzi $(u, v) \in E$. W przypadku gdy nie istnieje żadna krawędź pomiędzy wierzchołkami $u$ i $v$, to $A_{uv} = 0$.
     \end{definition}
@@ -239,42 +235,7 @@
 
     \pagebreak
 
-    \subsection{Aproksymacyjne minimalne rozszerzenie multigrafu}
-    \label{sec:minimalne_rozszerzenie_approx}
-
-    \noindent
-    Do problemu można zastosować pewną modyfikację algorytmu LeRP (Length-R Paths), opracowanego przez Freda W DePiero oraz Davida Krouta \cite{lerp_algorithm}. Algorytm opiera się na założeniu, że o podobieństwie strukturalnym dwóch wierzchołków można wnioskować na podstawie porównania liczby ścieżek (\textit{sygnatur}) o długości $r$ w ich sąsiedztwie. \\ \\
-    Modyfikacja algorytmu jako argumenty przyjmuje dwa multigrafy $G_1 = (V_1, E_1)$ i $G_2 = (V_2, E_2)$, maksymalną długość ścieżki $R$ oraz liczbę szukanych kopii grafu $k$. Im większa długość ścieżki $R$, tym algorytm jest dokładniejszy. Zwraca natomiast przekształcenie $f(g_{1i}) = g_{2k}$, gdzie $g_{1i} \in G_1$ i $g_{2k} \in G_2$, które opisuje najlepszy (w rozumieniu aproksymacji) wspólny podgraf $G_1$ oraz $G_2$. \\
-    Oznaczmy przez $H = (V_H, E_H)$ najlepszy wspólny podgraf $G_1$ oraz $G_2$. Do multigrafu $H$ należy dołożyć zbiór krawędzi $X$, tak aby grafy $G_1$ oraz $H' = (V_H, E_H \cup X)$ były izomorficzne. Wówczas multigraf $G_3 =(V_2, E_2\cup X)$ będzie minimalnym rozszerzeniem $G_2$, aby ten zawierał $G_1$ jako podgraf. Przez minimalne rozszerzenie, rozumie się minimalną liczbę dodanych krawędzi do grafu. \\
-    Następnie usuwamy z początkowego grafu $G_2$ wierzchołki podgrafu $H$ i powtarzamy proces dla grafów $G_1$ i $G'_2 = (V_2-V_H, E_2')$, aby znaleźć $k$ rozdzielnych kopii $G_1$ w grafie $G_2$.
-
-    \subsubsection{Opis algorytmu}
-    \noindent
-    Algorytm można podzielić na kilka etapów.
-
-    \begin{enumerate}
-        \item W pierwszym kroku, należy wykonać transformację multigrafów wejściowych $G_1 = (V_1, E_1)$ oraz $G_2 = (V_2, E_2)$ na grafy atrybutowe $G'_1$ oraz $G'_2$. Transformacja przebiega w następujący sposób:
-        \begin{itemize}
-            \item Zbiory wierzchołków pozostają bez zmian ($V'_1 = V_1, V'_2 = V_2$).
-            \item Dla każdej pary wierzchołków $(u, v)$ w $G_1$ (i analogicznie w $G_2$): Jeśli między $u$ a $v$ w $G_1$ istnieje $k$ równoległych krawędzi, to w $G'_1$ tworzona jest pojedyncza krawędź $(u, v)$ z atrybutem $k \in \mathbb{N^+}$.
-        \end{itemize}
-        \item W etapie drugim, dla obu grafów $G'_1$ i $G'_2$ obliczane są potęgi ich macierzy sąsiedztwa, odpowiednio $A^r$ i $B^r$ aż do maksymalnej długości $R$. Wartość $A_{ij}^r$ w macierzy $A^r$ reprezentuje liczbę ścieżek o długości dokładnie $r$ z wierzchołka $i$ do wierzchołka $j$ (na ścieżkach mogą się powtarzać wierzchołki i krawędzie). W kontekście omówionej transformacji, macierz $A$ jest macierzą, gdzie $A_{ij}$ przechowuje atrybut $k$ - liczbę równoległych krawędzi między wierzchołkami $i$ i $j$ w multigrafie $G_1$.
-        \item Każdy wierzchołek $g_{1i} \in G'_1$ można porównać z każdym wierzchołkiem $g_{2k} \in G'_2$, stosując przykładowo podobieństwo cosinusowe między histogramem wartości w wierszu macierzy $A^r_i$ a histogramem wartości w wierszu macierzy $B^r_k$. Następnie tworzymy macierz z wartościami podobieństw między wierzchołkami. Wierzchołki najbardziej podobne zostają ziarnem mapowania.
-        \item Następnie iteracyjnie (przykładowo DFS), algorytm porównuje sąsiadów wierzchołków zmapowanych. Do następnego mapowania, wybiera tych sąsiadów, do których liczba ścieżek o długości co najwyżej $R$ jest największa i jest równa dla obu wierzchołków z dwóch grafów. Algorytm sprawdza również, czy wybrane wierzchołki nie zostały już zmapowane.
-        \item Zmapowane wierzchołki w grafie $G'_2$ są usuwane, tworząc nowy graf $G''_2$ i proces jest powtarzany dla grafów $G'_1$ oraz $G''_2$. W ten sposób znajdowane jest $k$ rozdzielnych kopii $G_1$ w minimalnym rozszerzeniu $G_2$.
-    \end{enumerate}
-
-    \subsubsection{Złożoność obliczeniowa}
-    Złożoność pesymistyczna omówionej modyfikacji algorytmu LeRP jest wielomianowa i wynosi $O(N^2 \cdot(N+E) \cdot D^2 \cdot R \cdot k)$, gdzie:
-    \begin{itemize}
-        \item $N$ to liczba wierzchołków w grafach (zakładając, że oba grafy mają rozmiar rzędu $N$).
-        \item $E$ to liczba krawędzi w grafach (zakładając, że oba grafy mają liczbę krawędzi rzędu $N$).
-        \item $D$ to średni stopień wierzchołków w grafach.
-        \item $R$ to maksymalna długość ścieżki brana pod uwagę.
-        \item $k$ to liczba szukanych kopii w minimalnym rozszerzeniu
-    \end{itemize}
-    Uzasadnienie złożoności: porównanie par wierzchołków wymaga $N^2$ porównań. Każdy wierzchołek ma średnio $D$ sąsiadów, więc porównywanie sąsiadów daje $D^2$ dodatkowych operacji. Analiza różnych długości ścieżek to czynnik $R$. Podczas budowania dopasowania, algorytm iteracyjny ma złożoność $(N+E)$. Czynnik $k$ odpowiada za znalezienie $k$ kopii mniejszego multigrafu $G_1$.\\ \\
-    W kontekście tego algorytmu aproksymacyjnego nie rozważano formalnego dowodu poprawności. Dostarczono empiryczną gwarancję jakości - algorytm testowano na dużych zbiorach danych, wykazując, że algorytm konsekwentnie zwraca wyniki bliskie optimum w praktyce.
+   
 
 
 % ---------------- MINIMALNE ROZSZERZENIE MULTIGRAFU ---------------- %
@@ -1106,6 +1067,49 @@
     \end{itemize}
 
     Algorytm dokładny jest praktyczny dla małych wartości $k$ ($k \leq 6-7$) i $n \leq 20$. Dla większych instancji zaleca się stosowanie algorytmów aproksymacyjnych lub heurystyk.
+
+
+    \subsection{Aproksymacyjne minimalne rozszerzenie multigrafu - algorytm pierwszy}
+\label{sec:minimalne_rozszerzenie_approx}
+
+\noindent
+Zdefiniowane są dwa skierowane multigrafy: mniejszy $G_1 = (V_1, E_1)$ oraz większy $G_2 = (V_2, E_2)$. Multigrafy $G_1$ i $G_2$ są reprezentowane przez macierze sąsiedztwa $A_{G_1}$ i $A_{G_2}$. Wartość komórki $A_{G_1}[i, j]$ oznacza liczbę krawędzi skierowanych od wierzchołka $i$ do wierzchołka $j$ w grafie $G_1$. Podana jest także liczba szukanych kopii $m$. Idea algorytmu polega na iteracyjnym znajdowaniu \textit{najtańszej} kopii $G_1$ w $G_2$.
+
+\subsubsection{Opis algorytmu}
+\begin{enumerate}
+    \item Iteruj po wszystkich możliwych nasionach, czyli parach ($u_1$, $u_2$), gdzie $u_1 \in V_1$ i $u_2 \in V_2$.
+    \item Ustal zerową macierz kosztu $C_{u_1, u_2}$ o rozmiarze $|V_2|$ na $|V_2|$, która reprezentuje jakie i ile krawędzi skierowanych należy dodać do $G_2$ dla danych nasion ($u_1$, $u_2$).
+    \item Do mapowania dodaj takich sąsiadów nasion $u'_1 \in V_1$ i $u'_2 \in V_2$, które minimalizują koszt zdefiniowany wzorem:
+    \begin{equation}
+        Koszt = max(0, (A_{G_1}[u_1, u'_1] - A_{G_2}[u_2, u'_2])) + max(0, A_{G_1}[u'_1, u_1] - A_{G_2}[u'_2, u_2]))
+    \end{equation}
+    Zapisz do odpowiednich komórek macierzy $C_{u_1, u_2}$:
+    \begin{equation}
+        C_{u_1, u_2}[u_2,  u'_2] = C_{u_1, u_2}[u_2,  u'_2] + max(0, (A_{G_1}[u_1, u'_1] - A_{G_2}[u_2, u'_2]))
+    \end{equation}
+    \begin{equation}
+        C_{u_1, u_2}[u'_2,  u_2] = C_{u_1, u_2}[u'_2,  u_2] + max(0, (A_{G_1}[u'_1, u_1] - A_{G_2}[u'_2, u_2]))
+    \end{equation}
+    \item Następnie próbuj zachłannie rozszerzyć mapowanie na resztę wierzchołków $G_1$. Do mapowania dodawaj tylko wierzchołki, które nie zostały jeszcze zmapowane.
+    \item Ze wszystkich macierzy kosztu ($|V_1| \cdot |V_2|$ macierzy) wybierz $m$ najlepszych. Przez najlepszą macierz rozumiemy taką, dla której suma wartości we wszystkich komórkach jest najmniejsza. Każda macierz kosztu odpowiada jednemu mapowaniu - jeśli dowolna para z $m$ macierzy mapuje te same wierzchołki w $G_2$, wybierz kolejną $m+1$ najlepszą macierz kosztu i ponownie sprawdź warunek. Docelowo, żadna para z wybranych $m$ macierzy kosztu nie może mapować tych samych wierzchołków w $G_2$. 
+    \item Macierz $K$ o rozmiarze $|V_2|$ na $|V_2|$ skonstruuj w następujący sposób - $K[i, j] = max_{k=1,...,m}(C_k[i, j])$, gdzie $C_k$ dla $k=1,...,m$ to $m$ najlepszych macierzy kosztu.
+    \item Zwróć macierz $K$ reprezentującą minimalne rozszerzenie. 
+\end{enumerate}
+
+\subsubsection{Złożoność obliczeniowa}
+\noindent
+Pesymistyczna złożoność opisanego algorytmu aproksymacyjnego równa jest:
+\begin{equation}
+    O(|V_1| \cdot |V_2| \cdot (|V_1| \cdot |E_1| \cdot |E_2|) \cdot m) = O(|V_1|^2 \cdot |V_2| \cdot |E_1| \cdot |E_2| \cdot m)
+\end{equation}
+Czynnik $|V_1| \cdot |V_2|$ odpowiada za iteracyjne wybieranie nasion do mapowania. Czynnik $|V_1| \cdot |E_1| \cdot |E_2|$ to koszt zachłannego przeszukiwania grafu w celu minimalizacji kosztu. $m$ to liczba wybieranych macierzy kosztu (liczba kopii). Opisany algorytm ma zatem złożoność wielomianową. 
+
+\subsubsection{Uzasadnienie}
+
+\noindent
+Opisany algorytm jest heurystyką zachłanną naszego autorstwa. Algorytm gwarantuje, że macierz $K$ rzeczywiście uczyni $G_2$ rozszerzeniem zawierającym kopie $G_1$. \\ \\
+Z definicji każdej macierzy $C_{u_1, u_2}$ wpisy odpowiadają dokładnie brakującym krawędziom. Jeśli na końcu algorytm utworzy macierz $K$ zgodnie z opisem, to po dodaniu tych krawędzi w $G_2$ wszystkie odwzorowania skonstruowane przez algorytm staną się izomorficznymi (liczbowo zgodnymi) kopiami $G_1$. Zatem algorytm zwraca dopuszczalne rozwiązanie. \\ \\ 
+Niestety nie ma dowodu, że algorytm daje rozwiązanie optymalne, ani że ma stałą gwarancję aproksymacji. To heurystyka zachłanna — lokalnie wybiera najtańsze mapowanie — ale problem minimalnego rozszerzenia (znalezienie najmniejszego zbioru dodatkowych krawędzi, by powstały $m$ kopii) jest kombinatorycznie trudny i algorytm zachłanny może prowadzić do lokalnie optymalnych, ale globalnie złych decyzji.
 
 % \section{Testy}
 % \section{Podsumowanie}
