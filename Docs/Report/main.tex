@@ -254,7 +254,6 @@ Zdefiniowane są dwa skierowane multigrafy: mniejszy $G_1 = (V_1, E_1)$ oraz wi�
     \item Usuń dowolny wierzchołek $x_2 \in V_2$, który brał udział w najlepszym znalezionym mapowaniu oraz $deg(x_2)$ jest najmniejszy ze wszystkich stopni mapowanych wierzchołków w $G_2$. Przez usunięcie rozumiemy nie rozważanie danego wierzchołka przy szukaniu mapowań dla kolejnych kopii. 
     \item Zwróć macierz $K$ reprezentującą minimalne rozszerzenie. 
 \end{enumerate}
-Opisany algorytm zachłanny jest łatwy do zaimplementowania, niestety nie daje gwarancji, jak blisko optymalnego rozwiązania będzie wynik.
 
 \subsubsection{Złożoność obliczeniowa}
 \noindent
@@ -264,41 +263,15 @@ Pesymistyczna złożoność opisanego algorytmu aproksymacyjnego równa jest:
 \end{equation}
 Czynnik $|V_1| \cdot |V_2|$ odpowiada za iteracyjne wybieranie nasion do mapowania. Czynnik $|V_1| \cdot |E_1| \cdot |E_2|$ to koszt zachłannego przeszukiwania grafu w celu minimalizacji kosztu. $m$ to liczba szukanych kopii. Opisany algorytm ma zatem złożoność wielomianową. 
 
+\subsubsection{Uzasadnienie}
+
+\noindent
+Opisany algorytm jest heurystyką zachłanną naszego autorstwa. Algorytm gwarantuje, że macierz $K$ rzeczywiście uczyni $G_2$ rozszerzeniem zawierającym kopie $G_1$. \\ \\
+Z definicji każdej macierzy $C_{u_1, u_2}$ wpisy odpowiadają dokładnie brakującym krawędziom. Jeśli na końcu algorytm zsumuje do $K$ macierze wybranych $C$ to po dodaniu tych krawędzi w $G_2$ wszystkie odwzorowania skonstruowane przez algorytm staną się izomorficznymi (liczbowo zgodnymi) kopiami $G_1$. Zatem algorytm zwraca dopuszczalne rozwiązanie. \\ \\ 
+Niestety nie ma dowodu, że algorytm daje rozwiązanie optymalne, ani że ma stałą gwarancję aproksymacji. To heurystyka zachłanna — lokalnie wybiera najtańsze mapowanie — ale problem minimalnego rozszerzenia (znalezienie najmniejszego zbioru dodatkowych krawędzi, by powstały $m$ kopii) jest kombinatorycznie trudny i algorytm zachłanny może prowadzić do lokalnie optymalnych, ale globalnie złych decyzji. Dodatkowo, usuwanie wierzchołka w każdej iteracji jest heurystyką — nie ma dowodu, że minimalny stopień to najlepszy wybór do usunięcia, a wybór wpływa na dalsze obliczenia.
 
 
-% Do problemu można zastosować pewną modyfikację algorytmu LeRP (Length-R Paths), opracowanego przez Freda W DePiero oraz Davida Krouta \cite{lerp_algorithm}. Algorytm opiera się na założeniu, że o podobieństwie strukturalnym dwóch wierzchołków można wnioskować na podstawie porównania liczby ścieżek (\textit{sygnatur}) o długości $r$ w ich sąsiedztwie. \\ \\ 
-% Modyfikacja algorytmu jako argumenty przyjmuje dwa multigrafy $G_1 = (V_1, E_1)$ i $G_2 = (V_2, E_2)$, maksymalną długość ścieżki $R$ oraz liczbę szukanych kopii grafu $k$. Im większa długość ścieżki $R$, tym algorytm jest dokładniejszy. Zwraca natomiast przekształcenie $f(g_{1i}) = g_{2k}$, gdzie $g_{1i} \in G_1$ i $g_{2k} \in G_2$, które opisuje najlepszy (w rozumieniu aproksymacji) wspólny podgraf $G_1$ oraz $G_2$. \\
-% Oznaczmy przez $H = (V_H, E_H)$ najlepszy wspólny podgraf $G_1$ oraz $G_2$. Do multigrafu $H$ należy dołożyć zbiór krawędzi $X$, tak aby grafy $G_1$ oraz $H' = (V_H, E_H \cup X)$ były izomorficzne. Wówczas multigraf $G_3 =(V_2, E_2\cup X)$ będzie minimalnym rozszerzeniem $G_2$, aby ten zawierał $G_1$ jako podgraf. Przez minimalne rozszerzenie, rozumie się minimalną liczbę dodanych krawędzi do grafu. \\ 
-% Następnie usuwamy z początkowego grafu $G_2$ wierzchołki podgrafu $H$ i powtarzamy proces dla grafów $G_1$ i $G'_2 = (V_2-V_H, E_2')$, aby znaleźć $k$ rozdzielnych kopii $G_1$ w grafie $G_2$.
 
-
-% \subsubsection{Opis algorytmu}
-% \noindent
-% Algorytm można podzielić na kilka etapów.
-
-% \begin{enumerate}
-%     \item W pierwszym kroku, należy wykonać transformację multigrafów wejściowych $G_1 = (V_1, E_1)$ oraz $G_2 = (V_2, E_2)$ na grafy atrybutowe $G'_1$ oraz $G'_2$. Transformacja przebiega w następujący sposób:
-%     \begin{itemize}
-%         \item Zbiory wierzchołków pozostają bez zmian ($V'_1 = V_1, V'_2 = V_2$).
-%         \item Dla każdej pary wierzchołków $(u, v)$ w $G_1$ (i analogicznie w $G_2$): Jeśli między $u$ a $v$ w $G_1$ istnieje $k$ równoległych krawędzi, to w $G'_1$ tworzona jest pojedyncza krawędź $(u, v)$ z atrybutem $k \in \mathbb{N^+}$.
-%     \end{itemize}
-%     \item W etapie drugim, dla obu grafów $G'_1$ i $G'_2$ obliczane są potęgi ich macierzy sąsiedztwa, odpowiednio $A^r$ i $B^r$ aż do maksymalnej długości $R$. Wartość $A_{ij}^r$ w macierzy $A^r$ reprezentuje liczbę ścieżek o długości dokładnie $r$ z wierzchołka $i$ do wierzchołka $j$ (na ścieżkach mogą się powtarzać wierzchołki i krawędzie). W kontekście omówionej transformacji, macierz $A$ jest macierzą, gdzie $A_{ij}$ przechowuje atrybut $k$ - liczbę równoległych krawędzi między wierzchołkami $i$ i $j$ w multigrafie $G_1$.
-%     \item Każdy wierzchołek $g_{1i} \in G'_1$ można porównać z każdym wierzchołkiem $g_{2k} \in G'_2$, stosując przykładowo podobieństwo cosinusowe między histogramem wartości w wierszu macierzy $A^r_i$ a histogramem wartości w wierszu macierzy $B^r_k$. Następnie tworzymy macierz z wartościami podobieństw między wierzchołkami. Wierzchołki najbardziej podobne zostają ziarnem mapowania. 
-%     \item Następnie iteracyjnie (przykładowo DFS), algorytm porównuje sąsiadów wierzchołków zmapowanych. Do następnego mapowania, wybiera tych sąsiadów, do których liczba ścieżek o długości co najwyżej $R$ jest największa i jest równa dla obu wierzchołków z dwóch grafów. Algorytm sprawdza również, czy wybrane wierzchołki nie zostały już zmapowane. 
-%     \item Zmapowane wierzchołki w grafie $G'_2$ są usuwane, tworząc nowy graf $G''_2$ i proces jest powtarzany dla grafów $G'_1$ oraz $G''_2$. W ten sposób znajdowane jest $k$ rozdzielnych kopii $G_1$ w minimalnym rozszerzeniu $G_2$. 
-% \end{enumerate}
-
-% \subsubsection{Złożoność obliczeniowa}
-% Złożoność pesymistyczna omówionej modyfikacji algorytmu LeRP jest wielomianowa i wynosi $O(N^2 \cdot(N+E) \cdot D^2 \cdot R \cdot k)$, gdzie:
-% \begin{itemize}
-%     \item $N$ to liczba wierzchołków w grafach (zakładając, że oba grafy mają rozmiar rzędu $N$).
-%     \item $E$ to liczba krawędzi w grafach (zakładając, że oba grafy mają liczbę krawędzi rzędu $N$).
-%     \item $D$ to średni stopień wierzchołków w grafach.
-%     \item $R$ to maksymalna długość ścieżki brana pod uwagę. 
-%     \item $k$ to liczba szukanych kopii w minimalnym rozszerzeniu
-% \end{itemize}
-% Uzasadnienie złożoności: porównanie par wierzchołków wymaga $N^2$ porównań. Każdy wierzchołek ma średnio $D$ sąsiadów, więc porównywanie sąsiadów daje $D^2$ dodatkowych operacji. Analiza różnych długości ścieżek to czynnik $R$. Podczas budowania dopasowania, algorytm iteracyjny ma złożoność $(N+E)$. Czynnik $k$ odpowiada za znalezienie $k$ kopii mniejszego multigrafu $G_1$.\\ \\
-% W kontekście tego algorytmu aproksymacyjnego nie rozważano formalnego dowodu poprawności. Dostarczono empiryczną gwarancję jakości - algorytm testowano na dużych zbiorach danych, wykazując, że algorytm konsekwentnie zwraca wyniki bliskie optimum w praktyce.
 
 
 % ---------------- MINIMALNE ROZSZERZENIE MULTIGRAFU ---------------- %
