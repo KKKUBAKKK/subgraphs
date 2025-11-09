@@ -80,3 +80,14 @@ Makefile
 # Generated PDF files
 # You may want to comment this out if you wish to track the final PDF in git
 # *.pdf
+
+# Ignore python cache and build files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+ENV/
+build/
+dist/

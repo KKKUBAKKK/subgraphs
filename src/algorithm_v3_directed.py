@@ -92,8 +92,150 @@ def build_cost_matrix_directed(P_degrees, G_degrees, k, N):
     return cost_matrix
 
 
+class KBestAssignments:
+    """
+    Implementation of Murty's algorithm for finding k-best assignments.
+    
+    Murty's algorithm finds the k lowest cost solutions to the linear assignment problem.
+    It uses a partitioning scheme with a tree structure where each node represents
+    a constrained assignment problem.
+    """
+    
+    def __init__(self, cost_matrix, k_pattern):
+        """
+        Args:
+            cost_matrix: N x N cost matrix
+            k_pattern: Number of pattern vertices (only first k_pattern rows matter)
+        """
+        self.cost_matrix = cost_matrix.copy()
+        self.N = cost_matrix.shape[0]
+        self.k_pattern = k_pattern
+        self.solutions = []
+        # self.compute_k_best()
+    
+    def solve_with_constraints(self, include_constraints, exclude_constraints):
+        """
+        Solve assignment problem with constraints.
+        
+        Args:
+            include_constraints: list of (row, col) tuples that MUST be in solution
+            exclude_constraints: list of (row, col) tuples that MUST NOT be in solution
+            
+        Returns:
+            (cost, assignment) or (None, None) if infeasible
+        """
+        # Create modified cost matrix
+        modified_cost = self.cost_matrix.copy()
+        
+        # Set excluded assignments to very high cost
+        for row, col in exclude_constraints:
+            modified_cost[row, col] = 1e10
+        
+        # For included constraints, we need to ensure they're selected
+        # We'll do this by setting their cost to very negative
+        # and all other assignments in those rows to very high
+        for row, col in include_constraints:
+            modified_cost[row, :] = 1e10
+            modified_cost[row, col] = -1e10
+        
+        try:
+            row_ind, col_ind = linear_sum_assignment(modified_cost)
+            
+            # Verify all include constraints are satisfied
+            assignment = list(zip(row_ind, col_ind))
+            for constraint in include_constraints:
+                if constraint not in assignment:
+                    return None, None
+            
+            # Calculate true cost (without modifications)
+            true_cost = sum(self.cost_matrix[r, c] for r, c in assignment)
+            
+            # Extract only first k_pattern assignments
+            mapping = col_ind[row_ind < self.k_pattern]
+            
+            return true_cost, mapping
+            
+        except ValueError:
+            return None, None
+    
+    def compute_k_best(self, max_solutions=100):
+        """
+        Compute k-best solutions using Murty's algorithm.
+        
+        Args:
+            max_solutions: Maximum number of solutions to generate
+        """
+        import heapq
+        
+        # Start with unconstrained problem
+        cost, mapping = self.solve_with_constraints([], [])
+        if cost is None:
+            return
+        
+        # Priority queue: (cost, include_constraints, exclude_constraints, mapping)
+        queue = [(cost, [], [], mapping)]
+        
+        # Track seen mappings to avoid duplicates
+        seen_mappings = set()
+        
+        while queue and len(self.solutions) < max_solutions:
+            current_cost, includes, excludes, current_mapping = heapq.heappop(queue)
+            
+            # Check if we've seen this mapping before
+            mapping_tuple = tuple(current_mapping)
+            if mapping_tuple in seen_mappings:
+                continue
+            
+            seen_mappings.add(mapping_tuple)
+            
+            # Add this solution
+            self.solutions.append((current_cost, current_mapping))
+            
+            # Create partitions by excluding each assignment one by one
+            # Only partition on the first k_pattern assignments
+            for i in range(self.k_pattern):
+                row = i
+                col = current_mapping[i]
+                
+                # Create new partition with this assignment excluded
+                new_excludes = excludes + [(row, col)]
+                
+                # Try to solve with this new constraint
+                new_cost, new_mapping = self.solve_with_constraints(includes, new_excludes)
+                
+                if new_cost is not None:
+                    heapq.heappush(queue, (new_cost, includes, new_excludes, new_mapping))
+                
+                # For next partition, include this assignment
+                includes = includes + [(row, col)]
+    
+    def get_solution(self, j):
+        """
+        Get the j-th best solution (1-indexed).
+        
+        Args:
+            j: Solution rank (1 = best, 2 = second best, etc.)
+            
+        Returns:
+            mapping array or None if not enough solutions
+        """
+        if j <= len(self.solutions):
+            return self.solutions[j - 1][1]
+        return None
+
+
 def k_best_assignment_solver(cost_matrix, j, k=None):
-    """K-best assignment solver (same as undirected version)"""
+    """
+    K-best assignment solver using Murty's algorithm.
+    
+    Args:
+        cost_matrix: N x N cost matrix
+        j: Which solution to return (1 = best, 2 = second best, etc.)
+        k: Number of pattern vertices (if None, inferred from cost matrix)
+        
+    Returns:
+        mapping array of size k
+    """
     N = cost_matrix.shape[0]
     
     if k is None:
@@ -103,30 +245,31 @@ def k_best_assignment_solver(cost_matrix, j, k=None):
                 k = i
                 break
     
+    # For j=1, just use standard assignment (faster)
     if j == 1:
         row_ind, col_ind = linear_sum_assignment(cost_matrix)
         mapping = col_ind[row_ind < k]
         return mapping
-    else:
-        print(f"Warning: k-best solver for j={j} is not fully implemented. Using heuristic.")
-        row_ind, col_ind = linear_sum_assignment(cost_matrix)
-        base_mapping = col_ind[row_ind < k]
-        
-        available_vertices = set(range(N))
-        new_mapping = np.copy(base_mapping)
-        
-        swap_count = min(j - 1, k)
-        for swap_idx in range(swap_count):
-            current_vertex = new_mapping[swap_idx]
-            remaining = available_vertices - set(new_mapping)
-            
-            if len(remaining) > 0:
-                alternatives = list(remaining)
-                costs = [cost_matrix[swap_idx, alt] for alt in alternatives]
-                best_alt_idx = np.argmin(costs)
-                new_mapping[swap_idx] = alternatives[best_alt_idx]
-        
-        return new_mapping
+    
+    # For j>1, use Murty's algorithm
+    # Only compute up to j solutions (no need to compute all 100)
+    solver = KBestAssignments(cost_matrix, k)
+    solver.compute_k_best(max_solutions=min(j + 10, 100))  # Compute a few extra for safety
+    
+    mapping = solver.get_solution(j)
+    
+    if mapping is None:
+        # Fallback: not enough distinct solutions found
+        # This can happen when there aren't enough vertices for j unique mappings
+        print(f"Warning: Could not find {j}-th best solution. Only {len(solver.solutions)} solutions exist.")
+        if len(solver.solutions) > 0:
+            # Return the last available solution
+            return solver.solutions[-1][1]
+        else:
+            # Last resort: return arbitrary mapping
+            return np.arange(k)
+    
+    return mapping
 
 
 def calculate_extension_cost_directed(A_curr, A_P, mapping):
