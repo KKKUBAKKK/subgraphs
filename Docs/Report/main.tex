@@ -23,6 +23,7 @@
 \newtheorem{definition}{Definicja}
 \theoremstyle{plain}
 \newtheorem{theorem}{Twierdzenie}
+\newtheorem{lemma}[theorem]{Lemat}
 \begin{document}
 
     \title{
@@ -1111,12 +1112,156 @@ Opisany algorytm jest heurystyką zachłanną naszego autorstwa. Algorytm gwaran
 Z definicji każdej macierzy $C_{u_1, u_2}$ wpisy odpowiadają dokładnie brakującym krawędziom. Jeśli na końcu algorytm utworzy macierz $K$ zgodnie z opisem, to po dodaniu tych krawędzi w $G_2$ wszystkie odwzorowania skonstruowane przez algorytm staną się izomorficznymi (liczbowo zgodnymi) kopiami $G_1$. Zatem algorytm zwraca dopuszczalne rozwiązanie. \\ \\ 
 Niestety nie ma dowodu, że algorytm daje rozwiązanie optymalne, ani że ma stałą gwarancję aproksymacji. To heurystyka zachłanna — lokalnie wybiera najtańsze mapowanie — ale problem minimalnego rozszerzenia (znalezienie najmniejszego zbioru dodatkowych krawędzi, by powstały $m$ kopii) jest kombinatorycznie trudny i algorytm zachłanny może prowadzić do lokalnie optymalnych, ale globalnie złych decyzji.
 
+% --------------------------------- ALGORYTM APROKSYMACYJNY 2 ---------------------------------
+\subsection{Aproksymacyjne minimalne rozszerzenie multigrafu - algorytm drugi}
+\label{sec:minimalne_rozszerzenie_approx_2}
+
+Algorytm implementuje metodę Murty'ego do znajdowania $j$ najlepszych (o najniższym koszcie) rozwiązań problemu przypisania, z kluczową modyfikacją: problem dotyczy przypisania $k$ wierszy "wzorca" do $N$ kolumn "grafu" ($k \le N$), modelowanego jako problem $N \times N$, gdzie $N-k$ wierszy to "atrapy".
+
+\subsubsection{Notacja i Definicje}
+
+\begin{definition}[Problem Przypisania]
+Dany jest graf dwudzielny z wierzchołkami $U = \{u_1, \dots, u_N\}$ (wiersze) i $V = \{v_1, \dots, v_N\}$ (kolumny) oraz macierz kosztów $M$ o wymiarach $N \times N$. Celem jest znalezienie permutacji $\sigma$ zbioru $\{1, \dots, N\}$ minimalizującej całkowity koszt:
+$$ C(\sigma) = \sum_{i=1}^{N} M[i, \sigma(i)] $$
+\end{definition}
+
+\begin{definition}[Problem $k$-Mapowania]
+W naszym przypadku interesuje nas tylko przypisanie pierwszych $k$ wierszy (reprezentujących $P$). Mapowanie $f$ jest iniekcją $f: \{1, \dots, k\} \to \{1, \dots, N\}$. Algorytm \verb|linear_sum_assignment| znajduje pełną permutację $\sigma$, z której my ekstrahujemy $f$ jako:
+$$ f(i) = \sigma(i) \quad \text{dla } i \in \{1, \dots, k\} $$
+Zbiór wierszy "atrap" to $D = \{k+1, \dots, N\}$. Ich przypisania są ignorowane.
+\end{definition}
+
+\begin{definition}[Problem z Ograniczeniami]
+Definiujemy $H(M')$ jako funkcję rozwiązującą problem przypisania (np. algorytm węgierski) na macierzy $M'$. Rozwiązanie podproblemu z ograniczeniami jest realizowane przez modyfikację macierzy kosztów:
+\begin{itemize}
+    \item $I \subset \{1..k\} \times \{1..N\}$: zbiór "wymuszonych" przypisań (includes).
+    \item $E \subset \{1..k\} \times \{1..N\}$: zbiór "zabronionych" przypisań (excludes).
+\end{itemize}
+Funkcja \verb|solve_with_constraints(I, E)| rozwiązuje problem $H(M')$ na zmodyfikowanej macierzy $M'$, gdzie:
+$$ M'[i, j] = 
+\begin{cases} 
+    -\infty & \text{jeśli } (i, j) \in I \\
+    +\infty & \text{jeśli } (i, j) \notin I \text{ oraz } \exists j': (i, j') \in I \\
+    +\infty & \text{jeśli } (i, j) \in E \\
+    M[i, j] & \text{w przeciwnym razie}
+\end{cases}
+$$
+Funkcja zwraca $(\text{Koszt}(f), f)$ używając oryginalnej macierzy $M$ do obliczenia kosztu, lub $(\text{None}, \text{None})$, jeśli ograniczenia $I$ nie zostały spełnione.
+\end{definition}
+
+
+\subsubsection{Algorytm Główny (\texttt{compute\_k\_best})}
+
+Algorytm wykorzystuje kolejkę priorytetową (min-heap) $Q$ do przechowywania kandydatów na rozwiązania. Każdy element w $Q$ to krotka: $(C, I, E, f)$, gdzie $C$ to koszt mapowania $f$, a $I$ i $E$ to zbiory ograniczeń, które wygenerowały to rozwiązanie.
+
+\begin{enumerate}
+    \item \textbf{Inicjalizacja:}
+    \begin{itemize}
+        \item Stwórz pustą listę rozwiązań $L_{sol}$.
+        \item Stwórz pusty zbiór "widzianych" mapowań $U_{seen}$.
+        \item Stwórz pustą kolejkę priorytetową $Q$.
+        \item Rozwiąż problem bez ograniczeń: $(C_1, f_1) \leftarrow \verb|solve_with_constraints|(\emptyset, \emptyset)$.
+        \item \textbf{if} $C_1 \neq \text{None}$ \textbf{then} $Q.\text{push}((C_1, \emptyset, \emptyset, f_1))$.
+    \end{itemize}
+    
+    \item \textbf{Pętla główna:}
+    \item \textbf{while} $Q$ nie jest pusta \textbf{and} $|L_{sol}| < \text{max\_solutions}$:
+    \begin{enumerate}
+        \item $(C, I, E, f) \leftarrow Q.\text{pop}()$.
+        \item \textbf{if} $f \in U_{seen}$ \textbf{then continue} (pomiń duplikat).
+        \item $U_{seen}.\text{add}(f)$.
+        \item $L_{sol}.\text{append}((C, f))$.
+        
+        \item \textbf{Partycjonowanie (Rozgałęzienie):}
+        \item $I_{accum} \leftarrow I$ (akumulator wymuszonych krawędzi dla tej gałęzi).
+        \item \textbf{for} $i = 1$ \textbf{to} $k$:
+        \begin{itemize}
+            \item $(r, c) \leftarrow (i, f(i))$ (krawędź do partycjonowania).
+            \item $E_{new} \leftarrow E \cup \{(r, c)\}$ (nowy zbiór zabronionych).
+            
+            \item \emph{// Generowanie podproblemu P1: wymuś (1..i-1), zabroń (i)}
+            \item $(C_{new}, f_{new}) \leftarrow \verb|solve_with_constraints|(I_{accum}, E_{new})$.
+            
+            \item \textbf{if} $C_{new} \neq \text{None}$ \textbf{then} $Q.\text{push}((C_{new}, I_{accum}, E_{new}, f_{new}))$.
+            
+            \item \emph{// Przygotowanie do następnej iteracji: wymuś (i)}
+            \item $I_{accum} \leftarrow I_{accum} \cup \{(r, c)\}$.
+        \end{itemize}
+    \end{enumerate}
+    \item \textbf{Zakończenie:} Zwróć $L_{sol}$.
+\end{enumerate}
+
+\subsubsection{Dowód Poprawności}
+
+\begin{theorem}[Zakończenie Algorytmu]
+Algorytm \verb|compute_k_best| zawsze kończy działanie w skończonym czasie.
+\end{theorem}
+\begin{proof}
+Liczba możliwych mapowań $f$ (iniekcji z $\{1..k\}$ do $\{1..N\}$) jest skończona i wynosi $P(N, k) = N! / (N-k)!$. Zbiór \verb|seen_mappings| ($U_{seen}$) gwarantuje, że każde unikalne mapowanie $f$ jest dodawane do $L_{sol}$ i partycjonowane co najwyżej raz. Ponieważ pętla \verb|while| jest również ograniczona przez \verb|max_solutions|, algorytm musi się zakończyć.
+\end{proof}
+
+\begin{theorem}[Kompletność i Optymalność]
+Algorytm generuje rozwiązania w kolejności niemalejącego kosztu. Jeśli istnieje $j$ unikalnych rozwiązań, algorytm znajdzie je w $j$ pierwszych (unikalnych) iteracjach pętli.
+\end{theorem}
+\begin{proof}
+Dowód opiera się na poprawności schematu partycjonowania Murty'ego.
+Niech $S$ będzie zbiorem wszystkich dozwolonych mapowań (rozwiązań). Niech $f_1$ będzie optymalnym rozwiązaniem (1-szym najlepszym).
+W kroku 2.c.i, algorytm generuje $k$ podproblemów $P_1, \dots, P_k$ na podstawie $f_1$.
+\end{proof}
+\begin{lemma}[Partycjonowanie Murty'ego]
+Zbiory rozwiązań dla podproblemów $P_1, \dots, P_k$ są parami rozłączne, a ich suma (unia) jest równa $S \setminus \{f_1\}$.
+\end{lemma}
+\begin{proof}[Dowód (Szkic)]
+Niech $f_1 = \{(1, c_1), \dots, (k, c_k)\}$.
+\begin{itemize}
+    \item $P_1$ zawiera rozwiązania, które \emph{nie} mają $(1, c_1)$.
+    \item $P_2$ zawiera rozwiązania, które \emph{mają} $(1, c_1)$, ale \emph{nie} mają $(2, c_2)$.
+    \item $P_i$ zawiera rozwiązania, które \emph{mają} $\{(1, c_1), \dots, (i-1, c_{i-1})\}$, ale \emph{nie} mają $(i, c_i)$.
+\end{itemize}
+Są one z definicji rozłączne.
+Weźmy dowolne rozwiązanie $f' \in S \setminus \{f_1\}$. Musi ono różnić się od $f_1$ na co najmniej jednej pozycji. Niech $i$ będzie pierwszym indeksem (wierszem), gdzie $f'(i) \neq c_i$. Oznacza to, że $f'$ pasuje do $f_1$ na pozycjach $1, \dots, i-1$, ale nie na $i$. Zatem $f'$ należy do zbioru $P_i$.
+W ten sposób $\bigcup_{i=1}^{k} P_i = S \setminus \{f_1\}$.
+\end{proof}
+
+Ponieważ (1) partycjonowanie jest kompletne i rozłączne, (2) optymalne rozwiązanie każdego podproblemu $P_i$ (czyli $H(P_i)$) jest najlepszym kandydatem z tego podzbioru, oraz (3) kolejka priorytetowa $Q$ zawsze przechowuje najlepszych kandydatów ze wszystkich dotychczas wygenerowanych podzbiorów, to gdy \verb|Q.pop()| zwraca $f_j$, musi to być rozwiązanie o globalnie $j$-tym najniższym koszcie spośród wszystkich możliwych rozwiązań.
+
+\section{Analiza Złożoności}
+
+Analizujemy koszt znalezienia $j$ najlepszych rozwiązań.
+
+\subsubsection{Złożoność Pamięciowa}
+
+\begin{itemize}
+    \item Macierz kosztów \verb|cost_matrix| (oryginalna i kopie): $\mathcal{O}(N^2)$.
+    \item Lista rozwiązań \verb|solutions|: Przechowuje $j$ mapowań, każde o rozmiarze $k$. Koszt: $\mathcal{O}(j k)$.
+    \item Zbiór \verb|seen_mappings|: Przechowuje $j$ krotek o rozmiarze $k$. Koszt: $\mathcal{O}(j k)$.
+    \item Kolejka priorytetowa \verb|queue|: W najgorszym razie, każde z $j$ znalezionych rozwiązań generuje $k$ nowych kandydatów. Rozmiar kolejki jest rzędu $\mathcal{O}(j k)$. Każdy element przechowuje ograniczenia $I$ i $E$, które mogą rosnąć do $\mathcal{O}(k)$.
+    Koszt kolejki: $\mathcal{O}(j k \cdot k) = \mathcal{O}(j k^2)$.
+\end{itemize}
+\textbf{Całkowita złożoność pamięciowa: $\mathcal{O}(N^2 + j k^2)$.}
+
+\subsubsection{Złożoność Obliczeniowa (Czasowa)}
+
+\begin{itemize}
+    \item Główna pętla \verb|while| wykonuje się $\mathcal{O}(j)$ razy (ignorując duplikaty, których w praktyce jest niewiele w porównaniu do $j$).
+    \item Wewnątrz pętli, pętla \verb|for| (partycjonowanie) wykonuje się $k$ razy.
+    \item Wewnątrz pętli \verb|for| wywoływana jest funkcja \verb|solve_with_constraints|.
+    \item Koszt \verb|solve_with_constraints| jest zdominowany przez \verb|linear_sum_assignment|, którego złożoność dla macierzy $N \times N$ wynosi $\mathcal{O}(N^3)$.
+    \item Operacje na kolejce priorytetowej (\verb|push|/\verb|pop|) mają koszt $\mathcal{O}(\log |Q|) = \mathcal{O}(\log(jk))$.
+\end{itemize}
+Całkowity koszt to suma kosztów $\mathcal{O}(j)$ kroków "wyjęcia" rozwiązania i $\mathcal{O}(j \cdot k)$ kroków "rozwiązania podproblemu".
+
+$$ C_{\text{total}} = \underbrace{\mathcal{O}(j \cdot \log(jk))}_{\text{Zarządzanie kolejką}} + \underbrace{\mathcal{O}(j \cdot k \cdot N^3)}_{\text{Rozwiązywanie podproblemów}} $$
+
+Ponieważ $\mathcal{O}(N^3)$ jest znacznie większe niż $\mathcal{O}(\log(jk))$, ten drugi człon jest pomijalny.
+\textbf{Całkowita złożoność obliczeniowa: $\mathcal{O}(j \cdot k \cdot N^3)$.}
+
 % \section{Testy}
 % \section{Podsumowanie}
 
-    \section{Bibliografia}
+% \section{Bibliografia}
 
-    \bibliographystyle{plain}
-    \bibliography{refs}
+% \bibliographystyle{plain}
+% \bibliography{refs}
 
 \end{document}
