@@ -20,7 +20,13 @@
 \usepackage{amsfonts}
 \usepackage{thmtools}
 \theoremstyle{definition}
-\newtheorem{definition}{Definicja}
+% \newtheorem{definition}{Definicja}
+\newtheorem{theorem}{Twierdzenie}
+\newtheorem{lemma}[theorem]{Lemat} 
+\newtheorem{definition}{Definicja} 
+
+% Znak końca dowodu (opcjonalnie, dla estetyki)
+% \renewcommand{\qedsymbol}{$\blacksquare$}
 \begin{document}
 
 \title{
@@ -264,6 +270,214 @@ Złożoność pesymistyczna omówionej modyfikacji algorytmu LeRP jest wielomian
 Uzasadnienie złożoności: porównanie par wierzchołków wymaga $N^2$ porównań. Każdy wierzchołek ma średnio $D$ sąsiadów, więc porównywanie sąsiadów daje $D^2$ dodatkowych operacji. Analiza różnych długości ścieżek to czynnik $R$. Podczas budowania dopasowania, algorytm iteracyjny ma złożoność $(N+E)$. Czynnik $k$ odpowiada za znalezienie $k$ kopii mniejszego multigrafu $G_1$.\\ \\
 W kontekście tego algorytmu aproksymacyjnego nie rozważano formalnego dowodu poprawności. Dostarczono empiryczną gwarancję jakości - algorytm testowano na dużych zbiorach danych, wykazując, że algorytm konsekwentnie zwraca wyniki bliskie optimum w praktyce.
 
+\pagebreak
+\section{Minimalne rozszerzenie multigrafu - algorytm aproksymacyjny v.2}
+\label{sec:minimalne_rozszerzenie_approx_v2}
+\subsection{Definicje i Notacja}
+
+\begin{definition}[Grafy wejściowe]
+Niech $G = (V_G, A_G)$ będzie skierowanym multigrafem-gospodarzem, gdzie $N = |V_G|$, a $A_G: V_G \times V_G \to \mathbb{N}_0$ jest macierzą sąsiedztwa ($A_G[i,j]$ to krotność krawędzi $i \to j$).
+Niech $P = (V_P, A_P)$ będzie skierowanym multigrafem-wzorcem, gdzie $k = |V_P|$ ($k \le N$), a $A_P: V_P \times V_P \to \mathbb{N}_0$ jest jego macierzą sąsiedztwa.
+\end{definition}
+
+\begin{definition}[Mapowanie i Zbiór Docelowy]
+Mapowanie $f$ jest iniekcją $f: V_P \to V_G$. Zbiór wierzchołków docelowych dla $f$ to $S_f = f(V_P) = \{f(v) \mid v \in V_P\}$. $|S_f| = k$.
+\end{definition}
+
+\begin{definition}[Rzeczywisty Koszt Rozszerzenia]
+Rzeczywisty koszt (kwadratowy) zaimplementowania mapowania $f$ w grafie o macierzy $A$ jest zdefiniowany jako:
+$$ C_{ext}(f, A) = \sum_{u, v \in V_P} \max(0, A_P[u, v] - A[f(u), f(v)]) $$
+Jest to liczba krawędzi, które należy dodać do $A$, aby obraz $S_f$ był izomorficzny z $P$ (poprzez $f$).
+\end{definition}
+
+\begin{definition}[Heurystyki Kosztu Liniowego]
+Stopień całkowity wierzchołka $v$ to $\text{deg}(v) = \text{deg}_{in}(v) + \text{deg}_{out}(v)$.
+Heurystyka liniowa (dopasowanie stopni) $C_{lin}: V_P \times V_G \to \mathbb{R}^+$ jest zdefiniowana jako:
+$$ C_{lin}(u, v) = |\text{deg}_{A_P}(u) - \text{deg}_{A_{curr}}(v)| $$
+Heurystyka kwadratowa (używana dla $k=4$) $C_{quad}: V_P \times V_G \to \mathbb{R}^+$ jest zdefiniowana jako szacowany koszt $C_{ext}$ przy założeniu mapowania $u \to v$ i optymalnego dopasowania sąsiadów $u$ do sąsiadów $v$ (zgodnie z implementacją w \verb|build_cost_matrix_quadratic_directed|).
+\end{definition}
+
+\begin{definition}[Solver Problemu Przyporządkowania]
+Niech $M$ będzie macierzą kosztów $N \times N$. Niech $\mathcal{K}(M, j)$ będzie funkcją zwracającą $j$-te najlepsze (o $j$-tym najmniejszym koszcie) mapowanie $f^{(j)}: \{1..k\} \to \{1..N\}$ dla problemu przyporządkowania zdefiniowanego przez $M$.
+\end{definition}
+
+\subsection{Formalny Opis Algorytmu}
+
+\textbf{Dane wejściowe:} Macierz $A_G$ (rozmiar $N \times N$), macierz $A_P$ (rozmiar $k \times k$), liczba kopii $n$.
+\textbf{Dane wyjściowe:} Ostateczna macierz $A_{final}$, całkowity koszt $C_{total}$.
+
+\begin{enumerate}
+    \item \textbf{Inicjalizacja:}
+    \begin{itemize}
+        \item $A_{curr} \leftarrow A_G$
+        \item $C_{total} \leftarrow 0$
+        \item $U \leftarrow \emptyset$ (Zbiór użytych $k$-elementowych podzbiorów $V_G$)
+    \end{itemize}
+    
+    \item \textbf{Pętla główna (dla $i = 1$ do $n$):}
+    \begin{enumerate}
+        \item $f_i \leftarrow \text{null}$
+        \item \textbf{Strategia hybrydowa:}
+        \item \textbf{if} ($k \le 3 \land N \le 10$) \textbf{then} (Tryb dokładny - Brute Force)
+            \begin{itemize}
+                \item $\mathcal{F} \leftarrow \{f \mid f: V_P \to V_G \text{ jest iniekcją oraz } S_f \notin U \}$
+                \item \textbf{if} $\mathcal{F} = \emptyset$ \textbf{then throw} Exception("Brak dostępnych mapowań")
+                \item $f_i \leftarrow \arg \min_{f \in \mathcal{F}} \{ C_{ext}(f, A_{curr}) \}$
+            \end{itemize}
+        \item \textbf{else} (Tryb aproksymacyjny - Problem Przyporządkowania)
+            \begin{itemize}
+                \item \textbf{if} ($k = 4$) \textbf{then} $M \leftarrow \text{BuildMatrix}(C_{quad}, A_{curr}, A_P, k, N)$
+                \item \textbf{else} ($k > 4$) \textbf{then} $M \leftarrow \text{BuildMatrix}(C_{lin}, A_{curr}, A_P, k, N)$
+                
+                \item $j \leftarrow 1$
+                \item \textbf{repeat} (Pętla filtrująca)
+                    \begin{itemize}
+                        \item $f^{(j)} \leftarrow \mathcal{K}(M, j)$
+                        \item \textbf{if} $f^{(j)} = \text{null}$ \textbf{then throw} Exception("Solver nie znalazł rozwiązania")
+                        \item $S^{(j)} \leftarrow f^{(j)}(V_P)$
+                        \item \textbf{if} $S^{(j)} \notin U$ \textbf{then}
+                            \begin{itemize}
+                                \item $f_i \leftarrow f^{(j)}$
+                                \item \textbf{break repeat}
+                            \end{itemize}
+                        \item \textbf{else}
+                            \begin{itemize}
+                                \item $j \leftarrow j + 1$
+                            \end{itemize}
+                    \end{itemize}
+                \item \textbf{until} ($f_i \neq \text{null}$)
+            \end{itemize}
+        
+        \item \textbf{Rejestracja i Aktualizacja:}
+            \begin{itemize}
+                \item $S_i \leftarrow f_i(V_P)$
+                \item $U \leftarrow U \cup \{S_i\}$
+                \item $cost_i \leftarrow C_{ext}(f_i, A_{curr})$
+                \item $C_{total} \leftarrow C_{total} + cost_i$
+                \item $A_{curr} \leftarrow \text{ApplyExtension}(A_{curr}, A_P, f_i)$
+            \end{itemize}
+    \end{enumerate}
+    
+    \item \textbf{Zakończenie:}
+    \item \textbf{return} $A_{curr}, C_{total}$
+\end{enumerate}
+
+\begin{definition}[Funkcja ApplyExtension]
+Funkcja $\text{ApplyExtension}(A, A_P, f)$ zwraca nową macierz $A'$, gdzie:
+$$ A'[g_u, g_v] = A[g_u, g_v] + \max(0, A_P[u, v] - A[g_u, g_v]) \quad \forall u, v \in V_P $$
+oraz $A'[i,j] = A[i,j]$ dla pozostałych par $(i,j)$.
+\end{definition}
+
+
+\section{Dowód Poprawności}
+
+Poprawność algorytmu aproksymacyjnego oznacza, że algorytm (1) kończy działanie, (2) spełnia narzucone ograniczenia (unikalność) oraz (3) zwraca graf $A_{final}$, który faktycznie zawiera $n$ wymaganych kopii $P$.
+
+\begin{theorem}[Zakończenie Algorytmu]
+Algorytm kończy działanie w skończonym czasie, pod warunkiem, że $n \le \binom{N}{k}$.
+\end{theorem}
+\begin{proof}
+Główna pętla `for` wykonuje się $n$ razy. Musimy udowodnić, że wewnętrzna pętla filtrująca `repeat-until` (krok 2.d) zakończy się.
+Całkowita liczba unikalnych $k$-elementowych podzbiorów wierzchołków $V_G$ wynosi $\binom{N}{k}$.
+Zbiór $U$ przechowuje podzbiory już użyte. W $i$-tej iteracji $|U| = i-1$.
+Pętla filtrująca poszukuje mapowania $f$ takiego, że $S_f \notin U$.
+Liczba dostępnych, nieużytych podzbiorów wynosi $\binom{N}{k} - (i-1)$.
+Dopóki $i \le n \le \binom{N}{k}$, liczba ta jest $\ge 0$.
+Solver $\mathcal{K}(M, j)$ jest w stanie (w teorii, a w kodzie jest to założone przez `RuntimeError`) wygenerować wszystkie $P(N, k)$ mapowań, które pokrywają wszystkie $\binom{N}{k}$ podzbiorów.
+Ponieważ istnieje co najmniej jeden dostępny podzbiór, pętla filtrująca `repeat-until` w końcu znajdzie mapowanie $f^{(j)}$, dla którego $S^{(j)} \notin U$.
+Jeśli $n > \binom{N}{k}$, algorytm poprawnie zgłosi wyjątek (zgodnie z implementacją), co również jest formą poprawnego zakończenia (sygnalizacja niemożności spełnienia warunków).
+\end{proof}
+
+\begin{theorem}[Spełnienie Ograniczenia Unikalności]
+Algorytm gwarantuje, że wszystkie znalezione mapowania $f_1, \dots, f_n$ odpowiadają $n$ różnym zbiorom wierzchołków docelowych $S_1, \dots, S_n$.
+\end{theorem}
+\begin{proof}
+Dowód wynika bezpośrednio z konstrukcji algorytmu.
+Algorytm utrzymuje zbiór $U$ (krok 1.c).
+Mapowanie $f_i$ jest akceptowane w kroku 2.d \emph{tylko wtedy, gdy} jego zbiór docelowy $S_i = f_i(V_P)$ nie należy do $U$ ($S_i \notin U$).
+Bezpośrednio po akceptacji, w kroku 2.e, zbiór $S_i$ jest dodawany do $U$ ($U \leftarrow U \cup \{S_i\}$).
+Gwarantuje to, że żaden zbiór $S_i$ nie zostanie wybrany więcej niż raz, a zatem wszystkie $S_1, \dots, S_n$ są parami różne.
+\end{proof}
+
+\begin{theorem}[Poprawność Grafu Wyjściowego]
+Graf $A_{final}$ zwrócony przez algorytm zawiera co najmniej $n$ podgrafów izomorficznych z $P$, odpowiadających mapowaniom $f_1, \dots, f_n$.
+\end{theorem}
+\begin{proof}
+Użyjemy indukcji po $i$ (liczbie iteracji).
+Niech $A_i$ będzie macierzą $A_{curr}$ po $i$-tej iteracji. $A_0 = A_G$.
+\textbf{Baza (i=1):} Algorytm znajduje $f_1$. Następnie $A_1 = \text{ApplyExtension}(A_0, A_P, f_1)$. Z definicji $\text{ApplyExtension}$, dla wszystkich $u,v \in V_P$ mamy $A_1[f_1(u), f_1(v)] \ge A_P[u,v]$. Zatem podgraf w $A_1$ indukowany przez $S_1$ (poprzez mapowanie $f_1$) zawiera $P$.
+
+\textbf{Krok indukcyjny:} Załóżmy, że $A_{i-1}$ zawiera podgrafy izomorficzne z $P$ dla mapowań $f_1, \dots, f_{i-1}$.
+W $i$-tej iteracji algorytm znajduje $f_i$ (gdzie $S_i \neq S_j$ dla $j < i$) i oblicza $A_i = \text{ApplyExtension}(A_{i-1}, A_P, f_i)$.
+Z definicji $\text{ApplyExtension}$:
+1. $A_i[f_i(u), f_i(v)] \ge A_P[u,v]$ dla wszystkich $u,v \in V_P$. Zatem $A_i$ zawiera kopię $P$ dla $f_i$.
+2. Dla wszystkich par $(a,b)$, $A_i[a,b] \ge A_{i-1}[a,b]$ (ponieważ dodajemy tylko krawędzie, nigdy ich nie usuwamy).
+Ponieważ $A_i \ge A_{i-1}$ (element-wise), a $A_{i-1}$ zawierało kopie $f_1, \dots, f_{i-1}$, to $A_i$ również je zawiera.
+
+Po $n$ iteracjach, $A_{final} = A_n$ zawiera $n$ kopii $P$ dla $n$ unikalnych mapowań $f_1, \dots, f_n$.
+\end{proof}
+
+
+\section{Analiza Złożoności}
+
+Analizujemy złożoność obliczeniową (czasową) i pamięciową dostarczonego algorytmu. Niech $N = |V_G|$ i $k = |V_P|$.
+
+\subsection{Złożoność Pamięciowa}
+\begin{itemize}
+    \item Macierze $A_G, A_P, A_{curr}$: $\mathcal{O}(N^2 + k^2)$.
+    \item Macierz kosztów $M$: $\mathcal{O}(N^2)$.
+    \item Zbiór $U$: W najgorszym razie przechowuje $n$ zbiorów $k$-elementowych: $\mathcal{O}(nk)$.
+\end{itemize}
+\textbf{Całkowita złożoność pamięciowa: $\mathcal{O}(N^2 + k^2 + nk)$.}
+
+\subsection{Złożoność Obliczeniowa (Czasowa)}
+
+Pętla główna wykonuje się $n$ razy. Analizujemy koszt $i$-tej iteracji.
+Niech $K_i$ będzie liczbą wywołań solvera $\mathcal{K}$ w $i$-tej iteracji (koszt pętli filtrującej). W najgorszym razie $K_i = \mathcal{O}(i)$.
+
+Koszt $i$-tej iteracji zależy od strategii hybrydowej:
+
+\textbf{Przypadek 1: Tryb dokładny ($k \le 3 \land N \le 10$)}
+\begin{itemize}
+    \item Liczba wszystkich mapowań to $P(N, k) = \frac{N!}{(N-k)!}$.
+    \item Koszt obliczenia $C_{ext}$ dla jednego mapowania: $\mathcal{O}(k^2)$.
+    \item Całkowity koszt iteracji: $\mathcal{O}(P(N, k) \cdot k^2)$. Ponieważ $N$ i $k$ są ograniczone stałą (10), koszt ten jest $\mathcal{O}(1)$.
+\end{itemize}
+
+\textbf{Przypadek 2: Tryb aproksymacyjny ($k = 4$)}
+\begin{itemize}
+    \item Budowa $M$ (heurystyka kwadratowa, \verb|build_cost_matrix_quadratic_directed|): $\mathcal{O}(k^2 N^2)$.
+    \item Pętla filtrująca (koszt $K_i$ wywołań):
+        \begin{itemize}
+            \item Wywołanie $\mathcal{K}(M, 1)$ (algorytm węgierski): $\mathcal{O}(N^3)$.
+            \item Wywołanie $\mathcal{K}(M, j > 1)$ (heurystyka z kodu): $\mathcal{O}(kN)$.
+        \end{itemize}
+    \item Koszt pętli filtrującej: $\mathcal{O}(N^3 + (K_i - 1)kN)$.
+    \item Aktualizacja ($C_{ext}$ i `ApplyExtension`): $\mathcal{O}(k^2)$.
+    \item Całkowity koszt iteracji (dla $k=4$): $\mathcal{O}(N^2 k^2 + N^3 + K_i kN + k^2) = \mathcal{O}(N^2 + N^3 + K_i N) = \mathcal{O}(N^3 + K_i N)$.
+\end{itemize}
+
+\textbf{Przypadek 3: Tryb aproksymacyjny ($k > 4$)}
+\begin{itemize}
+    \item Obliczenie stopni: $\mathcal{O}(N^2 + k^2)$.
+    \item Budowa $M$ (heurystyka liniowa): $\mathcal{O}(kN)$.
+    \item Pętla filtrująca (koszt $K_i$ wywołań): $\mathcal{O}(N^3 + (K_i - 1)kN)$.
+    \item Aktualizacja ($C_{ext}$ i `ApplyExtension`): $\mathcal{O}(k^2)$.
+    \item Całkowity koszt iteracji: $\mathcal{O}(N^2 + k^2 + kN + N^3 + K_i kN + k^2) = \mathcal{O}(N^3 + k^2 + K_i kN)$.
+\end{itemize}
+
+\textbf{Całkowita złożoność czasowa (Najgorszy przypadek)}
+
+Zakładamy, że algorytm zawsze działa w Przypadku 3 ($k > 4$), który jest asymptotycznie najbardziej wymagający.
+Zakładamy najgorszy scenariusz dla pętli filtrującej, gdzie $K_i = \mathcal{O}(i)$ (np. $K_i = i$).
+
+$$ C_{total\_time} = \sum_{i=1}^{n} \left( \mathcal{O}(N^3 + k^2 + i \cdot kN) \right) $$
+$$ C_{total\_time} = \sum_{i=1}^{n} \mathcal{O}(N^3 + k^2) + \sum_{i=1}^{n} \mathcal{O}(i \cdot kN) $$
+$$ C_{total\_time} = \mathcal{O}(n(N^3 + k^2)) + \mathcal{O}(kN) \sum_{i=1}^{n} i $$
+$$ C_{total\_time} = \mathcal{O}(n(N^3 + k^2)) + \mathcal{O}(kN) \cdot \mathcal{O}(n^2) $$
+$$ C_{total\_time} = \mathcal{O}(n \cdot N^3 + n k^2 + n^2 kN) $$
+
+Jest to złożoność wielomianowa względem $N$, $k$ oraz $n$.
 
 % ---------------- MINIMALNE ROZSZERZENIE MULTIGRAFU ---------------- %
  
