@@ -1070,13 +1070,13 @@
     Algorytm dokładny jest praktyczny dla małych wartości $k$ ($k \leq 6-7$) i $n \leq 20$. Dla większych instancji zaleca się stosowanie algorytmów aproksymacyjnych lub heurystyk.
 
 
-    \subsection{Aproksymacyjne minimalne rozszerzenie multigrafu - algorytm pierwszy}
+\section{Aproksymacyjne minimalne rozszerzenie multigrafu - algorytm pierwszy}
 \label{sec:minimalne_rozszerzenie_approx}
 
 \noindent
 Zdefiniowane są dwa skierowane multigrafy: mniejszy $G_1 = (V_1, E_1)$ oraz większy $G_2 = (V_2, E_2)$. Multigrafy $G_1$ i $G_2$ są reprezentowane przez macierze sąsiedztwa $A_{G_1}$ i $A_{G_2}$. Wartość komórki $A_{G_1}[i, j]$ oznacza liczbę krawędzi skierowanych od wierzchołka $i$ do wierzchołka $j$ w grafie $G_1$. Podana jest także liczba szukanych kopii $m$. Idea algorytmu polega na iteracyjnym znajdowaniu \textit{najtańszej} kopii $G_1$ w $G_2$.
 
-\subsubsection{Opis algorytmu}
+\subsection{Opis algorytmu}
 \begin{enumerate}
     \item Iteruj po wszystkich możliwych nasionach, czyli parach ($u_1$, $u_2$), gdzie $u_1 \in V_1$ i $u_2 \in V_2$.
     \item Ustal zerową macierz kosztu $C_{u_1, u_2}$ o rozmiarze $|V_2|$ na $|V_2|$, która reprezentuje jakie i ile krawędzi skierowanych należy dodać do $G_2$ dla danych nasion ($u_1$, $u_2$).
@@ -1097,7 +1097,7 @@ Zdefiniowane są dwa skierowane multigrafy: mniejszy $G_1 = (V_1, E_1)$ oraz wi�
     \item Zwróć macierz $K$ reprezentującą minimalne rozszerzenie. 
 \end{enumerate}
 
-\subsubsection{Złożoność obliczeniowa}
+\subsection{Złożoność obliczeniowa}
 \noindent
 Pesymistyczna złożoność opisanego algorytmu aproksymacyjnego równa jest:
 \begin{equation}
@@ -1105,7 +1105,7 @@ Pesymistyczna złożoność opisanego algorytmu aproksymacyjnego równa jest:
 \end{equation}
 Czynnik $|V_1| \cdot |V_2|$ odpowiada za iteracyjne wybieranie nasion do mapowania. Czynnik $|V_1| \cdot |E_1| \cdot |E_2|$ to koszt zachłannego przeszukiwania grafu w celu minimalizacji kosztu. $m$ to liczba wybieranych macierzy kosztu (liczba kopii). Opisany algorytm ma zatem złożoność wielomianową. 
 
-\subsubsection{Uzasadnienie}
+\subsection{Uzasadnienie}
 
 \noindent
 Opisany algorytm jest heurystyką zachłanną naszego autorstwa. Algorytm gwarantuje, że macierz $K$ rzeczywiście uczyni $G_2$ rozszerzeniem zawierającym kopie $G_1$. \\ \\
@@ -1113,12 +1113,14 @@ Z definicji każdej macierzy $C_{u_1, u_2}$ wpisy odpowiadają dokładnie brakuj
 Niestety nie ma dowodu, że algorytm daje rozwiązanie optymalne, ani że ma stałą gwarancję aproksymacji. To heurystyka zachłanna — lokalnie wybiera najtańsze mapowanie — ale problem minimalnego rozszerzenia (znalezienie najmniejszego zbioru dodatkowych krawędzi, by powstały $m$ kopii) jest kombinatorycznie trudny i algorytm zachłanny może prowadzić do lokalnie optymalnych, ale globalnie złych decyzji.
 
 % --------------------------------- ALGORYTM APROKSYMACYJNY 2 ---------------------------------
-\subsection{Aproksymacyjne minimalne rozszerzenie multigrafu - algorytm drugi}
+\section{Aproksymacyjne minimalne rozszerzenie multigrafu - algorytm drugi}
 \label{sec:minimalne_rozszerzenie_approx_2}
 
-Algorytm implementuje metodę Murty'ego do znajdowania $j$ najlepszych (o najniższym koszcie) rozwiązań problemu przypisania, z kluczową modyfikacją: problem dotyczy przypisania $k$ wierszy "wzorca" do $N$ kolumn "grafu" ($k \le N$), modelowanego jako problem $N \times N$, gdzie $N-k$ wierszy to "atrapy".
+Algorytm implementuje metodę Murty'ego do znajdowania $j$ najlepszych rozwiązań problemu przypisania, z dwoma modyfikacjami: po pierwsze problem dotyczy przypisania $k$ wierszy mniejszego multigrafu do $N$ kolumn większego ($k \le N$), po drugie chcemy, żeby przypisania były różne pod względem zmapowanego podzbioru wierzchołków większego grafu. Do wyboru $j$ najlepszych rozwiązań używamy heurystycznej funkcji kosztu, która aproksymuje rzeczywisty koszt rozszerzenia multigrafu. 
 
-\subsubsection{Notacja i Definicje}
+Po zastosowaniu powyższych modyfikacji, algorytm Murty'ego znajduje $j$ najlepszych mapowań $k$ wierzchołków mniejszego grafu, do $N$ wierzchołków większego grafu, minimalizujących heurystyczny koszt rozszerzenia. Na koniec, kiedy mamy już $j$ najlepszych mapowań, po kolei dodajemy wszystkie brakujące krawędzie do większego grafu, tworząc jego rozszerzenie zawierające $j$ kopii mniejszego grafu, po drodze zliczając liczbę dodanych krawędzi.
+
+\subsection{Notacja i Definicje}
 
 \begin{definition}[Problem Przypisania]
 Dany jest graf dwudzielny z wierzchołkami $U = \{u_1, \dots, u_N\}$ (wiersze) i $V = \{v_1, \dots, v_N\}$ (kolumny) oraz macierz kosztów $M$ o wymiarach $N \times N$. Celem jest znalezienie permutacji $\sigma$ zbioru $\{1, \dots, N\}$ minimalizującej całkowity koszt:
@@ -1126,18 +1128,18 @@ $$ C(\sigma) = \sum_{i=1}^{N} M[i, \sigma(i)] $$
 \end{definition}
 
 \begin{definition}[Problem $k$-Mapowania]
-W naszym przypadku interesuje nas tylko przypisanie pierwszych $k$ wierszy (reprezentujących $P$). Mapowanie $f$ jest iniekcją $f: \{1, \dots, k\} \to \{1, \dots, N\}$. Algorytm \verb|linear_sum_assignment| znajduje pełną permutację $\sigma$, z której my ekstrahujemy $f$ jako:
+W naszym przypadku interesuje nas tylko przypisanie pierwszych $k$ wierszy (reprezentujących $P$). Mapowanie $f$ jest iniekcją $f: \{1, \dots, k\} \to \{1, \dots, N\}$. Algorytm węgierski znajduje pełną permutację $\sigma$, z której my ekstrahujemy $f$ jako:
 $$ f(i) = \sigma(i) \quad \text{dla } i \in \{1, \dots, k\} $$
 Zbiór wierszy "atrap" to $D = \{k+1, \dots, N\}$. Ich przypisania są ignorowane.
 \end{definition}
 
 \begin{definition}[Problem z Ograniczeniami]
-Definiujemy $H(M')$ jako funkcję rozwiązującą problem przypisania (np. algorytm węgierski) na macierzy $M'$. Rozwiązanie podproblemu z ograniczeniami jest realizowane przez modyfikację macierzy kosztów:
+Definiujemy $H(M')$ jako funkcję rozwiązującą problem przypisania (algorytm węgierski) na macierzy $M'$. Rozwiązanie podproblemu z ograniczeniami jest realizowane przez modyfikację macierzy kosztów:
 \begin{itemize}
     \item $I \subset \{1..k\} \times \{1..N\}$: zbiór "wymuszonych" przypisań (includes).
     \item $E \subset \{1..k\} \times \{1..N\}$: zbiór "zabronionych" przypisań (excludes).
 \end{itemize}
-Funkcja \verb|solve_with_constraints(I, E)| rozwiązuje problem $H(M')$ na zmodyfikowanej macierzy $M'$, gdzie:
+Rozwiązujemy ten problem poprzez wywołanie algorytmu $H(M')$ na zmodyfikowanej macierzy $M'$, gdzie:
 $$ M'[i, j] = 
 \begin{cases} 
     -\infty & \text{jeśli } (i, j) \in I \\
@@ -1146,71 +1148,119 @@ $$ M'[i, j] =
     M[i, j] & \text{w przeciwnym razie}
 \end{cases}
 $$
-Funkcja zwraca $(\text{Koszt}(f), f)$ używając oryginalnej macierzy $M$ do obliczenia kosztu, lub $(\text{None}, \text{None})$, jeśli ograniczenia $I$ nie zostały spełnione.
 \end{definition}
 
-\subsubsection{Heurystyczna Funkcja Kosztu}
+\subsection{Heurystyczna Funkcja Kosztu}
 
-Algorytm Murty'ego (opisany poniżej) operuje na macierzy kosztów $M$, która stanowi heurystyczną, "liniową" aproksymację rzeczywistego, "kwadratowego" kosztu rozszerzenia. Wybór tej heurystyki ma kluczowy wpływ na jakość znajdowanych rozwiązań -- lepsza heurystyka (bliższa rzeczywistemu kosztowi) sprawi, że $j$ najlepszych rozwiązań heurystycznych będzie z większym prawdopodobieństwem odpowiadać $j$ najlepszym rozwiązaniom rzeczywistym.
+Algorytm Murty'ego i węgierski (opisane poniżej) operują na macierzy kosztów $M$, która stanowi heurystyczną aproksymację rzeczywistego kosztu rozszerzenia. Wybór tej heurystyki ma kluczowy wpływ na jakość znajdowanych rozwiązań -- lepsza heurystyka (bliższa rzeczywistemu kosztowi) sprawi, że $j$ najlepszych rozwiązań heurystycznych będzie z większym prawdopodobieństwem odpowiadać $j$ najlepszym rozwiązaniom rzeczywistym. \\
 
-\begin{definition}[Heurystyka Różnicy Stopni]
-Podstawową i szybką heurystyką jest dopasowanie wierzchołków $P$ i $G$ na podstawie ich łącznej konektywności. Definiujemy koszt $M[i, j]$ (dla $i \le k$) jako absolutną różnicę stopni całkowitych (suma stopni wejściowych i wychodzących):
-$$ M[i, j] = |\text{deg}_{\text{total}}(p_i) - \text{deg}_{\text{total}}(g_j)| $$
-gdzie $p_i \in V_P$ oraz $g_j \in V_G$.
-\end{definition}
-
-\paragraph{Złożoność Obliczeniowa Heurystyki} Koszt zbudowania macierzy $M$ przy użyciu tej heurystyki składa się z dwóch części:
-\begin{enumerate}
-    \item Obliczenie wszystkich stopni dla $P$: Wymaga to zsumowania macierzy $A_P$, co ma koszt $\mathcal{O}(k^2)$.
-    \item Obliczenie wszystkich stopni dla $G$: Wymaga zsumowania macierzy $A_G$, co ma koszt $\mathcal{O}(N^2)$.
-    \item Wypełnienie $k$ pierwszych wierszy macierzy $M$: Wymaga $k \cdot N$ operacji (pobranie i odjęcie obliczonych wcześniej stopni).
-\end{enumerate}
-Całkowity koszt przygotowania macierzy heurystycznej $M$ jest zdominowany przez obliczenie stopni w grafie $G$, a zatem wynosi $\mathcal{O}(N^2)$. Koszt ten jest ponoszony jednokrotnie przed uruchomieniem procedury solvera.
-
-\paragraph{Walidacja} Heurystyka ta jest prosta i szybka. Bardziej zaawansowane (i potencjalnie dokładniejsze) funkcje heurystyczne, np. uwzględniające stopnie sąsiadów lub ważące osobno stopnie wejściowe i wyjściowe, mogą zostać opracowane i zweryfikowane w fazie testów empirycznych algorytmu.
-
-\subsubsection{Algorytm Główny (\texttt{compute\_k\_best})}
-
-Algorytm wykorzystuje kolejkę priorytetową (min-heap) $Q$ do przechowywania kandydatów na rozwiązania. Każdy element w $Q$ to krotka: $(C, I, E, f)$, gdzie $C$ to koszt mapowania $f$, a $I$ i $E$ to zbiory ograniczeń, które wygenerowały to rozwiązanie.
+Poniżej przedstawiono sześć propozycji heurystyk do obliczania macierzy kosztów $M$, które chcielibyśmy poddać testom w celu wybrania funkcji dającej najlepsze rezultaty.
 
 \begin{enumerate}
-    \item \textbf{Inicjalizacja:}
-    \begin{itemize}
-        \item Stwórz pustą listę rozwiązań $L_{sol}$.
-        \item Stwórz pusty zbiór "widzianych" mapowań $U_{seen}$.
-        \item Stwórz pustą kolejkę priorytetową $Q$.
-        \item Rozwiąż problem bez ograniczeń: $(C_1, f_1) \leftarrow \verb|solve_with_constraints|(\emptyset, \emptyset)$.
-        \item \textbf{if} $C_1 \neq \text{None}$ \textbf{then} $Q.\text{push}((C_1, \emptyset, \emptyset, f_1))$.
-    \end{itemize}
+    \item \textbf{Heurystyka Różnicy Stopni.}
+    Jest to najprostsza i najszybsza heurystyka. Zakłada, że wierzchołki o podobnej łącznej liczbie połączeń (niezależnie od kierunku) powinny być ze sobą mapowane. 
     
-    \item \textbf{Pętla główna:}
-    \item \textbf{while} $Q$ nie jest pusta \textbf{and} $|L_{sol}| < \text{max\_solutions}$:
-    \begin{enumerate}
-        \item $(C, I, E, f) \leftarrow Q.\text{pop}()$.
-        \item \textbf{if} $f \in U_{seen}$ \textbf{then continue} (pomiń duplikat).
-        \item $U_{seen}.\text{add}(f)$.
-        \item $L_{sol}.\text{append}((C, f))$.
-        
-        \item \textbf{Partycjonowanie (Rozgałęzienie):}
-        \item $I_{accum} \leftarrow I$ (akumulator wymuszonych krawędzi dla tej gałęzi).
-        \item \textbf{for} $i = 1$ \textbf{to} $k$:
-        \begin{itemize}
-            \item $(r, c) \leftarrow (i, f(i))$ (krawędź do partycjonowania).
-            \item $E_{new} \leftarrow E \cup \{(r, c)\}$ (nowy zbiór zabronionych).
-            
-            \item \emph{// Generowanie podproblemu P1: wymuś (1..i-1), zabroń (i)}
-            \item $(C_{new}, f_{new}) \leftarrow \verb|solve_with_constraints|(I_{accum}, E_{new})$.
-            
-            \item \textbf{if} $C_{new} \neq \text{None}$ \textbf{then} $Q.\text{push}((C_{new}, I_{accum}, E_{new}, f_{new}))$.
-            
-            \item \emph{// Przygotowanie do następnej iteracji: wymuś (i)}
-            \item $I_{accum} \leftarrow I_{accum} \cup \{(r, c)\}$.
-        \end{itemize}
-    \end{enumerate}
-    \item \textbf{Zakończenie:} Zwróć $L_{sol}$.
+    \textbf{Wzór:}
+    $$ M[i, j] = |\text{deg}_{\text{total}}(p_i) - \text{deg}_{\text{total}}(g_j)| $$
+    gdzie $\text{deg}_{\text{total}}(v) = \text{deg}_{in}(v) + \text{deg}_{out}(v)$.
+    
+    \textbf{Złożoność budowy:} $\mathcal{O}(N^2 + k^2 + kN)$. Zdominowana przez wstępne obliczenie stopni: $\mathcal{O}(N^2)$.
+
+    \item \textbf{Heurystyka Dopasowania Stopni Skierowanych.} % TODO: Dodaj opcje z roznym ignorowaniem roznicy, jesli w G jest wiecej niz w P
+    Nieco bardziej zaawansowana wersja dla grafów skierowanych. Koszt $M[i, j]$ jest sumą absolutnych różnic stopni wejściowych i wyjściowych.
+    
+    \textbf{Wzór:}
+    $$ M[i, j] = |\text{deg}_{in}(p_i) - \text{deg}_{in}(g_j)| + |\text{deg}_{out}(p_i) - \text{deg}_{out}(g_j)| $$
+    
+    \textbf{Złożoność budowy:} $\mathcal{O}(N^2 + k^2 + kN)$. Również zdominowana przez $\mathcal{O}(N^2)$.
+
+    \item \textbf{Heurystyka Dopasowania Stopni Skierowanych z Ignorowaniem Nadmiaru.}
+    Wersja modyfikowana poprzedniej heurystyki, która ignoruje nadmiar stopni w większym grafie. Pomaga to uniknąć karania wierzchołków w $G$ o większych stopniach niż ich odpowiedniki w $P$.
+
+    \textbf{Wzór:}
+    $$ M[i, j] = \max(0, \text{deg}_{in}(p_i) - \text{deg}_{in}(g_j)) + \max(0, \text{deg}_{out}(p_i) - \text{deg}_{out}(g_j)) $$
+
+    \textbf{Złożoność budowy:} $\mathcal{O}(N^2 + k^2 + kN)$. Również zdominowana przez $\mathcal{O}(N^2)$.
+
+    \item \textbf{Heurystyka Histogramu Stopni Sąsiadów.} % TODO: Sprawdz jak tworzyc te histogramy i liczyc ich odleglosc
+    Ta heurystyka analizuje najbliższe otoczenie. Dla każdego wierzchołka $p_i$ i $g_j$ tworzony jest histogram stopni ich bezpośrednich sąsiadów. Koszt $M[i, j]$ to odległość między tymi dwoma rozkładami.
+    
+    \textbf{Wzór:}
+    Niech $H_P(p_i)$ będzie histogramem stopni sąsiadów $p_i$, a $H_G(g_j)$ analogicznym histogramem dla $g_j$. Niech $S$ będzie większą z dwóch wartości stopni wierzchołków. Wtedy:
+    $$ M[i, j] = \sum_{s=0}^{S} |H_P(p_i)[s] - H_G(g_j)[s]| $$
+    Zakładamy, że histogramy są normalizowane do tej samej długości $S$.
+    
+    \textbf{Złożoność budowy:} Wymaga obliczenia stopni ($\mathcal{O}(N^2)$), zbudowania $N+k$ histogramów (w $\mathcal{O}(N^2)$) oraz obliczenia $kN$ odległości (w $\mathcal{O}(kN^2)$). Całkowity koszt to $\mathcal{O}(N^2 + kN^2)$.
+
+    \item \textbf{Heurystyka Dopasowania Struktury (Liczba Trójkątów).}
+    Ta heurystyka próbuje uchwycić naturę problemu przez mierzenie lokalnej struktury. Wierzchołek $p_i$ będący częścią wielu trójkątów powinien być mapowany na $g_j$, który również uczestniczy w wielu trójkątach.
+    
+    \textbf{Wzór:}
+    $$ M[i, j] = \alpha \cdot |\text{deg}(p_i) - \text{deg}(g_j)| + \beta \cdot \max(0, \text{triangles}(p_i) - \text{triangles}(g_j)) $$
+    gdzie $\text{triangles}(v)$ to liczba trójkątów, w których uczestniczy wierzchołek $v$. Karany jest tylko niedobór trójkątów w $g_j$ względem $p_i$.
+    
+    \textbf{Złożoność budowy:} Zdominowana przez koszt zliczania trójkątów w grafie $G$, który wynosi $\mathcal{O}(N^3)$ (przy użyciu mnożenia macierzy).
+
+    \item \textbf{Heurystyka Zachłannego Dopasowywania Sąsiadów.}
+    Najbardziej złożona obliczeniowo, ale potencjalnie najdokładniejsza heurystyka. Próbuje bezpośrednio oszacować koszt w najbliższym otoczeniu. Koszt $M[i, j]$ jest sumą "najlepszych" możliwych dopasowań dla sąsiadów $p_i$ wśród sąsiadów $g_j$.
+    
+    \textbf{Wzór (koncepcyjny):}
+    $$ M[i, j] = \sum_{p_k \in \mathcal{N}(p_i)} \left( \min_{g_l \in \mathcal{N}(g_j)} C(p_k, g_l) \right) $$
+    gdzie $\mathcal{N}(v)$ to sąsiedztwo $v$, a $C$ to prosta heurystyka kosztu (np. z Opcji 1).
+    
+    \textbf{Złożoność budowy:} Dla prostej heurystyki wypełnienie tymczasowej macierzy kosztów, to koszt $\mathcal{O}(N^2)$. Wypełnienie jednej komórki $M[i, j]$ kosztuje $\mathcal{O}(\text{deg}(p_i) \cdot \text{deg}(g_j))$. W najgorszym przypadku dla grafów gęstych (gdy $\text{deg} \approx k$ lub $N$), całkowity koszt wypełnienia $kN$ komórek wynosi $\mathcal{O}(k^2 N^2)$. Czyli koszt całej heurystyki to $\mathcal{O}(N^2 + k^2 N^2)$, czyli $\mathcal{O}(k^2 N^2)$.
 \end{enumerate}
 
-\subsubsection{Dowód Poprawności}
+\subsection{Algorytm Główny}
+
+Algorytm wykorzystuje kolejkę priorytetową $Q$ do przechowywania kandydatów na rozwiązania. Każdy element w $Q$ to krotka: $(C, I, E, f)$, gdzie $C$ to koszt mapowania $f$, a $I$ i $E$ to zbiory ograniczeń, które wygenerowały to rozwiązanie.
+
+\begin{algorithm}[H]
+    \caption{Algorytm Murty'ego}
+    \label{alg:murty_k_best}
+    \begin{algorithmic}[1]
+        \Require Macierz kosztów $M$, Liczba szukanych mapowań $\text{max\_solutions}$, Liczba wierszy wzorca $k$
+        \Ensure Lista $L_{sol}$ par $(C, f)$ zawierająca do $\text{max\_solutions}$ najlepszych mapowań
+        
+        \State $L_{sol} \gets []$ \Comment{Inicjalizacja listy rozwiązań}
+        \State $U_{seen} \gets \emptyset$ \Comment{Inicjalizacja zbioru użytych mapowań}
+        \State $Q \gets \text{new PriorityQueue()}$ \Comment{Inicjalizacja kolejki priorytetowej}
+        
+        \State $(C_1, f_1) \gets \Call{solve\_with\_constraints}{\emptyset, \emptyset}$ \Comment{Rozwiąż problem bez ograniczeń}
+        \If{$C_1 \neq \text{None}$}
+            \State $Q.\text{push}((C_1, \emptyset, \emptyset, f_1))$
+        \EndIf
+        
+        \While{$Q$ nie jest pusta \textbf{and} $|L_{sol}| < \text{max\_solutions}$}
+            \State $(C, I, E, f) \leftarrow Q.\text{pop}()$
+            
+            \If{$f \in U_{seen}$} \Comment{Pomiń duplikat}
+                \State \textbf{continue}
+            \EndIf
+            \State $U_{seen}.\text{add}(f)$
+            \State $L_{sol}.\text{append}((C, f))$
+            
+            \State $I_{accum} \leftarrow I$ \Comment{Akumulator wymuszonych krawędzi}
+            
+            \For{$i \gets 1$ \textbf{to} $k$}
+                \State $(r, c) \leftarrow (i, f(i))$ \Comment{Krawędź do partycjonowania}
+                \State $E_{new} \leftarrow E \cup \{(r, c)\}$ \Comment{Nowy zbiór zabronionych}
+                
+                \State $(C_{new}, f_{new}) \leftarrow \Call{solve\_with\_constraints}{I_{accum}, E_{new}}$
+                
+                \If{$C_{new} \neq \text{None}$}
+                    \State $Q.\text{push}((C_{new}, I_{accum}, E_{new}, f_{new}))$
+                \EndIf
+                
+                \State $I_{accum} \leftarrow I_{accum} \cup \{(r, c)\}$ \Comment{Przygotowanie do nast. iteracji}
+            \EndFor
+        \EndWhile
+        
+        \State \Return $L_{sol}$
+    \end{algorithmic}
+\end{algorithm}
+
+\subsection{Dowód Poprawności}
 
 \begin{theorem}[Zakończenie Algorytmu]
 Algorytm \verb|compute_k_best| zawsze kończy działanie w skończonym czasie.
@@ -1244,11 +1294,11 @@ W ten sposób $\bigcup_{i=1}^{k} P_i = S \setminus \{f_1\}$.
 
 Ponieważ (1) partycjonowanie jest kompletne i rozłączne, (2) optymalne rozwiązanie każdego podproblemu $P_i$ (czyli $H(P_i)$) jest najlepszym kandydatem z tego podzbioru, oraz (3) kolejka priorytetowa $Q$ zawsze przechowuje najlepszych kandydatów ze wszystkich dotychczas wygenerowanych podzbiorów, to gdy \verb|Q.pop()| zwraca $f_j$, musi to być rozwiązanie o globalnie $j$-tym najniższym koszcie spośród wszystkich możliwych rozwiązań.
 
-\section{Analiza Złożoności}
+\subsection{Analiza Złożoności}
 
 Analizujemy koszt znalezienia $j$ najlepszych rozwiązań.
 
-\subsubsection{Złożoność Pamięciowa}
+\subsection{Złożoność Pamięciowa}
 
 \begin{itemize}
     \item Macierz kosztów \verb|cost_matrix| (oryginalna i kopie): $\mathcal{O}(N^2)$.
@@ -1259,7 +1309,7 @@ Analizujemy koszt znalezienia $j$ najlepszych rozwiązań.
 \end{itemize}
 \textbf{Całkowita złożoność pamięciowa: $\mathcal{O}(N^2 + j k^2)$.}
 
-\subsubsection{Złożoność Obliczeniowa (Czasowa)}
+\subsection{Złożoność Obliczeniowa (Czasowa)}
 
 \begin{itemize}
     \item Główna pętla \verb|while| wykonuje się $\mathcal{O}(j)$ razy (ignorując duplikaty, których w praktyce jest niewiele w porównaniu do $j$).
@@ -1275,7 +1325,7 @@ $$ C_{\text{total}} = \underbrace{\mathcal{O}(j \cdot \log(jk))}_{\text{Zarządz
 Ponieważ $\mathcal{O}(N^3)$ jest znacznie większe niż $\mathcal{O}(\log(jk))$, ten drugi człon jest pomijalny.
 \textbf{Całkowita złożoność obliczeniowa: $\mathcal{O}(j \cdot k \cdot N^3)$.}
 
-\subsubsection{Krok 2: Zastosowanie Rozszerzeń i Końcowa Analiza Złożoności}
+\subsection{Krok 2: Zastosowanie Rozszerzeń i Końcowa Analiza Złożoności}
 \label{sec:zastosowanie_rozszerzen}
 
 Powyższa analiza dotyczy kosztu procedury-solvera, która znajduje $n$ najlepszych mapowań heurystycznych (ustawiając $j=n$). Pełen algorytm aproksymacyjny składa się z dwóch głównych faz:
