@@ -236,8 +236,6 @@
 
     \pagebreak
 
-   
-
 
 % ---------------- MINIMALNE ROZSZERZENIE MULTIGRAFU ---------------- %
 
@@ -975,142 +973,47 @@
         \item Wartość $m$ ma mniejszy wpływ na czas wykonania niż $k$ (dla małych $m$)
     \end{itemize}
 
-    \subsubsection{Heurystyki i algorytmy aproksymacyjne}
-    \label{subsubsec:heurystyki}
+    \subsection{Aproksymacyjne minimalne rozszerzenie multigrafu - algorytm pierwszy}
+    \label{sec:minimalne_rozszerzenie_approx}
 
-    \textbf{1. Algorytm zachłanny (Greedy)}
+    \noindent
+    Zdefiniowane są dwa skierowane multigrafy: mniejszy $G_1 = (V_1, E_1)$ oraz większy $G_2 = (V_2, E_2)$. Multigrafy $G_1$ i $G_2$ są reprezentowane przez macierze sąsiedztwa $A_{G_1}$ i $A_{G_2}$. Wartość komórki $A_{G_1}[i, j]$ oznacza liczbę krawędzi skierowanych od wierzchołka $i$ do wierzchołka $j$ w grafie $G_1$. Podana jest także liczba szukanych kopii $m$. Idea algorytmu polega na iteracyjnym znajdowaniu \textit{najtańszej} kopii $G_1$ w $G_2$.
 
-    \textit{Idea:} Zamiast rozważać wszystkie możliwe $m$-kombinacje osadzeń, wybieraj zachłannie następne najlepsze osadzenie.
+    \subsubsection{Opis algorytmu}
+    \begin{enumerate}
+        \item Iteruj po wszystkich możliwych nasionach, czyli parach ($u_1$, $u_2$), gdzie $u_1 \in V_1$ i $u_2 \in V_2$.
+        \item Ustal zerową macierz kosztu $C_{u_1, u_2}$ o rozmiarze $|V_2|$ na $|V_2|$, która reprezentuje jakie i ile krawędzi skierowanych należy dodać do $G_2$ dla danych nasion ($u_1$, $u_2$).
+        \item Do mapowania dodaj takich sąsiadów nasion $u'_1 \in V_1$ i $u'_2 \in V_2$, które minimalizują koszt zdefiniowany wzorem:
+        \begin{equation}
+            Koszt = max(0, (A_{G_1}[u_1, u'_1] - A_{G_2}[u_2, u'_2])) + max(0, A_{G_1}[u'_1, u_1] - A_{G_2}[u'_2, u_2]))
+        \end{equation}
+        Zapisz do odpowiednich komórek macierzy $C_{u_1, u_2}$:
+        \begin{equation}
+            C_{u_1, u_2}[u_2,  u'_2] = C_{u_1, u_2}[u_2,  u'_2] + max(0, (A_{G_1}[u_1, u'_1] - A_{G_2}[u_2, u'_2]))
+        \end{equation}
+        \begin{equation}
+            C_{u_1, u_2}[u'_2,  u_2] = C_{u_1, u_2}[u'_2,  u_2] + max(0, (A_{G_1}[u'_1, u_1] - A_{G_2}[u'_2, u_2]))
+        \end{equation}
+        \item Następnie próbuj zachłannie rozszerzyć mapowanie na resztę wierzchołków $G_1$. Do mapowania dodawaj tylko wierzchołki, które nie zostały jeszcze zmapowane.
+        \item Ze wszystkich macierzy kosztu ($|V_1| \cdot |V_2|$ macierzy) wybierz $m$ najlepszych. Przez najlepszą macierz rozumiemy taką, dla której suma wartości we wszystkich komórkach jest najmniejsza. Każda macierz kosztu odpowiada jednemu mapowaniu - jeśli dowolna para z $m$ macierzy mapuje te same wierzchołki w $G_2$, wybierz kolejną $m+1$ najlepszą macierz kosztu i ponownie sprawdź warunek. Docelowo, żadna para z wybranych $m$ macierzy kosztu nie może mapować tych samych wierzchołków w $G_2$.
+        \item Macierz $K$ o rozmiarze $|V_2|$ na $|V_2|$ skonstruuj w następujący sposób - $K[i, j] = max_{k=1,...,m}(C_k[i, j])$, gdzie $C_k$ dla $k=1,...,m$ to $m$ najlepszych macierzy kosztu.
+        \item Zwróć macierz $K$ reprezentującą minimalne rozszerzenie.
+    \end{enumerate}
 
-    \textit{Algorytm:}
-    \begin{itemize}
-        \item Dla pierwszej kopii $P$: znajdź osadzenie wymagające najmniej krawędzi
-        \item Dodaj te krawędzie do $G$
-        \item Dla kolejnych kopii: znajdź osadzenie wymagające najmniej nowych krawędzi (biorąc pod uwagę już dodane)
-        \item Powtórz $m$ razy
-    \end{itemize}
-
-    \textit{Złożoność:} $O\left(m \times \binom{n}{k} \times k! \times k^2\right)$
-
-    \textit{Jakość:} Nie gwarantuje optymalności, ale może dać dobre przybliżenie w krótszym czasie.
-
-    \textbf{2. Algorytm genetyczny}
-
-    \textit{Idea:} Ewolucyjne poszukiwanie dobrego rozwiązania.
-
-    \textit{Komponenty:}
-    \begin{itemize}
-        \item \textbf{Populacja:} Zbiór kandydatów rozwiązań ($m$-krotki osadzeń)
-        \item \textbf{Funkcja przystosowania:} Liczba krawędzi do dodania (minimalizowana)
-        \item \textbf{Operatory:} Krzyżowanie (wymiana osadzeń między rozwiązaniami), mutacja (losowa zmiana osadzenia)
-        \item \textbf{Selekcja:} Wybór najlepszych rozwiązań do następnego pokolenia
-    \end{itemize}
-
-    \textit{Zalety:} Możliwość znalezienia dobrych rozwiązań dla dużych instancji.
-
-    \textit{Wady:} Brak gwarancji optymalności, wymaga tuningu parametrów.
-
-    \textbf{3. Symulowane wyżarzanie (Simulated Annealing)}
-
-    \textit{Idea:} Iteracyjne ulepszanie rozwiązania z możliwością akceptacji gorszych rozwiązań.
-
-    \textit{Algorytm:}
-    \begin{itemize}
-        \item Start: losowa $m$-krotka osadzeń
-        \item Iteracyjnie: modyfikuj losowo jedno osadzenie
-        \item Akceptuj jeśli poprawia rozwiązanie lub z prawdopodobieństwem zależnym od "temperatury"
-        \item "Temperatura" maleje z czasem, redukując akceptację gorszych rozwiązań
-    \end{itemize}
-
-    \textit{Zalety:} Pozwala na wyjście z lokalnych minimów.
-
-    \textbf{4. Programowanie całkowitoliczbowe (ILP)}
-
-    \textit{Idea:} Sformułuj problem jako program całkowitoliczbowy.
-
-    \textit{Zmienne:}
-    \begin{itemize}
-        \item $x_{ij} \in \{0, 1\}$ - czy osadzenie $i$ jest wybrane dla kopii $j$
-        \item $y_e \in \mathbb{N}_0$ - liczba kopii krawędzi $e$ do dodania
-    \end{itemize}
-
-    \textit{Ograniczenia:}
-    \begin{itemize}
-        \item Każda kopia musi mieć dokładnie jedno osadzenie: $\sum_i x_{ij} = 1$ dla każdego $j$
-        \item Osadzenia muszą być różne (odpowiadać różnym kombinacjom wierzchołków)
-        \item Dla każdej krawędzi $e$: $y_e \geq \max_j \{\Delta_{ij}(e) \cdot x_{ij}\}$ gdzie $\Delta_{ij}(e)$ to krotność $e$ w brakujących krawędziach osadzenia $i$ dla kopii $j$
-    \end{itemize}
-
-    \textit{Cel:} Minimalizuj $\sum_e y_e$
-
-    \textit{Zalety:} Optymalne rozwiązanie (jeśli solver zakończy się w rozsądnym czasie).
-
-    \textit{Wady:} Może być wolne dla dużych instancji.
-
-    \subsection{Podsumowanie}
-    \label{subsec:podsumowanie_m}
-
-    W niniejszej sekcji przedstawiono kompleksowe podejście do problemu minimalnego rozszerzenia multigrafu zawierającego $m$ kopii podgrafu wzorcowego:
-
-    \begin{itemize}
-        \item \textbf{Sformułowano problem} i uzasadniono jego praktyczne znaczenie
-        \item \textbf{Zdefiniowano formalnie} kluczowe pojęcia: rozszerzenie, koszt rozszerzenia, osadzenie k-wierzchołkowe, brakujące krawędzie, minimalne rozszerzenie zawierające $m$ kopii
-        \item \textbf{Opracowano algorytm dokładny} oparty na pełnym przeszukiwaniu przestrzeni rozwiązań
-        \item \textbf{Udowodniono poprawność} algorytmu (kompletność, poprawność, minimalność)
-        \item \textbf{Przeprowadzono szczegółową analizę złożoności}:
-        \begin{itemize}
-            \item Złożoność czasowa: $O\left(\binom{n}{k} \times k! \times k^2 + \binom{\binom{n}{k}}{m} \times (k!)^m \times m \times k^2\right)$
-            \item Złożoność pamięciowa: $O\left(\binom{n}{k} \times k! \times k^2\right)$
-            \item Problem jest NP-trudny
-        \end{itemize}
-        \item \textbf{Zaprezentowano przykład działania} algorytmu na konkretnych danych
-        \item \textbf{Zaproponowano optymalizacje} implementacyjne i algorytmy aproksymacyjne (zachłanny, genetyczny, simulated annealing, ILP)
-    \end{itemize}
-
-    Algorytm dokładny jest praktyczny dla małych wartości $k$ ($k \leq 6-7$) i $n \leq 20$. Dla większych instancji zaleca się stosowanie algorytmów aproksymacyjnych lub heurystyk.
-
-
-\section{Aproksymacyjne minimalne rozszerzenie multigrafu - algorytm pierwszy}
-\label{sec:minimalne_rozszerzenie_approx}
-
-\noindent
-Zdefiniowane są dwa skierowane multigrafy: mniejszy $G_1 = (V_1, E_1)$ oraz większy $G_2 = (V_2, E_2)$. Multigrafy $G_1$ i $G_2$ są reprezentowane przez macierze sąsiedztwa $A_{G_1}$ i $A_{G_2}$. Wartość komórki $A_{G_1}[i, j]$ oznacza liczbę krawędzi skierowanych od wierzchołka $i$ do wierzchołka $j$ w grafie $G_1$. Podana jest także liczba szukanych kopii $m$. Idea algorytmu polega na iteracyjnym znajdowaniu \textit{najtańszej} kopii $G_1$ w $G_2$.
-
-\subsection{Opis algorytmu}
-\begin{enumerate}
-    \item Iteruj po wszystkich możliwych nasionach, czyli parach ($u_1$, $u_2$), gdzie $u_1 \in V_1$ i $u_2 \in V_2$.
-    \item Ustal zerową macierz kosztu $C_{u_1, u_2}$ o rozmiarze $|V_2|$ na $|V_2|$, która reprezentuje jakie i ile krawędzi skierowanych należy dodać do $G_2$ dla danych nasion ($u_1$, $u_2$).
-    \item Do mapowania dodaj takich sąsiadów nasion $u'_1 \in V_1$ i $u'_2 \in V_2$, które minimalizują koszt zdefiniowany wzorem:
+    \subsubsection{Złożoność obliczeniowa}
+    \noindent
+    Pesymistyczna złożoność opisanego algorytmu aproksymacyjnego równa jest:
     \begin{equation}
-        Koszt = max(0, (A_{G_1}[u_1, u'_1] - A_{G_2}[u_2, u'_2])) + max(0, A_{G_1}[u'_1, u_1] - A_{G_2}[u'_2, u_2]))
+        O(|V_1| \cdot |V_2| \cdot (|V_1| \cdot |E_1| \cdot |E_2|) \cdot m) = O(|V_1|^2 \cdot |V_2| \cdot |E_1| \cdot |E_2| \cdot m)
     \end{equation}
-    Zapisz do odpowiednich komórek macierzy $C_{u_1, u_2}$:
-    \begin{equation}
-        C_{u_1, u_2}[u_2,  u'_2] = C_{u_1, u_2}[u_2,  u'_2] + max(0, (A_{G_1}[u_1, u'_1] - A_{G_2}[u_2, u'_2]))
-    \end{equation}
-    \begin{equation}
-        C_{u_1, u_2}[u'_2,  u_2] = C_{u_1, u_2}[u'_2,  u_2] + max(0, (A_{G_1}[u'_1, u_1] - A_{G_2}[u'_2, u_2]))
-    \end{equation}
-    \item Następnie próbuj zachłannie rozszerzyć mapowanie na resztę wierzchołków $G_1$. Do mapowania dodawaj tylko wierzchołki, które nie zostały jeszcze zmapowane.
-    \item Ze wszystkich macierzy kosztu ($|V_1| \cdot |V_2|$ macierzy) wybierz $m$ najlepszych. Przez najlepszą macierz rozumiemy taką, dla której suma wartości we wszystkich komórkach jest najmniejsza. Każda macierz kosztu odpowiada jednemu mapowaniu - jeśli dowolna para z $m$ macierzy mapuje te same wierzchołki w $G_2$, wybierz kolejną $m+1$ najlepszą macierz kosztu i ponownie sprawdź warunek. Docelowo, żadna para z wybranych $m$ macierzy kosztu nie może mapować tych samych wierzchołków w $G_2$. 
-    \item Macierz $K$ o rozmiarze $|V_2|$ na $|V_2|$ skonstruuj w następujący sposób - $K[i, j] = max_{k=1,...,m}(C_k[i, j])$, gdzie $C_k$ dla $k=1,...,m$ to $m$ najlepszych macierzy kosztu.
-    \item Zwróć macierz $K$ reprezentującą minimalne rozszerzenie. 
-\end{enumerate}
+    Czynnik $|V_1| \cdot |V_2|$ odpowiada za iteracyjne wybieranie nasion do mapowania. Czynnik $|V_1| \cdot |E_1| \cdot |E_2|$ to koszt zachłannego przeszukiwania grafu w celu minimalizacji kosztu. $m$ to liczba wybieranych macierzy kosztu (liczba kopii). Opisany algorytm ma zatem złożoność wielomianową.
 
-\subsection{Złożoność obliczeniowa}
-\noindent
-Pesymistyczna złożoność opisanego algorytmu aproksymacyjnego równa jest:
-\begin{equation}
-    O(|V_1| \cdot |V_2| \cdot (|V_1| \cdot |E_1| \cdot |E_2|) \cdot m) = O(|V_1|^2 \cdot |V_2| \cdot |E_1| \cdot |E_2| \cdot m)
-\end{equation}
-Czynnik $|V_1| \cdot |V_2|$ odpowiada za iteracyjne wybieranie nasion do mapowania. Czynnik $|V_1| \cdot |E_1| \cdot |E_2|$ to koszt zachłannego przeszukiwania grafu w celu minimalizacji kosztu. $m$ to liczba wybieranych macierzy kosztu (liczba kopii). Opisany algorytm ma zatem złożoność wielomianową. 
+    \subsubsection{Uzasadnienie}
 
-\subsection{Uzasadnienie}
-
-\noindent
-Opisany algorytm jest heurystyką zachłanną naszego autorstwa. Algorytm gwarantuje, że macierz $K$ rzeczywiście uczyni $G_2$ rozszerzeniem zawierającym kopie $G_1$. \\ \\
-Z definicji każdej macierzy $C_{u_1, u_2}$ wpisy odpowiadają dokładnie brakującym krawędziom. Jeśli na końcu algorytm utworzy macierz $K$ zgodnie z opisem, to po dodaniu tych krawędzi w $G_2$ wszystkie odwzorowania skonstruowane przez algorytm staną się izomorficznymi (liczbowo zgodnymi) kopiami $G_1$. Zatem algorytm zwraca dopuszczalne rozwiązanie. \\ \\ 
-Niestety nie ma dowodu, że algorytm daje rozwiązanie optymalne, ani że ma stałą gwarancję aproksymacji. To heurystyka zachłanna — lokalnie wybiera najtańsze mapowanie — ale problem minimalnego rozszerzenia (znalezienie najmniejszego zbioru dodatkowych krawędzi, by powstały $m$ kopii) jest kombinatorycznie trudny i algorytm zachłanny może prowadzić do lokalnie optymalnych, ale globalnie złych decyzji.
+    \noindent
+    Opisany algorytm jest heurystyką zachłanną naszego autorstwa. Algorytm gwarantuje, że macierz $K$ rzeczywiście uczyni $G_2$ rozszerzeniem zawierającym kopie $G_1$. \\ \\
+    Z definicji każdej macierzy $C_{u_1, u_2}$ wpisy odpowiadają dokładnie brakującym krawędziom. Jeśli na końcu algorytm utworzy macierz $K$ zgodnie z opisem, to po dodaniu tych krawędzi w $G_2$ wszystkie odwzorowania skonstruowane przez algorytm staną się izomorficznymi (liczbowo zgodnymi) kopiami $G_1$. Zatem algorytm zwraca dopuszczalne rozwiązanie. \\ \\
+    Niestety nie ma dowodu, że algorytm daje rozwiązanie optymalne, ani że ma stałą gwarancję aproksymacji. To heurystyka zachłanna — lokalnie wybiera najtańsze mapowanie — ale problem minimalnego rozszerzenia (znalezienie najmniejszego zbioru dodatkowych krawędzi, by powstały $m$ kopii) jest kombinatorycznie trudny i algorytm zachłanny może prowadzić do lokalnie optymalnych, ale globalnie złych decyzji.
 
 % --------------------------------- ALGORYTM APROKSYMACYJNY 2 ---------------------------------
 \section{Aproksymacyjne minimalne rozszerzenie multigrafu - algorytm drugi}
@@ -1354,7 +1257,8 @@ Złożoność ta jest drastycznie niższa niż $\mathcal{O}(J \cdot k \cdot N^3)
 % \section{Testy}
 % \section{Podsumowanie}
 
-% \section{Bibliografia}
+
+    \section{Bibliografia}
 
 % \bibliographystyle{plain}
 % \bibliography{refs}
