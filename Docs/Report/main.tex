@@ -1016,12 +1016,12 @@
     Niestety nie ma dowodu, że algorytm daje rozwiązanie optymalne, ani że ma stałą gwarancję aproksymacji. To heurystyka zachłanna — lokalnie wybiera najtańsze mapowanie — ale problem minimalnego rozszerzenia (znalezienie najmniejszego zbioru dodatkowych krawędzi, by powstały $m$ kopii) jest kombinatorycznie trudny i algorytm zachłanny może prowadzić do lokalnie optymalnych, ale globalnie złych decyzji.
 
 % --------------------------------- ALGORYTM APROKSYMACYJNY 2 ---------------------------------
-\section{Aproksymacyjne minimalne rozszerzenie multigrafu - algorytm drugi}
+\subsection{Aproksymacyjne minimalne rozszerzenie multigrafu - algorytm drugi}
 \label{sec:minimalne_rozszerzenie_approx_2}
 
 Algorytm polega na losowym wybraniu $n$ k-elementowych podzbiorów wierzchołków z grafu $G$, a następnie użyciu pewnej heurystyki do stworzenia macierzy kosztów przypisania pomiędzy konkretnymi wierzchołkami z grafu $P$, oraz grafu $G$. Następnie na tej macierzy wywoływany jest Algorytm Węgierski, który znajduje najlepsze mapowanie wierzchołków, w sensie przyjętej heurystyki. Ta operacja jest powtarzana na każdym z $n$ podzbiorów, tak żeby uzyskać wymagane n podgrafów grafu $G$, różniących się przynajmniej jednym wierzchołkiem.
 
-\subsection{Heurystyczna Funkcja Kosztu}
+\subsubsection{Heurystyczna Funkcja Kosztu}
 
 Algorytm Węgierski operuje na macierzy kosztów $M$, która stanowi heurystyczną aproksymację rzeczywistego kosztu rozszerzenia. Wybór tej heurystyki ma kluczowy wpływ na jakość znajdowanych rozwiązań -- lepsza heurystyka (bliższa rzeczywistemu kosztowi) sprawi, że najlepsze rozwiązania heurystyczne będzą z większym prawdopodobieństwem odpowiadać najlepszym rozwiązaniom rzeczywistym. \\
 
@@ -1082,7 +1082,7 @@ Poniżej przedstawiono sześć propozycji heurystyk do obliczania macierzy koszt
     \textbf{Złożoność budowy:} Dla prostej heurystyki wypełnienie tymczasowej macierzy kosztów, to koszt $\mathcal{O}(N^2)$. Wypełnienie jednej komórki $M[i, j]$ kosztuje $\mathcal{O}(\text{deg}(p_i) \cdot \text{deg}(g_j))$. W najgorszym przypadku dla grafów gęstych (gdy $\text{deg} \approx k$ lub $N$), całkowity koszt wypełnienia $kN$ komórek wynosi $\mathcal{O}(k^2 N^2)$. Czyli koszt całej heurystyki to $\mathcal{O}(N^2 + k^2 N^2)$, czyli $\mathcal{O}(k^2 N^2)$.
 \end{enumerate}
 
-\subsection{Opis Algorytmów}
+\subsubsection{Opis Algorytmów}
 
 Ta część opisuje dwie części algorytmu aproksymacyjnego: fazę generowania k-elementowych podzbiorów wierzchołków większego grafu oraz fazę znajdowania najlepszych mapowań dla tych podzbiorów. Lepsze rozwiązanie można uzyskać poprzez iterowanie po podzbiorach i znajdowanie najlepszych mapowań dla każdego z nich, np. korzystając z Algorytmu Murty'ego, jednak z powodu ograniczenia wielomianowej złożoności czasowej, w tej wersji algorytmu generujemy tylko $n$ podzbiorów.
 
@@ -1091,7 +1091,7 @@ Ta część opisuje dwie części algorytmu aproksymacyjnego: fazę generowania 
     \item \textbf{Faza 2:} Następnie, algorytm iteruje $n$ razy. W każdej iteracji $i$, bierze $i$-ty podzbiór $S_i$ z listy $\mathcal{L}$ i rozwiązuje dla niego \emph{mały} ($k \times k$) problem przypisania (Algorytmem Węgierskim), aby znaleźć najlepsze mapowanie $f_i: V_P \to S_i$. Znalezione rozszerzenie jest dodawane do grafu $G$.
 \end{enumerate}
 
-\subsubsection{Algorytm Fazy 1: Generowanie Podzbiorów}
+\textbf{Algorytm Fazy 1: Generowanie Podzbiorów}
 
 Celem tej fazy jest szybkie wygenerowanie listy $\mathcal{L}$ $n$ unikalnych $k$-elementowych podzbiorów $V_G$.
 
@@ -1123,7 +1123,7 @@ Celem tej fazy jest szybkie wygenerowanie listy $\mathcal{L}$ $n$ unikalnych $k$
     \end{algorithmic}
 \end{algorithm}
 
-\subsubsection*{Dowód Poprawności (Faza 1)}
+\textbf*{Dowód Poprawności (Faza 1)}
 Poprawność procedury oznacza gwarancję zakończenia i zwrócenia listy $\mathcal{L}$ zawierającej $n$ (lub mniej, jeśli niemożliwe) unikalnych $k$-elementowych podzbiorów.
 \begin{itemize}
     \item \textbf{Zakończenie:} Pętla \texttt{for} (linia 6) jest ściśle ograniczona przez $n$. W każdej iteracji wywoływana jest operacja \texttt{next()} generatora kombinacji. Generator ten zakończy działanie (zwracając \texttt{false} w linii 7) po wygenerowaniu wszystkich $\binom{N}{k}$ kombinacji. Ponieważ $n$ jest skończone, algorytm zawsze się zakończy.
@@ -1131,7 +1131,7 @@ Poprawność procedury oznacza gwarancję zakończenia i zwrócenia listy $\math
     \item \textbf{Ilość Wyjścia:} Algorytm próbuje pobrać $n$ podzbiorów. Jeśli $n > \binom{N}{k}$, generator wyczerpie się wcześniej, a pętla zostanie przerwana (linia 10). Algorytm poprawnie zwróci $\binom{N}{k}$ podzbiorów, czyli wszystkie, które istnieją. W przeciwnym razie zwróci dokładnie $n$ podzbiorów.
 \end{itemize}
 
-\subsubsection*{Analiza Złożoności (Faza 1)}
+\textbf*{Analiza Złożoności (Faza 1)}
 Analiza ta dotyczy kosztu wygenerowania $n$ podzbiorów.
 \begin{itemize}
     \item \textbf{Inicjalizacja (linie 1-5):} Generator jest inicjowany na pierwszym elemencie, np. $\{v_1, \dots, v_k\}$ w czasie $\mathcal{O}(k)$.
@@ -1143,7 +1143,7 @@ Analiza ta dotyczy kosztu wygenerowania $n$ podzbiorów.
 \end{itemize}
 \textbf{Całkowita złożoność obliczeniowa (Faza 1): $\mathcal{O}(n \cdot k)$.}
 
-\subsubsection{Algorytm Fazy 2: Iteracyjne Rozwiązywanie i Rozszerzanie}
+\textbf{Algorytm Fazy 2: Iteracyjne Rozwiązywanie i Rozszerzanie}
 
 Faza 2 pobiera listę $\mathcal{L}$ $n$ podzbiorów-kandydatów i iteracyjnie znajduje najlepsze mapowanie $V_P \to S_i$ dla każdego $S_i \in \mathcal{L}$, stosując rozszerzenie do grafu $G$.
 
@@ -1242,7 +1242,7 @@ Analizujemy koszt obliczeniowy (czasowy) Algorytmu \ref{alg:solve_subsets} w zal
 \end{itemize}
 \textbf{Całkowita złożoność obliczeniowa (Faza 2): $\mathcal{O}(n \cdot N^2 + n \cdot k^3)$.}
 
-\subsection{Końcowa Analiza Złożoności Całkowitej}
+\subsubsection{Końcowa Analiza Złożoności}
 \label{sec:final_complexity_v4}
 
 Całkowity koszt algorytmu aproksymacyjnego v.4 to suma kosztów obu faz:
@@ -1251,7 +1251,7 @@ $$C_{\text{total}} = \mathcal{O}(nk) + \mathcal{O}(n \cdot N^2 + n \cdot k^3)$$
 
 \textbf{Całkowita złożoność obliczeniowa algorytmu: $\mathcal{O}(nk) + \mathcal{O}(n \cdot N^2 + n \cdot k^3)$.}
 
-\subsubsection*{Uwaga}
+\textbf*{Uwaga}
 Złożoność ta jest drastycznie niższa niż $\mathcal{O}(J \cdot k \cdot N^3)$ poprzedniego algorytmu. Ceną za tę szybkość jest jakość heurystyki. Poprzedni algorytm (oparty na Murty'm) gwarantował znalezienie $n$ najlepszych rozwiązań (w sensie heurystyki $M$) spośród \emph{wszystkich} $\binom{N}{k}$ podzbiorów. Ten algorytm przeszukuje tylko $n$ preselekcjonowanych podzbiorów; jeśli optymalne rozwiązanie leży poza nimi, algorytm ten go nie znajdzie.
 
 % \section{Testy}
