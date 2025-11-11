@@ -1211,48 +1211,91 @@ Poniżej przedstawiono sześć propozycji heurystyk do obliczania macierzy koszt
     \textbf{Złożoność budowy:} Dla prostej heurystyki wypełnienie tymczasowej macierzy kosztów, to koszt $\mathcal{O}(N^2)$. Wypełnienie jednej komórki $M[i, j]$ kosztuje $\mathcal{O}(\text{deg}(p_i) \cdot \text{deg}(g_j))$. W najgorszym przypadku dla grafów gęstych (gdy $\text{deg} \approx k$ lub $N$), całkowity koszt wypełnienia $kN$ komórek wynosi $\mathcal{O}(k^2 N^2)$. Czyli koszt całej heurystyki to $\mathcal{O}(N^2 + k^2 N^2)$, czyli $\mathcal{O}(k^2 N^2)$.
 \end{enumerate}
 
-\subsection{Algorytm Główny}
+\subsection{Opis Algorytmów}
 
-Algorytm wykorzystuje kolejkę priorytetową $Q$ do przechowywania kandydatów na rozwiązania. Każdy element w $Q$ to krotka: $(C, I, E, f)$, gdzie $C$ to koszt mapowania $f$, a $I$ i $E$ to zbiory ograniczeń, które wygenerowały to rozwiązanie.
+Cały algorytm aproksymacyjny składa się z dwóch faz. Faza 1 znajduje $n$ heurystycznych mapowań. Faza 2 oblicza na ich podstawie minimalne rozszerzenie.
+
+Faza 1 opiera się na dwóch kluczowych procedurach pomocniczych: (1) Algorytm Węgierski, który rozwiązuje problem przypisania, oraz (2) Procedurze Rozwiązywania z Ograniczeniami , która jest dodatkiem do Algorytmu Węgierskiego.
+
+\subsubsection{Procedura Pomocnicza: Algorytm Węgierski}
+
+Wewnątrz procedur używana jest funkcja \texttt{HungarianAlgorithm}. Odpowiada ona klasycznemu \textbf{Algorytmowi Węgierskiemu}.
+
+\begin{definition}[Algorytm Węgierski]
+Algorytm ten rozwiązuje Liniowy Problem Przypisania (LAP) w czasie wielomianowym.
+\begin{itemize}
+    \item \textbf{Dane wejściowe:} Macierz kosztów $M$ (rozmiar $N \times N$).
+    \item \textbf{Dane wyjściowe:} Permutacja $\sigma$ zbioru $\{1, \dots, N\}$ (lub równoważnie, zbiór $N$ par (wiersz, kolumna), np. $(\text{rows}, \text{cols})$), taka, że koszt całkowity $C = \sum_{i=1}^{N} M[i, \sigma(i)]$ jest zminimalizowany.
+    \item \textbf{Złożoność obliczeniowa:} $\mathcal{O}(N^3)$.
+\end{itemize}
+W kontekście naszej analizy, jest to podstawowa operacja o koszcie $\mathcal{O}(N^3)$, na której budowane są bardziej złożone procedury.
+\end{definition}
+
+\subsubsection{Procedura Pomocnicza: Rozwiązywanie z Ograniczeniami}
+    
+Ten algorytm jest rozwinięciem \texttt{HungarianAlgorithm}, które modyfikuje macierz $M$ w celu uwzględnienia zabronionych wierzchołków $E$.
 
 \begin{algorithm}[H]
-    \caption{Algorytm Murty'ego}
-    \label{alg:murty_k_best}
+    \caption{Procedura Pomocnicza - Rozwiązywanie z Ograniczeniami}
+    \label{alg:solve_with_constraints}
     \begin{algorithmic}[1]
-        \Require Macierz kosztów $M$, Liczba szukanych mapowań $\text{max\_solutions}$, Liczba wierszy wzorca $k$
-        \Ensure Lista $L_{sol}$ par $(C, f)$ zawierająca do $\text{max\_solutions}$ najlepszych mapowań
+        \Require Oryginalna macierz kosztów $M$, zbiór zabronionych wierzchołków $E \subset V_G$, wielkość wzorca $k$
+        \Ensure Para $($ heurystyczny koszt mapowania  $C$, mapowanie $f)$
         
-        \State $L_{sol} \gets []$ \Comment{Inicjalizacja listy rozwiązań}
-        \State $U_{seen} \gets \emptyset$ \Comment{Inicjalizacja zbioru użytych mapowań}
-        \State $Q \gets \text{new PriorityQueue()}$ \Comment{Inicjalizacja kolejki priorytetowej}
+        \State $M' \gets \Call{copy}{M}$ \Comment{Skopiuj oryginalną macierz kosztów}
         
-        \State $(C_1, f_1) \gets \Call{solve\_with\_constraints}{\emptyset, \emptyset}$ \Comment{Rozwiąż problem bez ograniczeń}
-        \If{$C_1 \neq \text{None}$}
-            \State $Q.\text{push}((C_1, \emptyset, \emptyset, f_1))$
+        \For{\textbf{each} $v$ \textbf{in} $E$} \Comment{Zastosuj ograniczenia}
+            \For{$i \gets 1$ \textbf{to} $k$} \Comment{Zablokuj mapowania z $P$ na wierzchołek $v \in G$}
+                \State $M'[i, v] \gets \infty$
+            \EndFor
+        \EndFor
+        
+        \State $(\text{rows}, \text{cols}) \gets \Call{StandardAssignmentSolver}{M'}$ \Comment{Wywołaj Algorytm Węgierski}
+        \If{koszt jest $\infty$}
+            \State \Return $(\text{None}, \text{None})$
         \EndIf
         
-        \While{$Q$ nie jest pusta \textbf{and} $|L_{sol}| < \text{max\_solutions}$}
-            \State $(C, I, E, f) \leftarrow Q.\text{pop}()$
+        \State $f \gets \Call{ExtractMapping}{\text{rows}, \text{cols}, k}$ \Comment{Wyodrębnij mapowanie dla $k$ wierszy}
+        
+        \State $C \gets \Call{CalculateTrueCost}{M, f}$ \Comment{Oblicz koszt na oryginalnej macierzy $M$}
+        \State \Return $(C, f)$
+    \end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Algorytm Główny Fazy 1: Wyszukiwanie Heurystyczne}
+
+Algorytm Fazy 1 wykorzystuje kolejkę priorytetową $Q$ do przechowywania kandydatów na rozwiązania. Każdy element w $Q$ to krotka: $(C, E, f)$, gdzie $C$ to koszt mapowania $f$, a $E$ to zbiór zabronionych wierzchołków, który wygenerował to rozwiązanie.
+
+\begin{algorithm}[H]
+    \caption{Faza 1: Heurystyczne Wyszukiwanie $n$ Mapowań}
+    \label{alg:heuristic_search}
+    \begin{algorithmic}[1]
+        \Require Macierz kosztów $M$, Liczba szukanych mapowań $n$, Liczba wierszy wzorca $k$
+        \Ensure Lista $L_{sol}$ par $(C, f)$ zawierająca do $n$ najlepszych mapowań
+        
+        \State $L_{sol} \gets []$ \Comment{Inicjalizacja listy rozwiązań}
+        \State $Q \gets \text{new PriorityQueue()}$ \Comment{Inicjalizacja kolejki priorytetowej}
+        
+        \State $(C_1, f_1) \gets \Call{solve\_with\_constraints}{M, \emptyset, k}$ \Comment{Rozwiąż problem bez ograniczeń}
+        \If{$C_1 \neq \text{None}$}
+            \State $Q.\text{push}((C_1, \emptyset, f_1))$
+        \EndIf
+        
+        \While{$Q$ nie jest pusta \textbf{and} $|L_{sol}| < n$}
+            \State $(C, E, f) \leftarrow Q.\text{pop}()$
             
-            \If{$f \in U_{seen}$} \Comment{Pomiń duplikat}
-                \State \textbf{continue}
-            \EndIf
-            \State $U_{seen}.\text{add}(f)$
-            \State $L_{sol}.\text{append}((C, f))$
+            \State $L_{sol}.\text{append}((C, f))$ \Comment{Dodaj najlepsze bieżące rozwiązanie}
             
-            \State $I_{accum} \leftarrow I$ \Comment{Akumulator wymuszonych krawędzi}
-            
+            \State \Comment{Partycjonowanie (Rozgałęzienie) - generowanie $k$ nowych podproblemów}
             \For{$i \gets 1$ \textbf{to} $k$}
-                \State $(r, c) \leftarrow (i, f(i))$ \Comment{Krawędź do partycjonowania}
-                \State $E_{new} \leftarrow E \cup \{(r, c)\}$ \Comment{Nowy zbiór zabronionych}
+                \State $v \gets f(i)$ \Comment{Pobierz wierzchołek $v \in G$ użyty w mapowaniu}
+                \State $E_{new} \leftarrow E \cup \{v\}$ \Comment{Stwórz nowy zbiór zabronionych wierzchołków}
                 
-                \State $(C_{new}, f_{new}) \leftarrow \Call{solve\_with\_constraints}{I_{accum}, E_{new}}$
+                \State $(C_{new}, f_{new}) \leftarrow \Call{solve\_with\_constraints}{M, E_{new}, k}$
                 
                 \If{$C_{new} \neq \text{None}$}
-                    \State $Q.\text{push}((C_{new}, I_{accum}, E_{new}, f_{new}))$
+                    \State $Q.\text{push}((C_{new}, E_{new}, f_{new}))$
                 \EndIf
-                
-                \State $I_{accum} \leftarrow I_{accum} \cup \{(r, c)\}$ \Comment{Przygotowanie do nast. iteracji}
             \EndFor
         \EndWhile
         
@@ -1260,102 +1303,264 @@ Algorytm wykorzystuje kolejkę priorytetową $Q$ do przechowywania kandydatów n
     \end{algorithmic}
 \end{algorithm}
 
+\subsubsection{Algorytm Główny Fazy 2: Zastosowanie Rozszerzeń}
+
+Po znalezieniu $n$ mapowań, Faza 2 oblicza końcowe rozszerzenie.
+
+\begin{algorithm}[H]
+    \caption{Faza 2: Zastosowanie Rozszerzeń}
+    \label{alg:apply_extension}
+    \begin{algorithmic}[1]
+        \Require Lista mapowań $L_{sol}$, Oryginalny graf $A_G$, Wzorzec $A_P$
+        \Ensure Końcowa macierz $A_{final}$, Całkowity koszt $C_{total}$
+        
+        \State $A_{final} \gets \Call{copy}{A_G}$
+        \State $C_{total} \gets 0$
+        \For{\textbf{each} $(C, f)$ \textbf{in} $L_{sol}$}
+            \For{\textbf{each} $(row, col)$ \textbf{in} $f$} \Comment{Iteruj przez mapowanie $f$}
+                \State value $\gets \max(0, A_P[row, col] - A_G[row, col])$
+                \State $C_{total} \gets C_{total} + value$ \Comment{Zlicz brakujące krawędzie}
+                \State $A_{final}[row, col] \gets A_G[row, col] + value$ \Comment{Aktualizuj krawędź do wymaganego maksimum}
+            \EndFor
+        \EndFor
+        
+        \State \Return $A_{final}, C_{total}$
+    \end{algorithmic}
+\end{algorithm}
+
 \subsection{Dowód Poprawności}
 
+Należy zauważyć, że algorytm \ref{alg:heuristic_search} \textbf{nie jest} algorytmem Murty'ego. Jest to heurystyczny algorytm przeszukiwania zachłannego (best-first search), który nie gwarantuje znalezienia $n$ globalnie najlepszych rozwiązań. Nie gwarantuje on również, że znalezione mapowania $f_i$ będą używały różnych podzbiorów wierzchołków (choć kolejka priorytetowa promuje eksplorację różnych rozwiązań). Algorytm ten \emph{może} wielokrotnie zwrócić to samo mapowanie, jeśli zostanie ono wygenerowane przez różne gałęzie przeszukiwania o najniższym koszcie.
+
+Poprawność algorytmu rozumiemy jako jego zdolność do zakończenia działania i zwrócenia $n$ mapowań oraz poprawnie obliczonego rozszerzenia dla \emph{tych} mapowań.
+
 \begin{theorem}[Zakończenie Algorytmu]
-Algorytm \verb|compute_k_best| zawsze kończy działanie w skończonym czasie.
+Algorytm (Faza 1 + Faza 2) zawsze kończy działanie w skończonym czasie.
 \end{theorem}
 \begin{proof}
-Liczba możliwych mapowań $f$ (iniekcji z $\{1..k\}$ do $\{1..N\}$) jest skończona i wynosi $P(N, k) = N! / (N-k)!$. Zbiór \verb|seen_mappings| ($U_{seen}$) gwarantuje, że każde unikalne mapowanie $f$ jest dodawane do $L_{sol}$ i partycjonowane co najwyżej raz. Ponieważ pętla \verb|while| jest również ograniczona przez \verb|max_solutions|, algorytm musi się zakończyć.
+Faza 1 (Algorytm \ref{alg:heuristic_search}): Pętla `while` wykonuje się dokładnie $n$ razy (po jednym razie na każde rozwiązanie dodane do $L_{sol}$). W każdej iteracji wykonuje $k$ wywołań procedury \ref{alg:solve_with_constraints}. Każde wywołanie \ref{alg:solve_with_constraints} wywołuje \texttt{StandardAssignmentSolver} (Algorytm Węgierski), który jest algorytmem o skończonej, wielomianowej złożoności ($\mathcal{O}(N^3)$). Ponieważ $n$, $k$ i $N$ są skończone, Faza 1 kończy działanie.
+Faza 2 (Algorytm \ref{alg:apply_extension}): Pętla `for` wykonuje się $n$ razy, a wewnętrzne pętle wykonują $k^2$ operacji. Jest to również skończona liczba kroków.
 \end{proof}
 
-\begin{theorem}[Kompletność i Optymalność]
-Algorytm generuje rozwiązania w kolejności niemalejącego kosztu. Jeśli istnieje $j$ unikalnych rozwiązań, algorytm znajdzie je w $j$ pierwszych (unikalnych) iteracjach pętli.
+\begin{theorem}[Poprawność Rozszerzenia]
+Graf $A_{final}$ zwrócony przez Algorytm \ref{alg:apply_extension} zawiera podgrafy izomorficzne z $P$ dla wszystkich $n$ mapowań $f \in L_{sol}$ znalezionych w Fazie 1.
 \end{theorem}
 \begin{proof}
-Dowód opiera się na poprawności schematu partycjonowania Murty'ego.
-Niech $S$ będzie zbiorem wszystkich dozwolonych mapowań (rozwiązań). Niech $f_1$ będzie optymalnym rozwiązaniem (1-szym najlepszym).
-W kroku 2.c.i, algorytm generuje $k$ podproblemów $P_1, \dots, P_k$ na podstawie $f_1$.
+Dowód wynika z konstrukcji Fazy 2. Algorytm iteruje przez każde mapowanie $f_i \in L_{sol}$. Dla każdego $f_i$ i każdej wymaganej krawędzi $(u,v)$ w $A_P$, algorytm sprawdza krawędź $(g_u, g_v)$ w $A_{final}$. Jeśli krotność $A_{final}[g_u, g_v]$ jest mniejsza niż $A_P[u, v]$, jest ona aktualizowana do $A_P[u, v]$ (linia 12). Ponieważ krotności krawędzi są tylko zwiększane (nigdy zmniejszane), po zakończeniu pętli `for` dla $f_i$, wszystkie wymagane krawędzie dla $f_i$ są obecne. Ponieważ dzieje się to dla wszystkich $f \in L_{sol}$, ostateczny graf $A_{final}$ gwarantuje pokrycie dla wszystkich $n$ mapowań.
 \end{proof}
-\begin{lemma}[Partycjonowanie Murty'ego]
-Zbiory rozwiązań dla podproblemów $P_1, \dots, P_k$ są parami rozłączne, a ich suma (unia) jest równa $S \setminus \{f_1\}$.
-\end{lemma}
-\begin{proof}[Dowód (Szkic)]
-Niech $f_1 = \{(1, c_1), \dots, (k, c_k)\}$.
-\begin{itemize}
-    \item $P_1$ zawiera rozwiązania, które \emph{nie} mają $(1, c_1)$.
-    \item $P_2$ zawiera rozwiązania, które \emph{mają} $(1, c_1)$, ale \emph{nie} mają $(2, c_2)$.
-    \item $P_i$ zawiera rozwiązania, które \emph{mają} $\{(1, c_1), \dots, (i-1, c_{i-1})\}$, ale \emph{nie} mają $(i, c_i)$.
-\end{itemize}
-Są one z definicji rozłączne.
-Weźmy dowolne rozwiązanie $f' \in S \setminus \{f_1\}$. Musi ono różnić się od $f_1$ na co najmniej jednej pozycji. Niech $i$ będzie pierwszym indeksem (wierszem), gdzie $f'(i) \neq c_i$. Oznacza to, że $f'$ pasuje do $f_1$ na pozycjach $1, \dots, i-1$, ale nie na $i$. Zatem $f'$ należy do zbioru $P_i$.
-W ten sposób $\bigcup_{i=1}^{k} P_i = S \setminus \{f_1\}$.
-\end{proof}
-
-Ponieważ (1) partycjonowanie jest kompletne i rozłączne, (2) optymalne rozwiązanie każdego podproblemu $P_i$ (czyli $H(P_i)$) jest najlepszym kandydatem z tego podzbioru, oraz (3) kolejka priorytetowa $Q$ zawsze przechowuje najlepszych kandydatów ze wszystkich dotychczas wygenerowanych podzbiorów, to gdy \verb|Q.pop()| zwraca $f_j$, musi to być rozwiązanie o globalnie $j$-tym najniższym koszcie spośród wszystkich możliwych rozwiązań.
 
 \subsection{Analiza Złożoności}
 
-Analizujemy koszt znalezienia $j$ najlepszych rozwiązań.
+Analizujemy koszt obu faz algorytmu.
 
-\subsection{Złożoność Pamięciowa}
-
+\subsubsection{Złożoność Pamięciowa}
 \begin{itemize}
-    \item Macierz kosztów \verb|cost_matrix| (oryginalna i kopie): $\mathcal{O}(N^2)$.
-    \item Lista rozwiązań \verb|solutions|: Przechowuje $j$ mapowań, każde o rozmiarze $k$. Koszt: $\mathcal{O}(j k)$.
-    \item Zbiór \verb|seen_mappings|: Przechowuje $j$ krotek o rozmiarze $k$. Koszt: $\mathcal{O}(j k)$.
-    \item Kolejka priorytetowa \verb|queue|: W najgorszym razie, każde z $j$ znalezionych rozwiązań generuje $k$ nowych kandydatów. Rozmiar kolejki jest rzędu $\mathcal{O}(j k)$. Każdy element przechowuje ograniczenia $I$ i $E$, które mogą rosnąć do $\mathcal{O}(k)$.
-    Koszt kolejki: $\mathcal{O}(j k \cdot k) = \mathcal{O}(j k^2)$.
+    \item Macierze $M$, $M'$, $A_G$, $A_{final}$: $\mathcal{O}(N^2)$.
+    \item Lista $L_{sol}$: Przechowuje $n$ mapowań, każde o rozmiarze $k$. Koszt: $\mathcal{O}(nk)$.
+    \item Kolejka priorytetowa $Q$: W $i$-tej iteracji pętli `while`, $Q$ zawiera $i \cdot k$ kandydatów. Maksymalny rozmiar $Q$ to $\mathcal{O}(nk)$. Każdy element przechowuje zbiór $E$, który w najgorszym razie (głębokie drzewo) może mieć rozmiar $\mathcal{O}(N)$.
+    Koszt kolejki: $\mathcal{O}(nk \cdot N)$.
 \end{itemize}
-\textbf{Całkowita złożoność pamięciowa: $\mathcal{O}(N^2 + j k^2)$.}
+\textbf{Całkowita złożoność pamięciowa: $\mathcal{O}(N^2 + n k N)$.}
 
-\subsection{Złożoność Obliczeniowa (Czasowa)}
-
-\begin{itemize}
-    \item Główna pętla \verb|while| wykonuje się $\mathcal{O}(j)$ razy (ignorując duplikaty, których w praktyce jest niewiele w porównaniu do $j$).
-    \item Wewnątrz pętli, pętla \verb|for| (partycjonowanie) wykonuje się $k$ razy.
-    \item Wewnątrz pętli \verb|for| wywoływana jest funkcja \verb|solve_with_constraints|.
-    \item Koszt \verb|solve_with_constraints| jest zdominowany przez \verb|linear_sum_assignment|, którego złożoność dla macierzy $N \times N$ wynosi $\mathcal{O}(N^3)$.
-    \item Operacje na kolejce priorytetowej (\verb|push|/\verb|pop|) mają koszt $\mathcal{O}(\log |Q|) = \mathcal{O}(\log(jk))$.
-\end{itemize}
-Całkowity koszt to suma kosztów $\mathcal{O}(j)$ kroków "wyjęcia" rozwiązania i $\mathcal{O}(j \cdot k)$ kroków "rozwiązania podproblemu".
-
-$$ C_{\text{total}} = \underbrace{\mathcal{O}(j \cdot \log(jk))}_{\text{Zarządzanie kolejką}} + \underbrace{\mathcal{O}(j \cdot k \cdot N^3)}_{\text{Rozwiązywanie podproblemów}} $$
-
-Ponieważ $\mathcal{O}(N^3)$ jest znacznie większe niż $\mathcal{O}(\log(jk))$, ten drugi człon jest pomijalny.
-\textbf{Całkowita złożoność obliczeniowa: $\mathcal{O}(j \cdot k \cdot N^3)$.}
-
-\subsection{Krok 2: Zastosowanie Rozszerzeń i Końcowa Analiza Złożoności}
-\label{sec:zastosowanie_rozszerzen}
-
-Powyższa analiza dotyczy kosztu procedury-solvera, która znajduje $n$ najlepszych mapowań heurystycznych (ustawiając $j=n$). Pełen algorytm aproksymacyjny składa się z dwóch głównych faz:
+\subsubsection{Złożoność Obliczeniowa (Czasowa)}
 
 \begin{enumerate}
-    \item \textbf{Faza 1 (Znalezienie mapowań):} Wywołanie procedury \verb|compute_k_best| z $j=n$. Koszt tej operacji, jak wykazano powyżej, wynosi:
-    $$ C_{\text{solver}} = \mathcal{O}(n \cdot k \cdot N^3) $$
-    Wynikiem jest lista $L_{sol} = \{f_1, \dots, f_n\}$ zawierająca $n$ unikalnych mapowań.
+    \item \textbf{Koszt Fazy 1 (Algorytm \ref{alg:heuristic_search}):}
+    \begin{itemize}
+        \item Pętla `while` wykonuje się $n$ razy.
+        \item W każdej iteracji pętli `while`:
+            \item Jedna operacja `Q.pop()`: $\mathcal{O}(\log(nk))$.
+            \item $k$ wywołań pętli `for`.
+            \item Wewnątrz pętli `for`:
+                \item Jedno wywołanie \Call{solve\_with\_constraints}{} (Algorytm \ref{alg:solve_with_constraints}).
+                \item Koszt \Call{solve\_with\_constraints}{} jest zdominowany przez \texttt{StandardAssignmentSolver}, czyli $\mathcal{O}(N^3)$.
+                \item Jedna operacja `Q.push()`: $\mathcal{O}(\log(nk))$.
+        \item Całkowity koszt $i$-tej iteracji `while`: $\mathcal{O}(k \cdot (N^3 + \log(nk)))$.
+    \end{itemize}
+    Całkowity koszt Fazy 1 to $n$ (iteracje `while`) razy koszt wewnętrznej pętli:
+    $$ C_{\text{Faza 1}} = \mathcal{O}(n \cdot k \cdot N^3) $$
     
-    \item \textbf{Faza 2 (Zastosowanie rozszerzeń):} Po uzyskaniu listy $L_{sol}$, algorytm musi zastosować je do grafu $A_G$, aby utworzyć końcowe rozszerzenie $A_{final}$. Procedura ta iteruje $n$ razy (raz dla każdego mapowania $f_i \in L_{sol}$). Wewnątrz każdej iteracji, sprawdza $k^2$ potencjalnych krawędzi (z $A_P$) i aktualizuje macierz $A_{final}$ (inicjalizowaną jako $A_G$), zliczając przy tym dodane krawędzie.
+    \item \textbf{Koszt Fazy 2 (Algorytm \ref{alg:apply_extension}):}
+    \begin{itemize}
+        \item Pętla `for` po $L_{sol}$ wykonuje się $n$ razy.
+        \item Wewnętrzne pętle (po $u$ i $v$) wykonują $k^2$ operacji.
+    \end{itemize}
+    Całkowity koszt Fazy 2 to:
+    $$ C_{\text{Faza 2}} = \mathcal{O}(n \cdot k^2) $$
 \end{enumerate}
 
-\begin{definition}[Rzeczywisty Koszt Rozszerzenia $C_{ext}$]
-Koszt ten, w przeciwieństwie do heurystyki liniowej, jest kosztem "kwadratowym" i reprezentuje faktyczną liczbę krawędzi do dodania.
-$$C_{ext}(f, A) = \sum_{u, v \in V_P} \max(0, A_P[u, v] - A[f(u), f(v)])$$
-\end{definition}
+Całkowity koszt algorytmu to suma kosztów obu faz (oraz kosztu budowy macierzy $M$, $\mathcal{O}(N^2 + k^2 + kN)$):
+$$ C_{\text{total}} = C_{\text{Budowa M}} + C_{\text{Faza 1}} + C_{\text{Faza 2}} $$
+$$ C_{\text{total}} = \mathcal{O}(N^2 + k^2 + kN) + \mathcal{O}(n \cdot k \cdot N^3) + \mathcal{O}(n \cdot k^2) $$
 
-Koszt Fazy 2 (zastosowania rozszerzeń) jest następujący:
-$$ C_{\text{rozszerzenie}} = \sum_{i=1}^{n} (\text{koszt obliczenia } C_{ext}(f_i, A_{curr}) \text{ i aktualizacji } A_{curr}) $$
-Koszt obliczenia $C_{ext}$ i aktualizacji macierzy dla jednego mapowania $f_i$ wymaga iteracji przez $k \times k$ par wierzchołków $P$, a więc wynosi $\mathcal{O}(k^2)$.
-Całkowity koszt Fazy 2 to:
-$$ C_{\text{rozszerzenie}} = \sum_{i=1}^{n} \mathcal{O}(k^2) = \mathcal{O}(n \cdot k^2) $$
-
-Całkowity koszt algorytmu to suma kosztów obu faz:
-$$ C_{\text{total}} = C_{\text{solver}} + C_{\text{rozszerzenie}} $$
-$$ C_{\text{total}} = \mathcal{O}(n \cdot k \cdot N^3) + \mathcal{O}(n \cdot k^2) $$
-
-Ponieważ $N \ge k$, złożoność $\mathcal{O}(N^3)$ jest zawsze asymptotycznie większa lub równa $\mathcal{O}(k^2)$. W związku z tym, dominującym członem jest koszt Fazy 1 (znalezienia mapowań).
-
+Zakładając $N \ge k$, dominującym członem jest koszt Fazy 1.
 \textbf{Całkowita złożoność obliczeniowa: $\mathcal{O}(n \cdot k \cdot N^3)$.}
+
+% \subsection{Algorytm Główny}
+
+% Cały algorytm aproksymacyjny składa się z dwóch faz. Faza 1 jest oparta na zmodyfikowanym algorytmie Murty'ego i znajduje $n$ najlepszych heurystycznych mapowań. Faza 2 oblicza na ich podstawie minimalne rozszerzenie.
+
+% Poniżej znajduje się opis procedury pomocniczej, która znajduje pojedyncze rozwiązanie.
+
+% \begin{algorithm}[H]
+%     \caption{Procedura Pomocnicza - Rozwiązywanie z Ograniczeniami}
+%     \label{alg:solve_with_constraints}
+%     \begin{algorithmic}[1]
+%         \Require Oryginalna macierz kosztów $M$, zbiór zabronionych $E$, wielkość wzorca $k$
+%         \Ensure Para $(C, f)$
+        
+%         \State $M' \gets \Call{copy}{M}$ \Comment{Skopiuj oryginalną macierz kosztów}
+        
+%         \For{\textbf{each} $v$ \textbf{in} $E$} \Comment{Zastosuj ograniczenia}
+%             \For($i \gets 1$ \textbf{to} $k$) \Comment{Zablokuj mapowania na dany wierzchołek}
+%                 \State $M'[i, v] \gets \infty$
+%             \EndFor
+%         \EndFor
+        
+%         \State $(\text{rows}, \text{cols}) \gets \Call{StandardAssignmentSolver}{M'}$ \Comment{Wywołaj np. algorytm węgierski}
+        
+%         \State $f \gets \Call{ExtractMapping}{\text{rows}, \text{cols}, k}$ \Comment{Wyodrębnij mapowanie dla $k$ wierszy}
+        
+%         \State $C \gets \Call{CalculateTrueCost}{M, f}$ \Comment{Oblicz koszt na oryginalnej macierzy $M$}
+%         \State \Return $(C, f)$
+%     \end{algorithmic}
+% \end{algorithm}
+
+% Algorytm główny Fazy 1 wykorzystuje kolejkę priorytetową $Q$ do przechowywania kandydatów na rozwiązania. Każdy element w $Q$ to krotka: $(C, E, f)$, gdzie $C$ to koszt mapowania $f$, a $E$ to zbiór ograniczeń, które wygenerowały to rozwiązanie.
+
+% \begin{algorithm}[H]
+%     \caption{Zmodyfikowany Algorytm Murty'ego - Znajdowanie $n$ mapowań}
+%     \label{alg:murty_k_best}
+%     \begin{algorithmic}[1]
+%         \Require Macierz kosztów $M$, Liczba szukanych mapowań $n$, Liczba wierszy wzorca $k$
+%         \Ensure Lista $L_{sol}$ par $(C, f)$ zawierająca do $n$ najlepszych mapowań
+        
+%         \State $L_{sol} \gets []$ \Comment{Inicjalizacja listy rozwiązań}
+%         \State $Q \gets \text{new PriorityQueue()}$ \Comment{Inicjalizacja kolejki priorytetowej}
+        
+%         \State $(C_1, f_1) \gets \Call{solve\_with\_constraints}{M, \emptyset, k}$ \Comment{Rozwiąż problem bez ograniczeń}
+%         \If{$C_1 \neq \text{None}$}
+%             \State $Q.\text{push}((C_1, \emptyset, f_1))$
+%         \EndIf
+        
+%         \While{$Q$ nie jest pusta \textbf{and} $|L_{sol}| < n$}
+%             \State $(C, E, f) \leftarrow Q.\text{pop}()$
+            
+%             \State $L_{sol}.\text{append}((C, f))$
+            
+%             \State $E_{accum} \leftarrow E$ \Comment{Akumulator zabronionych krawędzi}
+            
+%             \For{$i \gets 1$ \textbf{to} $k$}
+%                 \State $E_{new} \leftarrow E \cup \{f(i)\}$ \Comment{Nowy zbiór zabronionych wierzchołków}
+                
+%                 \State $(C_{new}, f_{new}) \leftarrow \Call{solve\_with\_constraints}{M, E_{new}, k}$
+                
+%                 \If{$C_{new} \neq \text{None}$}
+%                     \State $Q.\text{push}((C_{new}, E_{new}, f_{new}))$
+%                 \EndIf
+%             \EndFor
+%         \EndWhile
+        
+%         \State \Return $L_{sol}$
+%     \end{algorithmic}
+% \end{algorithm}
+
+% \subsection{Dowód Poprawności}
+
+% \begin{theorem}[Zakończenie Algorytmu]
+% Algorytm Murty'ego (Algorytm \ref{alg:murty_k_best}) zawsze kończy działanie w skończonym czasie.
+% \end{theorem}
+% \begin{proof}
+% Liczba możliwych mapowań $f$ (iniekcji z $\{1..k\}$ do $\{1..N\}$) jest skończona i wynosi $P(N, k) = N! / (N-k)!$. Zbiór \texttt{seen\_mappings} ($U_{seen}$) gwarantuje, że każde unikalne mapowanie $f$ jest dodawane do $L_{sol}$ i partycjonowane co najwyżej raz. Ponieważ pętla \texttt{while} jest również ograniczona przez $n$ (\texttt{max\_solutions}), algorytm musi się zakończyć.
+% \end{proof}
+
+% \begin{theorem}[Kompletność i Optymalność]
+% Algorytm generuje rozwiązania w kolejności niemalejącego kosztu. Jeśli istnieje $j$ unikalnych rozwiązań, algorytm znajdzie je w $j$ pierwszych (unikalnych) iteracjach pętli.
+% \end{theorem}
+% \begin{proof}
+% Dowód opiera się na poprawności schematu partycjonowania Murty'ego.
+% Niech $S$ będzie zbiorem wszystkich dozwolonych mapowań (rozwiązań). Niech $f_1$ będzie optymalnym rozwiązaniem (1-szym najlepszym).
+% W kroku 2.c.i (linii 23 algorytmu), algorytm generuje $k$ podproblemów $P_1, \dots, P_k$ na podstawie $f_1$.
+% \end{proof}
+% \begin{lemma}[Partycjonowanie Murty'ego]
+% Zbiory rozwiązań dla podproblemów $P_1, \dots, P_k$ są parami rozłączne, a ich suma (unia) jest równa $S \setminus \{f_1\}$.
+% \end{lemma}
+% \begin{proof}[Dowód (Szkic)]
+% Niech $f_1 = \{(1, c_1), \dots, (k, c_k)\}$.
+% \begin{itemize}
+%     \item $P_1$ zawiera rozwiązania, które \emph{nie} mają $(1, c_1)$.
+%     \item $P_2$ zawiera rozwiązania, które \emph{mają} $(1, c_1)$, ale \emph{nie} mają $(2, c_2)$.
+%     \item $P_i$ zawiera rozwiązania, które \emph{mają} $\{(1, c_1), \dots, (i-1, c_{i-1})\}$, ale \emph{nie} mają $(i, c_i)$.
+% \end{itemize}
+% Są one z definicji rozłączne.
+% Weźmy dowolne rozwiązanie $f' \in S \setminus \{f_1\}$. Musi ono różnić się od $f_1$ na co najmniej jednej pozycji. Niech $i$ będzie pierwszym indeksem (wierszem), gdzie $f'(i) \neq c_i$. Oznacza to, że $f'$ pasuje do $f_1$ na pozycjach $1, \dots, i-1$, ale nie na $i$. Zatem $f'$ należy do zbioru $P_i$.
+% W ten sposób $\bigcup_{i=1}^{k} P_i = S \setminus \{f_1\}$.
+% \end{proof}
+
+% Ponieważ (1) partycjonowanie jest kompletne i rozłączne, (2) optymalne rozwiązanie każdego podproblemu $P_i$ (czyli $H(P_i)$) jest najlepszym kandydatem z tego podzbioru, oraz (3) kolejka priorytetowa $Q$ zawsze przechowuje najlepszych kandydatów ze wszystkich dotychczas wygenerowanych podzbiorów, to gdy \texttt{Q.pop()} zwraca $f_j$, musi to być rozwiązanie o globalnie $j$-tym najniższym koszcie spośród wszystkich możliwych rozwiązań.
+
+% \subsection{Analiza Złożoności}
+
+% Analizujemy koszt znalezienia $n$ najlepszych rozwiązań (ustawiając $\texttt{max\_solutions} = j = n$).
+
+% \subsection{Złożoność Pamięciowa}
+
+% \begin{itemize}
+%     \item Macierz kosztów \texttt{cost\_matrix} (oryginalna i kopie): $\mathcal{O}(N^2)$.
+%     \item Lista rozwiązań \texttt{solutions}: Przechowuje $n$ mapowań, każde o rozmiarze $k$. Koszt: $\mathcal{O}(n k)$.
+%     \item Zbiór \texttt{seen\_mappings}: Przechowuje $n$ krotek o rozmiarze $k$. Koszt: $\mathcal{O}(n k)$.
+%     \item Kolejka priorytetowa \texttt{queue}: W najgorszym razie, każde z $n$ znalezionych rozwiązań generuje $k$ nowych kandydatów. Rozmiar kolejki jest rzędu $\mathcal{O}(n k)$. Każdy element przechowuje ograniczenia $I$ i $E$, które mogą rosnąć do $\mathcal{O}(k)$.
+%     Koszt kolejki: $\mathcal{O}(n k \cdot k) = \mathcal{O}(n k^2)$.
+% \end{itemize}
+% \textbf{Całkowita złożoność pamięciowa: $\mathcal{O}(N^2 + n k^2)$.}
+
+% \subsection{Złożoność Obliczeniowa (Czasowa)}
+
+% \begin{itemize}
+%     \item Główna pętla \texttt{while} wykonuje się $\mathcal{O}(n)$ razy (ignorując duplikaty, których w praktyce jest niewiele w porównaniu do $n$).
+%     \item Wewnątrz pętli, pętla \texttt{for} (partycjonowanie) wykonuje się $k$ razy.
+%     \item Wewnątrz pętli \texttt{for} wywoływana jest funkcja \texttt{solve\_with\_constraints}.
+%     \item Koszt \texttt{solve\_with\_constraints} jest zdominowany przez \texttt{StandardAssignmentSolver} (np. \texttt{linear\_sum\_assignment}), którego złożoność dla macierzy $N \times N$ wynosi $\mathcal{O}(N^3)$.
+%     \item Operacje na kolejce priorytetowej (\texttt{push}/\texttt{pop}) mają koszt $\mathcal{O}(\log |Q|) = \mathcal{O}(\log(nk))$.
+% \end{itemize}
+% Całkowity koszt to suma kosztów $\mathcal{O}(n)$ kroków "wyjęcia" rozwiązania i $\mathcal{O}(n \cdot k)$ kroków "rozwiązania podproblemu".
+
+% $$ C_{\text{solver}} = \underbrace{\mathcal{O}(n \cdot \log(nk))}_{\text{Zarządzanie kolejką}} + \underbrace{\mathcal{O}(n \cdot k \cdot N^3)}_{\text{Rozwiązywanie podproblemów}} $$
+
+% Ponieważ $\mathcal{O}(N^3)$ jest znacznie większe niż $\mathcal{O}(\log(nk))$, ten drugi człon jest pomijalny.
+% \textbf{Złożoność obliczeniowa (Faza 1 - Solver): $\mathcal{O}(n \cdot k \cdot N^3)$.}
+
+% \subsection{Faza 2: Zastosowanie Rozszerzeń i Końcowa Analiza Złożoności}
+% \label{sec:zastosowanie_rozszerzen}
+
+% Powyższa analiza dotyczy kosztu Fazy 1 (procedury-solvera), która znajduje $n$ najlepszych mapowań heurystycznych. Pełen algorytm aproksymacyjny musi również wykonać Fazę 2.
+
+% \begin{enumerate}
+%     \item \textbf{Faza 1 (Znalezienie mapowań):} Wywołanie algorytmu \ref{alg:murty_k_best} z $n$. Koszt tej operacji, jak wykazano powyżej, wynosi:
+%     $$ C_{\text{Faza 1}} = \mathcal{O}(n \cdot k \cdot N^3) $$
+%     Wynikiem jest lista $L_{sol} = \{f_1, \dots, f_n\}$ zawierająca $n$ unikalnych mapowań.
+    
+%     \item \textbf{Faza 2 (Zastosowanie rozszerzeń):} Po uzyskaniu listy $L_{sol}$, algorytm musi zastosować je do grafu $A_G$, aby utworzyć końcowe rozszerzenie $A_{final}$. Procedura ta iteruje $n$ razy (raz dla każdego mapowania $f_i \in L_{sol}$). Wewnątrz każdej iteracji, sprawdza $k^2$ potencjalnych krawędzi (z $A_P$) i aktualizuje macierz $A_{final}$ (inicjalizowaną jako $A_G$), zliczając przy tym dodane krawędzie.
+% \end{enumerate}
+
+% \begin{definition}[Rzeczywisty Koszt Rozszerzenia $C_{ext}$]
+% Koszt ten, w przeciwieństwie do heurystyki liniowej, jest kosztem "kwadratowym" i reprezentuje faktyczną liczbę krawędzi do dodania.
+% $$C_{ext}(f, A) = \sum_{u, v \in V_P} \max(0, A_P[u, v] - A[f(u), f(v)])$$
+% \end{definition}
+
+% Koszt Fazy 2 (zastosowania rozszerzeń) jest następujący:
+% $$ C_{\text{Faza 2}} = \sum_{i=1}^{n} (\text{koszt obliczenia } C_{ext}(f_i, A_{curr}) \text{ i aktualizacji } A_{curr}) $$
+% Koszt obliczenia $C_{ext}$ i aktualizacji macierzy dla jednego mapowania $f_i$ wymaga iteracji przez $k \times k$ par wierzchołków $P$, a więc wynosi $\mathcal{O}(k^2)$.
+% Całkowity koszt Fazy 2 to:
+% $$ C_{\text{Faza 2}} = \sum_{i=1}^{n} \mathcal{O}(k^2) = \mathcal{O}(n \cdot k^2) $$
+
+% Całkowity koszt algorytmu to suma kosztów obu faz (oraz kosztu budowy macierzy $M$, $\mathcal{O}(N^2 + k^2 + kN)$):
+% $$ C_{\text{total}} = C_{\text{Budowa M}} + C_{\text{Faza 1}} + C_{\text{Faza 2}} $$
+% $$ C_{\text{total}} = \mathcal{O}(N^2 + k^2 + kN) + \mathcal{O}(n \cdot k \cdot N^3) + \mathcal{O}(n \cdot k^2) $$
+
+% Ponieważ $N \ge k$, złożoność $\mathcal{O}(N^3)$ jest zawsze asymptotycznie większa lub równa $\mathcal{O}(k^2)$. W związku z tym, dominującym członem jest koszt Fazy 1 (znalezienia mapowań).
+
+% \textbf{Całkowita złożoność obliczeniowa: $\mathcal{O}(n \cdot k \cdot N^3)$.}
 
 % \section{Testy}
 % \section{Podsumowanie}
