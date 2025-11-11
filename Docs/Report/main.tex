@@ -1116,43 +1116,11 @@ Niestety nie ma dowodu, że algorytm daje rozwiązanie optymalne, ani że ma sta
 \section{Aproksymacyjne minimalne rozszerzenie multigrafu - algorytm drugi}
 \label{sec:minimalne_rozszerzenie_approx_2}
 
-Algorytm implementuje metodę Murty'ego do znajdowania $j$ najlepszych rozwiązań problemu przypisania, z dwoma modyfikacjami: po pierwsze problem dotyczy przypisania $k$ wierszy mniejszego multigrafu do $N$ kolumn większego ($k \le N$), po drugie chcemy, żeby przypisania były różne pod względem zmapowanego podzbioru wierzchołków większego grafu. Do wyboru $j$ najlepszych rozwiązań używamy heurystycznej funkcji kosztu, która aproksymuje rzeczywisty koszt rozszerzenia multigrafu. 
-
-Po zastosowaniu powyższych modyfikacji, algorytm Murty'ego znajduje $j$ najlepszych mapowań $k$ wierzchołków mniejszego grafu, do $N$ wierzchołków większego grafu, minimalizujących heurystyczny koszt rozszerzenia. Na koniec, kiedy mamy już $j$ najlepszych mapowań, po kolei dodajemy wszystkie brakujące krawędzie do większego grafu, tworząc jego rozszerzenie zawierające $j$ kopii mniejszego grafu, po drodze zliczając liczbę dodanych krawędzi.
-
-\subsection{Notacja i Definicje}
-
-\begin{definition}[Problem Przypisania]
-Dany jest graf dwudzielny z wierzchołkami $U = \{u_1, \dots, u_N\}$ (wiersze) i $V = \{v_1, \dots, v_N\}$ (kolumny) oraz macierz kosztów $M$ o wymiarach $N \times N$. Celem jest znalezienie permutacji $\sigma$ zbioru $\{1, \dots, N\}$ minimalizującej całkowity koszt:
-$$ C(\sigma) = \sum_{i=1}^{N} M[i, \sigma(i)] $$
-\end{definition}
-
-\begin{definition}[Problem $k$-Mapowania]
-W naszym przypadku interesuje nas tylko przypisanie pierwszych $k$ wierszy (reprezentujących $P$). Mapowanie $f$ jest iniekcją $f: \{1, \dots, k\} \to \{1, \dots, N\}$. Algorytm węgierski znajduje pełną permutację $\sigma$, z której my ekstrahujemy $f$ jako:
-$$ f(i) = \sigma(i) \quad \text{dla } i \in \{1, \dots, k\} $$
-Zbiór wierszy "atrap" to $D = \{k+1, \dots, N\}$. Ich przypisania są ignorowane.
-\end{definition}
-
-\begin{definition}[Problem z Ograniczeniami]
-Definiujemy $H(M')$ jako funkcję rozwiązującą problem przypisania (algorytm węgierski) na macierzy $M'$. Rozwiązanie podproblemu z ograniczeniami jest realizowane przez modyfikację macierzy kosztów:
-\begin{itemize}
-    \item $I \subset \{1..k\} \times \{1..N\}$: zbiór "wymuszonych" przypisań (includes).
-    \item $E \subset \{1..k\} \times \{1..N\}$: zbiór "zabronionych" przypisań (excludes).
-\end{itemize}
-Rozwiązujemy ten problem poprzez wywołanie algorytmu $H(M')$ na zmodyfikowanej macierzy $M'$, gdzie:
-$$ M'[i, j] = 
-\begin{cases} 
-    -\infty & \text{jeśli } (i, j) \in I \\
-    +\infty & \text{jeśli } (i, j) \notin I \text{ oraz } \exists j': (i, j') \in I \\
-    +\infty & \text{jeśli } (i, j) \in E \\
-    M[i, j] & \text{w przeciwnym razie}
-\end{cases}
-$$
-\end{definition}
+Algorytm polega na losowym wybraniu $n$ k-elementowych podzbiorów wierzchołków z grafu $G$, a następnie użyciu pewnej heurystyki do stworzenia macierzy kosztów przypisania pomiędzy konkretnymi wierzchołkami z grafu $P$, oraz grafu $G$. Następnie na tej macierzy wywoływany jest Algorytm Węgierski, który znajduje najlepsze mapowanie wierzchołków, w sensie przyjętej heurystyki. Ta operacja jest powtarzana na każdym z $n$ podzbiorów, tak żeby uzyskać wymagane n podgrafów grafu $G$, różniących się przynajmniej jednym wierzchołkiem.
 
 \subsection{Heurystyczna Funkcja Kosztu}
 
-Algorytm Murty'ego i węgierski (opisane poniżej) operują na macierzy kosztów $M$, która stanowi heurystyczną aproksymację rzeczywistego kosztu rozszerzenia. Wybór tej heurystyki ma kluczowy wpływ na jakość znajdowanych rozwiązań -- lepsza heurystyka (bliższa rzeczywistemu kosztowi) sprawi, że $j$ najlepszych rozwiązań heurystycznych będzie z większym prawdopodobieństwem odpowiadać $j$ najlepszym rozwiązaniom rzeczywistym. \\
+Algorytm Węgierski operuje na macierzy kosztów $M$, która stanowi heurystyczną aproksymację rzeczywistego kosztu rozszerzenia. Wybór tej heurystyki ma kluczowy wpływ na jakość znajdowanych rozwiązań -- lepsza heurystyka (bliższa rzeczywistemu kosztowi) sprawi, że najlepsze rozwiązania heurystyczne będzą z większym prawdopodobieństwem odpowiadać najlepszym rozwiązaniom rzeczywistym. \\
 
 Poniżej przedstawiono sześć propozycji heurystyk do obliczania macierzy kosztów $M$, które chcielibyśmy poddać testom w celu wybrania funkcji dającej najlepsze rezultaty.
 
@@ -1213,354 +1181,175 @@ Poniżej przedstawiono sześć propozycji heurystyk do obliczania macierzy koszt
 
 \subsection{Opis Algorytmów}
 
-Cały algorytm aproksymacyjny składa się z dwóch faz. Faza 1 znajduje $n$ heurystycznych mapowań. Faza 2 oblicza na ich podstawie minimalne rozszerzenie.
+Ta część opisuje dwie części algorytmu aproksymacyjnego: fazę generowania k-elementowych podzbiorów wierzchołków większego grafu oraz fazę znajdowania najlepszych mapowań dla tych podzbiorów. Lepsze rozwiązanie można uzyskać poprzez iterowanie po podzbiorach i znajdowanie najlepszych mapowań dla każdego z nich, np. korzystając z Algorytmu Murty'ego, jednak z powodu ograniczenia wielomianowej złożoności czasowej, w tej wersji algorytmu generujemy tylko $n$ podzbiorów.
 
-Faza 1 opiera się na dwóch kluczowych procedurach pomocniczych: (1) Algorytm Węgierski, który rozwiązuje problem przypisania, oraz (2) Procedurze Rozwiązywania z Ograniczeniami , która jest dodatkiem do Algorytmu Węgierskiego.
+\begin{enumerate}
+    \item \textbf{Faza 1:} Najpierw generowana jest lista $\mathcal{L}$ $n$ $k$-elementowych podzbiorów wierzchołków z $G$ ($S \subset V_G$).
+    \item \textbf{Faza 2:} Następnie, algorytm iteruje $n$ razy. W każdej iteracji $i$, bierze $i$-ty podzbiór $S_i$ z listy $\mathcal{L}$ i rozwiązuje dla niego \emph{mały} ($k \times k$) problem przypisania (Algorytmem Węgierskim), aby znaleźć najlepsze mapowanie $f_i: V_P \to S_i$. Znalezione rozszerzenie jest dodawane do grafu $G$.
+\end{enumerate}
 
-\subsubsection{Procedura Pomocnicza: Algorytm Węgierski}
+\subsubsection{Algorytm Fazy 1: Generowanie Podzbiorów}
 
-Wewnątrz procedur używana jest funkcja \texttt{HungarianAlgorithm}. Odpowiada ona klasycznemu \textbf{Algorytmowi Węgierskiemu}.
-
-\begin{definition}[Algorytm Węgierski]
-Algorytm ten rozwiązuje Liniowy Problem Przypisania (LAP) w czasie wielomianowym.
-\begin{itemize}
-    \item \textbf{Dane wejściowe:} Macierz kosztów $M$ (rozmiar $N \times N$).
-    \item \textbf{Dane wyjściowe:} Permutacja $\sigma$ zbioru $\{1, \dots, N\}$ (lub równoważnie, zbiór $N$ par (wiersz, kolumna), np. $(\text{rows}, \text{cols})$), taka, że koszt całkowity $C = \sum_{i=1}^{N} M[i, \sigma(i)]$ jest zminimalizowany.
-    \item \textbf{Złożoność obliczeniowa:} $\mathcal{O}(N^3)$.
-\end{itemize}
-W kontekście naszej analizy, jest to podstawowa operacja o koszcie $\mathcal{O}(N^3)$, na której budowane są bardziej złożone procedury.
-\end{definition}
-
-\subsubsection{Procedura Pomocnicza: Rozwiązywanie z Ograniczeniami}
-    
-Ten algorytm jest rozwinięciem \texttt{HungarianAlgorithm}, które modyfikuje macierz $M$ w celu uwzględnienia zabronionych wierzchołków $E$.
+Celem tej fazy jest szybkie wygenerowanie listy $\mathcal{L}$ $n$ unikalnych $k$-elementowych podzbiorów $V_G$.
 
 \begin{algorithm}[H]
-    \caption{Procedura Pomocnicza - Rozwiązywanie z Ograniczeniami}
-    \label{alg:solve_with_constraints}
+    \caption{Faza 1: Generowanie $n$ Pierwszych Podzbiorów Leksygograficznych}
+    \label{alg:generate_subsets_lexical}
     \begin{algorithmic}[1]
-        \Require Oryginalna macierz kosztów $M$, zbiór zabronionych wierzchołków $E \subset V_G$, wielkość wzorca $k$
-        \Ensure Para $($ heurystyczny koszt mapowania  $C$, mapowanie $f)$
+        \Require Graf $G$ (o $N$ wierzchołkach, $V_G = \{v_1, \dots, v_N\}$), Liczba podzbiorów $n$, Rozmiar podzbioru $k$
+        \Ensure Lista $\mathcal{L}$ (do $n$) unikalnych $k$-elementowych podzbiorów $V_G$
         
-        \State $M' \gets \Call{copy}{M}$ \Comment{Skopiuj oryginalną macierz kosztów}
+        \State $\mathcal{L} \gets []$
         
-        \For{\textbf{each} $v$ \textbf{in} $E$} \Comment{Zastosuj ograniczenia}
-            \For{$i \gets 1$ \textbf{to} $k$} \Comment{Zablokuj mapowania z $P$ na wierzchołek $v \in G$}
-                \State $M'[i, v] \gets \infty$
-            \EndFor
+        \If{$n = 0$ \textbf{or} $k > N$}
+            \State \Return $\mathcal{L}$
+        \EndIf
+        
+        \State $\mathcal{C} \gets \Call{CombinationsGenerator}{V_G, k}$ \Comment{Inicjalizuj generator kombinacji $\binom{N}{k}$}
+        
+        \For{$i \gets 1$ \textbf{to} $n$}
+            \If{$\mathcal{C}.\text{hasNext}()$}
+                \State $S \gets \mathcal{C}.\text{next}()$ \Comment{Pobierz następny podzbiór, np. $\{v_1, ..., v_k\}$}
+                \State $\mathcal{L}.\text{append}(S)$
+            \Else
+                \State \textbf{break} \Comment{Zakończ, jeśli jest mniej niż $n$ możliwych kombinacji}
+            \EndIf
         \EndFor
         
-        \State $(\text{rows}, \text{cols}) \gets \Call{StandardAssignmentSolver}{M'}$ \Comment{Wywołaj Algorytm Węgierski}
-        \If{koszt jest $\infty$}
-            \State \Return $(\text{None}, \text{None})$
-        \EndIf
-        
-        \State $f \gets \Call{ExtractMapping}{\text{rows}, \text{cols}, k}$ \Comment{Wyodrębnij mapowanie dla $k$ wierszy}
-        
-        \State $C \gets \Call{CalculateTrueCost}{M, f}$ \Comment{Oblicz koszt na oryginalnej macierzy $M$}
-        \State \Return $(C, f)$
+        \State \Return $\mathcal{L}$
     \end{algorithmic}
 \end{algorithm}
 
-\subsubsection{Algorytm Główny Fazy 1: Wyszukiwanie Heurystyczne}
+\subsubsection*{Dowód Poprawności (Faza 1)}
+Poprawność procedury oznacza gwarancję zakończenia i zwrócenia listy $\mathcal{L}$ zawierającej $n$ (lub mniej, jeśli niemożliwe) unikalnych $k$-elementowych podzbiorów.
+\begin{itemize}
+    \item \textbf{Zakończenie:} Pętla \texttt{for} (linia 6) jest ściśle ograniczona przez $n$. W każdej iteracji wywoływana jest operacja \texttt{next()} generatora kombinacji. Generator ten zakończy działanie (zwracając \texttt{false} w linii 7) po wygenerowaniu wszystkich $\binom{N}{k}$ kombinacji. Ponieważ $n$ jest skończone, algorytm zawsze się zakończy.
+    \item \textbf{Unikalność:} Standardowy generator kombinacji (leksykograficzny) z definicji produkuje każdą kombinację (podzbiór) dokładnie jeden raz. Ponieważ algorytm tylko pobiera elementy z tego generatora, lista $\mathcal{L}$ z definicji zawiera unikalne podzbiory.
+    \item \textbf{Ilość Wyjścia:} Algorytm próbuje pobrać $n$ podzbiorów. Jeśli $n > \binom{N}{k}$, generator wyczerpie się wcześniej, a pętla zostanie przerwana (linia 10). Algorytm poprawnie zwróci $\binom{N}{k}$ podzbiorów, czyli wszystkie, które istnieją. W przeciwnym razie zwróci dokładnie $n$ podzbiorów.
+\end{itemize}
 
-Algorytm Fazy 1 wykorzystuje kolejkę priorytetową $Q$ do przechowywania kandydatów na rozwiązania. Każdy element w $Q$ to krotka: $(C, E, f)$, gdzie $C$ to koszt mapowania $f$, a $E$ to zbiór zabronionych wierzchołków, który wygenerował to rozwiązanie.
+\subsubsection*{Analiza Złożoności (Faza 1)}
+Analiza ta dotyczy kosztu wygenerowania $n$ podzbiorów.
+\begin{itemize}
+    \item \textbf{Inicjalizacja (linie 1-5):} Generator jest inicjowany na pierwszym elemencie, np. $\{v_1, \dots, v_k\}$ w czasie $\mathcal{O}(k)$.
+    \item \textbf{Pętla Główna (linie 6-12):} Wykonuje się $n$ razy.
+    \item \textbf{Operacje w pętli:}
+        \item Wygenerowanie \texttt{next()} (linia 8): Koszt wygenerowania następnej kombinacji leksykograficznej z poprzedniej jest w zamortyzowanym czasie stałym $\mathcal{O}(1)$, a w najgorszym przypadku wynosi $\mathcal{O}(k)$.
+        \item Dodanie do listy $\mathcal{L}$ (linia 9): Wymaga skopiowania podzbioru o rozmiarze $k$, co ma koszt $\mathcal{O}(k)$.
+    \item Koszt pętli wynosi $n \cdot \mathcal{O}(k)$.
+\end{itemize}
+\textbf{Całkowita złożoność obliczeniowa (Faza 1): $\mathcal{O}(n \cdot k)$.}
 
-\begin{algorithm}[H]
-    \caption{Faza 1: Heurystyczne Wyszukiwanie $n$ Mapowań}
-    \label{alg:heuristic_search}
-    \begin{algorithmic}[1]
-        \Require Macierz kosztów $M$, Liczba szukanych mapowań $n$, Liczba wierszy wzorca $k$
-        \Ensure Lista $L_{sol}$ par $(C, f)$ zawierająca do $n$ najlepszych mapowań
-        
-        \State $L_{sol} \gets []$ \Comment{Inicjalizacja listy rozwiązań}
-        \State $Q \gets \text{new PriorityQueue()}$ \Comment{Inicjalizacja kolejki priorytetowej}
-        
-        \State $(C_1, f_1) \gets \Call{solve\_with\_constraints}{M, \emptyset, k}$ \Comment{Rozwiąż problem bez ograniczeń}
-        \If{$C_1 \neq \text{None}$}
-            \State $Q.\text{push}((C_1, \emptyset, f_1))$
-        \EndIf
-        
-        \While{$Q$ nie jest pusta \textbf{and} $|L_{sol}| < n$}
-            \State $(C, E, f) \leftarrow Q.\text{pop}()$
-            
-            \State $L_{sol}.\text{append}((C, f))$ \Comment{Dodaj najlepsze bieżące rozwiązanie}
-            
-            \State \Comment{Partycjonowanie (Rozgałęzienie) - generowanie $k$ nowych podproblemów}
-            \For{$i \gets 1$ \textbf{to} $k$}
-                \State $v \gets f(i)$ \Comment{Pobierz wierzchołek $v \in G$ użyty w mapowaniu}
-                \State $E_{new} \leftarrow E \cup \{v\}$ \Comment{Stwórz nowy zbiór zabronionych wierzchołków}
-                
-                \State $(C_{new}, f_{new}) \leftarrow \Call{solve\_with\_constraints}{M, E_{new}, k}$
-                
-                \If{$C_{new} \neq \text{None}$}
-                    \State $Q.\text{push}((C_{new}, E_{new}, f_{new}))$
-                \EndIf
-            \EndFor
-        \EndWhile
-        
-        \State \Return $L_{sol}$
-    \end{algorithmic}
-\end{algorithm}
+\subsubsection{Algorytm Fazy 2: Iteracyjne Rozwiązywanie i Rozszerzanie}
 
-\subsubsection{Algorytm Główny Fazy 2: Zastosowanie Rozszerzeń}
-
-Po znalezieniu $n$ mapowań, Faza 2 oblicza końcowe rozszerzenie.
+Faza 2 pobiera listę $\mathcal{L}$ $n$ podzbiorów-kandydatów i iteracyjnie znajduje najlepsze mapowanie $V_P \to S_i$ dla każdego $S_i \in \mathcal{L}$, stosując rozszerzenie do grafu $G$.
 
 \begin{algorithm}[H]
-    \caption{Faza 2: Zastosowanie Rozszerzeń}
-    \label{alg:apply_extension}
+    \caption{Faza 2: Iteracyjne Rozwiązywanie na Podzbiorach}
+    \label{alg:solve_subsets}
     \begin{algorithmic}[1]
-        \Require Lista mapowań $L_{sol}$, Oryginalny graf $A_G$, Wzorzec $A_P$
+        \Require Lista podzbiorów $\mathcal{L}$, Oryginalny graf $A_G$, Wzorzec $A_P$
         \Ensure Końcowa macierz $A_{final}$, Całkowity koszt $C_{total}$
         
-        \State $A_{final} \gets \Call{copy}{A_G}$
+        \State $A_{curr} \gets \Call{copy}{A_G}$
         \State $C_{total} \gets 0$
-        \For{\textbf{each} $(C, f)$ \textbf{in} $L_{sol}$}
-            \For{\textbf{each} $(row, col)$ \textbf{in} $f$} \Comment{Iteruj przez mapowanie $f$}
-                \State value $\gets \max(0, A_P[row, col] - A_G[row, col])$
-                \State $C_{total} \gets C_{total} + value$ \Comment{Zlicz brakujące krawędzie}
-                \State $A_{final}[row, col] \gets A_G[row, col] + value$ \Comment{Aktualizuj krawędź do wymaganego maksimum}
+        
+        \For{\textbf{each} $S_i$ \textbf{in} $\mathcal{L}$} \Comment{Iteruj $n$ razy}
+            \State
+            \State $D_{curr} \gets \Call{GetDegrees}{A_{curr}}$ \Comment{Tablica stopni wierzchołków w $A_{curr}$}
+            \State $D_{P} \gets \Call{GetDegrees}{A_{P}}$ \Comment{Tablica stopni wierzchołków w $P$}
+            \State
+            \State $M_{sub} \gets \Call{Heurystyka}{S_i, A_{curr}, A_{P}, D_{curr}, D_{P}}$ \Comment{Wypełnij $M_{sub}$ wagami}
+            \State
+            \State $f_i \gets \Call{HungarianAlgorithm}{M_{sub}}$ \Comment{Wywołaj Algorytm Węgierski}
+            
+            \State
+            \State $cost_i \gets 0$ \Comment{Zastosuj rozszerzenie dla tego mapowania}
+            \For{$u \gets 1$ \textbf{to} $k$} \Comment{Iteruj $k \times k$ w macierzy wzorca $P$}
+                \For{$v \gets 1$ \textbf{to} $k$}
+                    \State $g_u \gets f_i(u)$
+                    \State $g_v \gets f_i(v)$
+                    \State $w_{needed} \leftarrow A_P[u, v]$
+                    \State $w_{current} \leftarrow A_{curr}[g_u, g_v]$
+                    \If{$w_{needed} > w_{current}$}
+                        \State $w_{missing} \leftarrow w_{needed} - w_{current}$
+                        \State $A_{curr}[g_u, g_v] \leftarrow w_{needed}$
+                        \State $cost_i \gets cost_i + w_{missing}$
+                    \EndIf
+                \EndFor
             \EndFor
+            \State $C_{total} \gets C_{total} + cost_i$
         \EndFor
         
+        \State $A_{final} \gets A_{curr}$
         \State \Return $A_{final}, C_{total}$
     \end{algorithmic}
 \end{algorithm}
 
-\subsection{Dowód Poprawności}
+\paragraph{Dowód Poprawności (Faza 2)}
+Poprawność procedury (Algorytm \ref{alg:solve_subsets}) opiera się na dwóch głównych filarach: gwarancji zakończenia oraz poprawności iteracyjnego rozszerzania grafu.
 
-Należy zauważyć, że algorytm \ref{alg:heuristic_search} \textbf{nie jest} algorytmem Murty'ego. Jest to heurystyczny algorytm przeszukiwania zachłannego (best-first search), który nie gwarantuje znalezienia $n$ globalnie najlepszych rozwiązań. Nie gwarantuje on również, że znalezione mapowania $f_i$ będą używały różnych podzbiorów wierzchołków (choć kolejka priorytetowa promuje eksplorację różnych rozwiązań). Algorytm ten \emph{może} wielokrotnie zwrócić to samo mapowanie, jeśli zostanie ono wygenerowane przez różne gałęzie przeszukiwania o najniższym koszcie.
-
-Poprawność algorytmu rozumiemy jako jego zdolność do zakończenia działania i zwrócenia $n$ mapowań oraz poprawnie obliczonego rozszerzenia dla \emph{tych} mapowań.
-
-\begin{theorem}[Zakończenie Algorytmu]
-Algorytm (Faza 1 + Faza 2) zawsze kończy działanie w skończonym czasie.
-\end{theorem}
-\begin{proof}
-Faza 1 (Algorytm \ref{alg:heuristic_search}): Pętla `while` wykonuje się dokładnie $n$ razy (po jednym razie na każde rozwiązanie dodane do $L_{sol}$). W każdej iteracji wykonuje $k$ wywołań procedury \ref{alg:solve_with_constraints}. Każde wywołanie \ref{alg:solve_with_constraints} wywołuje \texttt{StandardAssignmentSolver} (Algorytm Węgierski), który jest algorytmem o skończonej, wielomianowej złożoności ($\mathcal{O}(N^3)$). Ponieważ $n$, $k$ i $N$ są skończone, Faza 1 kończy działanie.
-Faza 2 (Algorytm \ref{alg:apply_extension}): Pętla `for` wykonuje się $n$ razy, a wewnętrzne pętle wykonują $k^2$ operacji. Jest to również skończona liczba kroków.
-\end{proof}
-
-\begin{theorem}[Poprawność Rozszerzenia]
-Graf $A_{final}$ zwrócony przez Algorytm \ref{alg:apply_extension} zawiera podgrafy izomorficzne z $P$ dla wszystkich $n$ mapowań $f \in L_{sol}$ znalezionych w Fazie 1.
-\end{theorem}
-\begin{proof}
-Dowód wynika z konstrukcji Fazy 2. Algorytm iteruje przez każde mapowanie $f_i \in L_{sol}$. Dla każdego $f_i$ i każdej wymaganej krawędzi $(u,v)$ w $A_P$, algorytm sprawdza krawędź $(g_u, g_v)$ w $A_{final}$. Jeśli krotność $A_{final}[g_u, g_v]$ jest mniejsza niż $A_P[u, v]$, jest ona aktualizowana do $A_P[u, v]$ (linia 12). Ponieważ krotności krawędzi są tylko zwiększane (nigdy zmniejszane), po zakończeniu pętli `for` dla $f_i$, wszystkie wymagane krawędzie dla $f_i$ są obecne. Ponieważ dzieje się to dla wszystkich $f \in L_{sol}$, ostateczny graf $A_{final}$ gwarantuje pokrycie dla wszystkich $n$ mapowań.
-\end{proof}
-
-\subsection{Analiza Złożoności}
-
-Analizujemy koszt obu faz algorytmu.
-
-\subsubsection{Złożoność Pamięciowa}
 \begin{itemize}
-    \item Macierze $M$, $M'$, $A_G$, $A_{final}$: $\mathcal{O}(N^2)$.
-    \item Lista $L_{sol}$: Przechowuje $n$ mapowań, każde o rozmiarze $k$. Koszt: $\mathcal{O}(nk)$.
-    \item Kolejka priorytetowa $Q$: W $i$-tej iteracji pętli `while`, $Q$ zawiera $i \cdot k$ kandydatów. Maksymalny rozmiar $Q$ to $\mathcal{O}(nk)$. Każdy element przechowuje zbiór $E$, który w najgorszym razie (głębokie drzewo) może mieć rozmiar $\mathcal{O}(N)$.
-    Koszt kolejki: $\mathcal{O}(nk \cdot N)$.
+    \item \textbf{Zakończenie:} 
+    Algorytm składa się z jednej głównej pętli \texttt{for} (linia 2), która iteruje po liście $\mathcal{L}$. Ponieważ lista $\mathcal{L}$ jest skończona (zawiera $n$ podzbiorów), pętla \texttt{for} wykona się $n$ razy.
+    Musimy przeanalizować operacje wewnątrz pętli:
+    \begin{enumerate}
+        \item \texttt{GetDegrees} (linie 5-6): Obliczenie stopni dla macierzy $N \times N$ i $k \times k$ jest operacją o skończonej, wielomianowej złożoności (odpowiednio $\mathcal{O}(N^2)$ i $\mathcal{O}(k^2)$).
+        \item \texttt{Heurystyka} (linia 8): Wypełnienie macierzy $k \times k$ jest operacją o złożoności zależnej od wybranej heurystyki. Dla prostszych heurystyk, jak liczenie różnicy stopni, przy podanej macierzy stopni i przy wielkości macierzy kosztów $k \times k$, jej złożoność to $\mathcal{O}(k^2)$.
+        \item \texttt{HungarianAlgorithm} (linia 10): Wywołanie Algorytmu Węgierskiego na macierzy $k \times k$ ma złożoność wielomianową $\mathcal{O}(k^3)$.
+        \item Pętla rozszerzenia (linie 13-25): Jest to zagnieżdżona pętla wykonująca $k \times k = k^2$ operacji $\mathcal{O}(1)$, stąd jej koszt to $\mathcal{O}(k^2)$.
+    \end{enumerate}
+    Ponieważ $n, k, N$ są skończone, a wszystkie operacje wewnątrz pętli głównej mają skończoną, wielomianową złożoność, cały algorytm gwarantuje zakończenie działania.
+
+    \item \textbf{Poprawność Rozszerzenia:} 
+    Musimy udowodnić, że końcowy graf $A_{final}$ zawiera $n$ podgrafów izomorficznych z $P$, zgodnie ze znalezionymi mapowaniami $f_1, \dots, f_n$.
+    Niech $A_{curr}^{(i)}$ będzie stanem macierzy $A_{curr}$ na \emph{początku} $i$-tej iteracji pętli \texttt{for} (gdzie $A_{curr}^{(1)} = A_G$). Niezmiennik: $A_{curr}^{(i)}$ zawiera podgrafy $f_1, \dots, f_{i-1}$.
+    \begin{itemize}
+        \item \textbf{Baza ($i=1$):} $A_{curr}^{(1)} = A_G$. Niezmiennik jest trywialnie prawdziwy (zawiera 0 podgrafów).
+        \item \textbf{Krok Indukcyjny:} Zakładamy, że $A_{curr}^{(i)}$ zawiera $f_1, \dots, f_{i-1}$. W $i$-tej iteracji algorytm znajduje nowe mapowanie $f_i$ (linie 5-10). Następnie pętla rozszerzenia (linie 13-25) iteruje przez wszystkie $k^2$ par w $P$. W linii 19, algorytm sprawdza, czy wymagana krawędź $(f_i(u), f_i(v))$ o krotności $w_{needed}$ istnieje. Jeśli nie ($w_{needed} > w_{current}$), algorytm \emph{dodaje} brakujące krawędzie (lub zwiększa krotność) w linii 21 ($A_{curr}[g_u, g_v] \leftarrow w_{needed}$). 
+        \item Operacja ta jest monotoniczna: krotności krawędzi w $A_{curr}$ nigdy nie maleją ($A_{curr}^{(i+1)} \ge A_{curr}^{(i)}$).
+        \item Zatem, po zakończeniu pętli (linii 13-25), graf $A_{curr}^{(i+1)}$ gwarantuje zawarcie podgrafu $f_i$. Ponieważ krawędzie są tylko dodawane, $A_{curr}^{(i+1)}$ nadal zawiera wszystkie poprzednie podgrafy $f_1, \dots, f_{i-1}$.
+        \item \textbf{Zakończenie:} Po $n$ iteracjach, $A_{final} = A_{curr}^{(n+1)}$ zawiera wszystkie $n$ podgrafów $f_1, \dots, f_n$.
+    \end{itemize}
+    Algorytm poprawnie również sumuje koszt $C_{total}$ jako sumę kosztów $cost_i$ poniesionych w każdej iteracji, odzwierciedlając fakt, że krawędzie dodane we wcześniejszych iteracjach zmniejszają koszt rozszerzeń w późniejszych iteracjach.
 \end{itemize}
-\textbf{Całkowita złożoność pamięciowa: $\mathcal{O}(N^2 + n k N)$.}
 
-\subsubsection{Złożoność Obliczeniowa (Czasowa)}
+\paragraph{Analiza Złożoności (Faza 2)}
+Analizujemy koszt obliczeniowy (czasowy) Algorytmu \ref{alg:solve_subsets} w zależności od $N$ (rozmiar $G$), $k$ (rozmiar $P$) oraz $n$ (liczba podzbiorów w $\mathcal{L}$).
 
-\begin{enumerate}
-    \item \textbf{Koszt Fazy 1 (Algorytm \ref{alg:heuristic_search}):}
-    \begin{itemize}
-        \item Pętla `while` wykonuje się $n$ razy.
-        \item W każdej iteracji pętli `while`:
-            \item Jedna operacja `Q.pop()`: $\mathcal{O}(\log(nk))$.
-            \item $k$ wywołań pętli `for`.
-            \item Wewnątrz pętli `for`:
-                \item Jedno wywołanie \Call{solve\_with\_constraints}{} (Algorytm \ref{alg:solve_with_constraints}).
-                \item Koszt \Call{solve\_with\_constraints}{} jest zdominowany przez \texttt{StandardAssignmentSolver}, czyli $\mathcal{O}(N^3)$.
-                \item Jedna operacja `Q.push()`: $\mathcal{O}(\log(nk))$.
-        \item Całkowity koszt $i$-tej iteracji `while`: $\mathcal{O}(k \cdot (N^3 + \log(nk)))$.
-    \end{itemize}
-    Całkowity koszt Fazy 1 to $n$ (iteracje `while`) razy koszt wewnętrznej pętli:
-    $$ C_{\text{Faza 1}} = \mathcal{O}(n \cdot k \cdot N^3) $$
+\begin{itemize}
+    \item \textbf{Operacje Wstępne (linie 1-2):} Kopiowanie macierzy $A_G$ ma koszt $\mathcal{O}(N^2)$.
     
-    \item \textbf{Koszt Fazy 2 (Algorytm \ref{alg:apply_extension}):}
-    \begin{itemize}
-        \item Pętla `for` po $L_{sol}$ wykonuje się $n$ razy.
-        \item Wewnętrzne pętle (po $u$ i $v$) wykonują $k^2$ operacji.
-    \end{itemize}
-    Całkowity koszt Fazy 2 to:
-    $$ C_{\text{Faza 2}} = \mathcal{O}(n \cdot k^2) $$
-\end{enumerate}
-
-Całkowity koszt algorytmu to suma kosztów obu faz (oraz kosztu budowy macierzy $M$, $\mathcal{O}(N^2 + k^2 + kN)$):
-$$ C_{\text{total}} = C_{\text{Budowa M}} + C_{\text{Faza 1}} + C_{\text{Faza 2}} $$
-$$ C_{\text{total}} = \mathcal{O}(N^2 + k^2 + kN) + \mathcal{O}(n \cdot k \cdot N^3) + \mathcal{O}(n \cdot k^2) $$
-
-Zakładając $N \ge k$, dominującym członem jest koszt Fazy 1.
-\textbf{Całkowita złożoność obliczeniowa: $\mathcal{O}(n \cdot k \cdot N^3)$.}
-
-% \subsection{Algorytm Główny}
-
-% Cały algorytm aproksymacyjny składa się z dwóch faz. Faza 1 jest oparta na zmodyfikowanym algorytmie Murty'ego i znajduje $n$ najlepszych heurystycznych mapowań. Faza 2 oblicza na ich podstawie minimalne rozszerzenie.
-
-% Poniżej znajduje się opis procedury pomocniczej, która znajduje pojedyncze rozwiązanie.
-
-% \begin{algorithm}[H]
-%     \caption{Procedura Pomocnicza - Rozwiązywanie z Ograniczeniami}
-%     \label{alg:solve_with_constraints}
-%     \begin{algorithmic}[1]
-%         \Require Oryginalna macierz kosztów $M$, zbiór zabronionych $E$, wielkość wzorca $k$
-%         \Ensure Para $(C, f)$
-        
-%         \State $M' \gets \Call{copy}{M}$ \Comment{Skopiuj oryginalną macierz kosztów}
-        
-%         \For{\textbf{each} $v$ \textbf{in} $E$} \Comment{Zastosuj ograniczenia}
-%             \For($i \gets 1$ \textbf{to} $k$) \Comment{Zablokuj mapowania na dany wierzchołek}
-%                 \State $M'[i, v] \gets \infty$
-%             \EndFor
-%         \EndFor
-        
-%         \State $(\text{rows}, \text{cols}) \gets \Call{StandardAssignmentSolver}{M'}$ \Comment{Wywołaj np. algorytm węgierski}
-        
-%         \State $f \gets \Call{ExtractMapping}{\text{rows}, \text{cols}, k}$ \Comment{Wyodrębnij mapowanie dla $k$ wierszy}
-        
-%         \State $C \gets \Call{CalculateTrueCost}{M, f}$ \Comment{Oblicz koszt na oryginalnej macierzy $M$}
-%         \State \Return $(C, f)$
-%     \end{algorithmic}
-% \end{algorithm}
-
-% Algorytm główny Fazy 1 wykorzystuje kolejkę priorytetową $Q$ do przechowywania kandydatów na rozwiązania. Każdy element w $Q$ to krotka: $(C, E, f)$, gdzie $C$ to koszt mapowania $f$, a $E$ to zbiór ograniczeń, które wygenerowały to rozwiązanie.
-
-% \begin{algorithm}[H]
-%     \caption{Zmodyfikowany Algorytm Murty'ego - Znajdowanie $n$ mapowań}
-%     \label{alg:murty_k_best}
-%     \begin{algorithmic}[1]
-%         \Require Macierz kosztów $M$, Liczba szukanych mapowań $n$, Liczba wierszy wzorca $k$
-%         \Ensure Lista $L_{sol}$ par $(C, f)$ zawierająca do $n$ najlepszych mapowań
-        
-%         \State $L_{sol} \gets []$ \Comment{Inicjalizacja listy rozwiązań}
-%         \State $Q \gets \text{new PriorityQueue()}$ \Comment{Inicjalizacja kolejki priorytetowej}
-        
-%         \State $(C_1, f_1) \gets \Call{solve\_with\_constraints}{M, \emptyset, k}$ \Comment{Rozwiąż problem bez ograniczeń}
-%         \If{$C_1 \neq \text{None}$}
-%             \State $Q.\text{push}((C_1, \emptyset, f_1))$
-%         \EndIf
-        
-%         \While{$Q$ nie jest pusta \textbf{and} $|L_{sol}| < n$}
-%             \State $(C, E, f) \leftarrow Q.\text{pop}()$
-            
-%             \State $L_{sol}.\text{append}((C, f))$
-            
-%             \State $E_{accum} \leftarrow E$ \Comment{Akumulator zabronionych krawędzi}
-            
-%             \For{$i \gets 1$ \textbf{to} $k$}
-%                 \State $E_{new} \leftarrow E \cup \{f(i)\}$ \Comment{Nowy zbiór zabronionych wierzchołków}
-                
-%                 \State $(C_{new}, f_{new}) \leftarrow \Call{solve\_with\_constraints}{M, E_{new}, k}$
-                
-%                 \If{$C_{new} \neq \text{None}$}
-%                     \State $Q.\text{push}((C_{new}, E_{new}, f_{new}))$
-%                 \EndIf
-%             \EndFor
-%         \EndWhile
-        
-%         \State \Return $L_{sol}$
-%     \end{algorithmic}
-% \end{algorithm}
-
-% \subsection{Dowód Poprawności}
-
-% \begin{theorem}[Zakończenie Algorytmu]
-% Algorytm Murty'ego (Algorytm \ref{alg:murty_k_best}) zawsze kończy działanie w skończonym czasie.
-% \end{theorem}
-% \begin{proof}
-% Liczba możliwych mapowań $f$ (iniekcji z $\{1..k\}$ do $\{1..N\}$) jest skończona i wynosi $P(N, k) = N! / (N-k)!$. Zbiór \texttt{seen\_mappings} ($U_{seen}$) gwarantuje, że każde unikalne mapowanie $f$ jest dodawane do $L_{sol}$ i partycjonowane co najwyżej raz. Ponieważ pętla \texttt{while} jest również ograniczona przez $n$ (\texttt{max\_solutions}), algorytm musi się zakończyć.
-% \end{proof}
-
-% \begin{theorem}[Kompletność i Optymalność]
-% Algorytm generuje rozwiązania w kolejności niemalejącego kosztu. Jeśli istnieje $j$ unikalnych rozwiązań, algorytm znajdzie je w $j$ pierwszych (unikalnych) iteracjach pętli.
-% \end{theorem}
-% \begin{proof}
-% Dowód opiera się na poprawności schematu partycjonowania Murty'ego.
-% Niech $S$ będzie zbiorem wszystkich dozwolonych mapowań (rozwiązań). Niech $f_1$ będzie optymalnym rozwiązaniem (1-szym najlepszym).
-% W kroku 2.c.i (linii 23 algorytmu), algorytm generuje $k$ podproblemów $P_1, \dots, P_k$ na podstawie $f_1$.
-% \end{proof}
-% \begin{lemma}[Partycjonowanie Murty'ego]
-% Zbiory rozwiązań dla podproblemów $P_1, \dots, P_k$ są parami rozłączne, a ich suma (unia) jest równa $S \setminus \{f_1\}$.
-% \end{lemma}
-% \begin{proof}[Dowód (Szkic)]
-% Niech $f_1 = \{(1, c_1), \dots, (k, c_k)\}$.
-% \begin{itemize}
-%     \item $P_1$ zawiera rozwiązania, które \emph{nie} mają $(1, c_1)$.
-%     \item $P_2$ zawiera rozwiązania, które \emph{mają} $(1, c_1)$, ale \emph{nie} mają $(2, c_2)$.
-%     \item $P_i$ zawiera rozwiązania, które \emph{mają} $\{(1, c_1), \dots, (i-1, c_{i-1})\}$, ale \emph{nie} mają $(i, c_i)$.
-% \end{itemize}
-% Są one z definicji rozłączne.
-% Weźmy dowolne rozwiązanie $f' \in S \setminus \{f_1\}$. Musi ono różnić się od $f_1$ na co najmniej jednej pozycji. Niech $i$ będzie pierwszym indeksem (wierszem), gdzie $f'(i) \neq c_i$. Oznacza to, że $f'$ pasuje do $f_1$ na pozycjach $1, \dots, i-1$, ale nie na $i$. Zatem $f'$ należy do zbioru $P_i$.
-% W ten sposób $\bigcup_{i=1}^{k} P_i = S \setminus \{f_1\}$.
-% \end{proof}
-
-% Ponieważ (1) partycjonowanie jest kompletne i rozłączne, (2) optymalne rozwiązanie każdego podproblemu $P_i$ (czyli $H(P_i)$) jest najlepszym kandydatem z tego podzbioru, oraz (3) kolejka priorytetowa $Q$ zawsze przechowuje najlepszych kandydatów ze wszystkich dotychczas wygenerowanych podzbiorów, to gdy \texttt{Q.pop()} zwraca $f_j$, musi to być rozwiązanie o globalnie $j$-tym najniższym koszcie spośród wszystkich możliwych rozwiązań.
-
-% \subsection{Analiza Złożoności}
-
-% Analizujemy koszt znalezienia $n$ najlepszych rozwiązań (ustawiając $\texttt{max\_solutions} = j = n$).
-
-% \subsection{Złożoność Pamięciowa}
-
-% \begin{itemize}
-%     \item Macierz kosztów \texttt{cost\_matrix} (oryginalna i kopie): $\mathcal{O}(N^2)$.
-%     \item Lista rozwiązań \texttt{solutions}: Przechowuje $n$ mapowań, każde o rozmiarze $k$. Koszt: $\mathcal{O}(n k)$.
-%     \item Zbiór \texttt{seen\_mappings}: Przechowuje $n$ krotek o rozmiarze $k$. Koszt: $\mathcal{O}(n k)$.
-%     \item Kolejka priorytetowa \texttt{queue}: W najgorszym razie, każde z $n$ znalezionych rozwiązań generuje $k$ nowych kandydatów. Rozmiar kolejki jest rzędu $\mathcal{O}(n k)$. Każdy element przechowuje ograniczenia $I$ i $E$, które mogą rosnąć do $\mathcal{O}(k)$.
-%     Koszt kolejki: $\mathcal{O}(n k \cdot k) = \mathcal{O}(n k^2)$.
-% \end{itemize}
-% \textbf{Całkowita złożoność pamięciowa: $\mathcal{O}(N^2 + n k^2)$.}
-
-% \subsection{Złożoność Obliczeniowa (Czasowa)}
-
-% \begin{itemize}
-%     \item Główna pętla \texttt{while} wykonuje się $\mathcal{O}(n)$ razy (ignorując duplikaty, których w praktyce jest niewiele w porównaniu do $n$).
-%     \item Wewnątrz pętli, pętla \texttt{for} (partycjonowanie) wykonuje się $k$ razy.
-%     \item Wewnątrz pętli \texttt{for} wywoływana jest funkcja \texttt{solve\_with\_constraints}.
-%     \item Koszt \texttt{solve\_with\_constraints} jest zdominowany przez \texttt{StandardAssignmentSolver} (np. \texttt{linear\_sum\_assignment}), którego złożoność dla macierzy $N \times N$ wynosi $\mathcal{O}(N^3)$.
-%     \item Operacje na kolejce priorytetowej (\texttt{push}/\texttt{pop}) mają koszt $\mathcal{O}(\log |Q|) = \mathcal{O}(\log(nk))$.
-% \end{itemize}
-% Całkowity koszt to suma kosztów $\mathcal{O}(n)$ kroków "wyjęcia" rozwiązania i $\mathcal{O}(n \cdot k)$ kroków "rozwiązania podproblemu".
-
-% $$ C_{\text{solver}} = \underbrace{\mathcal{O}(n \cdot \log(nk))}_{\text{Zarządzanie kolejką}} + \underbrace{\mathcal{O}(n \cdot k \cdot N^3)}_{\text{Rozwiązywanie podproblemów}} $$
-
-% Ponieważ $\mathcal{O}(N^3)$ jest znacznie większe niż $\mathcal{O}(\log(nk))$, ten drugi człon jest pomijalny.
-% \textbf{Złożoność obliczeniowa (Faza 1 - Solver): $\mathcal{O}(n \cdot k \cdot N^3)$.}
-
-% \subsection{Faza 2: Zastosowanie Rozszerzeń i Końcowa Analiza Złożoności}
-% \label{sec:zastosowanie_rozszerzen}
-
-% Powyższa analiza dotyczy kosztu Fazy 1 (procedury-solvera), która znajduje $n$ najlepszych mapowań heurystycznych. Pełen algorytm aproksymacyjny musi również wykonać Fazę 2.
-
-% \begin{enumerate}
-%     \item \textbf{Faza 1 (Znalezienie mapowań):} Wywołanie algorytmu \ref{alg:murty_k_best} z $n$. Koszt tej operacji, jak wykazano powyżej, wynosi:
-%     $$ C_{\text{Faza 1}} = \mathcal{O}(n \cdot k \cdot N^3) $$
-%     Wynikiem jest lista $L_{sol} = \{f_1, \dots, f_n\}$ zawierająca $n$ unikalnych mapowań.
+    \item \textbf{Pętla Główna (linia 4):} Pętla \texttt{for} wykonuje się $n$ razy. Musimy przeanalizować koszt \emph{jednej} iteracji.
     
-%     \item \textbf{Faza 2 (Zastosowanie rozszerzeń):} Po uzyskaniu listy $L_{sol}$, algorytm musi zastosować je do grafu $A_G$, aby utworzyć końcowe rozszerzenie $A_{final}$. Procedura ta iteruje $n$ razy (raz dla każdego mapowania $f_i \in L_{sol}$). Wewnątrz każdej iteracji, sprawdza $k^2$ potencjalnych krawędzi (z $A_P$) i aktualizuje macierz $A_{final}$ (inicjalizowaną jako $A_G$), zliczając przy tym dodane krawędzie.
-% \end{enumerate}
+    \item \textbf{Koszt jednej iteracji (linie 6-27):}
+    \begin{itemize}
+        \item Linia 6, \texttt{GetDegrees(A\_curr)}: Wymaga przejścia przez macierz $N \times N$, aby obliczyć stopnie dla $A_{curr}$. Koszt: $\mathcal{O}(N^2)$.
+        \item Linia 7, \texttt{GetDegrees(A\_P)}: Wymaga przejścia przez macierz $k \times k$. Koszt: $\mathcal{O}(k^2)$.
+        \item Linia 9, \texttt{Heurystyka}: Wypełnia macierz $M_{sub}$ o rozmiarze $k \times k$. Zakładając, że stopnie są już obliczone, każda z $k^2$ komórek jest obliczana w czasie $\mathcal{O}(1)$. Koszt: $\mathcal{O}(k^2)$.
+        \item Linia 11, \texttt{HungarianAlgorithm(M\_sub)}: Wywołanie Algorytmu Węgierskiego na macierzy $k \times k$. Koszt: $\mathcal{O}(k^3)$.
+        \item Linie 14-26, Pętla rozszerzenia: Zagnieżdżone pętle \texttt{for} wykonują $k \times k$ iteracji. Wszystkie operacje wewnątrz (mapowanie, odczyt, zapis) mają koszt $\mathcal{O}(1)$. Koszt: $\mathcal{O}(k^2)$.
+    \end{itemize}
+    
+    \item \textbf{Koszt całkowity jednej iteracji:} Sumując powyższe kroki:
+    $$ C_{\text{iteracja}} = \mathcal{O}(N^2 + k^2 + k^2 + k^3 + k^2) = \mathcal{O}(N^2 + k^3) $$
+    
+    \item \textbf{Koszt Całkowity Fazy 2:} Całkowity koszt to koszt inicjalizacji plus $n$ razy koszt jednej iteracji.
+    $$ C_{\text{Faza 2}} = \mathcal{O}(N^2) + \mathcal{O}(n \cdot (N^2 + k^3)) = \mathcal{O}(N^2 + n \cdot N^2 + n \cdot k^3) $$
+\end{itemize}
+\textbf{Całkowita złożoność obliczeniowa (Faza 2): $\mathcal{O}(n \cdot N^2 + n \cdot k^3)$.}
 
-% \begin{definition}[Rzeczywisty Koszt Rozszerzenia $C_{ext}$]
-% Koszt ten, w przeciwieństwie do heurystyki liniowej, jest kosztem "kwadratowym" i reprezentuje faktyczną liczbę krawędzi do dodania.
-% $$C_{ext}(f, A) = \sum_{u, v \in V_P} \max(0, A_P[u, v] - A[f(u), f(v)])$$
-% \end{definition}
+\subsection{Końcowa Analiza Złożoności Całkowitej}
+\label{sec:final_complexity_v4}
 
-% Koszt Fazy 2 (zastosowania rozszerzeń) jest następujący:
-% $$ C_{\text{Faza 2}} = \sum_{i=1}^{n} (\text{koszt obliczenia } C_{ext}(f_i, A_{curr}) \text{ i aktualizacji } A_{curr}) $$
-% Koszt obliczenia $C_{ext}$ i aktualizacji macierzy dla jednego mapowania $f_i$ wymaga iteracji przez $k \times k$ par wierzchołków $P$, a więc wynosi $\mathcal{O}(k^2)$.
-% Całkowity koszt Fazy 2 to:
-% $$ C_{\text{Faza 2}} = \sum_{i=1}^{n} \mathcal{O}(k^2) = \mathcal{O}(n \cdot k^2) $$
+Całkowity koszt algorytmu aproksymacyjnego v.4 to suma kosztów obu faz:
+$$C_{\text{total}} = C_{\text{Faza 1}} + C_{\text{Faza 2}}$$
+$$C_{\text{total}} = \mathcal{O}(nk) + \mathcal{O}(n \cdot N^2 + n \cdot k^3)$$
 
-% Całkowity koszt algorytmu to suma kosztów obu faz (oraz kosztu budowy macierzy $M$, $\mathcal{O}(N^2 + k^2 + kN)$):
-% $$ C_{\text{total}} = C_{\text{Budowa M}} + C_{\text{Faza 1}} + C_{\text{Faza 2}} $$
-% $$ C_{\text{total}} = \mathcal{O}(N^2 + k^2 + kN) + \mathcal{O}(n \cdot k \cdot N^3) + \mathcal{O}(n \cdot k^2) $$
+\textbf{Całkowita złożoność obliczeniowa algorytmu: $\mathcal{O}(nk) + \mathcal{O}(n \cdot N^2 + n \cdot k^3)$.}
 
-% Ponieważ $N \ge k$, złożoność $\mathcal{O}(N^3)$ jest zawsze asymptotycznie większa lub równa $\mathcal{O}(k^2)$. W związku z tym, dominującym członem jest koszt Fazy 1 (znalezienia mapowań).
-
-% \textbf{Całkowita złożoność obliczeniowa: $\mathcal{O}(n \cdot k \cdot N^3)$.}
+\subsubsection*{Uwaga}
+Złożoność ta jest drastycznie niższa niż $\mathcal{O}(J \cdot k \cdot N^3)$ poprzedniego algorytmu. Ceną za tę szybkość jest jakość heurystyki. Poprzedni algorytm (oparty na Murty'm) gwarantował znalezienie $n$ najlepszych rozwiązań (w sensie heurystyki $M$) spośród \emph{wszystkich} $\binom{N}{k}$ podzbiorów. Ten algorytm przeszukuje tylko $n$ preselekcjonowanych podzbiorów; jeśli optymalne rozwiązanie leży poza nimi, algorytm ten go nie znajdzie.
 
 % \section{Testy}
 % \section{Podsumowanie}
