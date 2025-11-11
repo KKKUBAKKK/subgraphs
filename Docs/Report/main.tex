@@ -23,6 +23,7 @@
 \newtheorem{definition}{Definicja}
 \theoremstyle{plain}
 \newtheorem{theorem}{Twierdzenie}
+\newtheorem{lemma}[theorem]{Lemat}
 \begin{document}
 
     \title{
@@ -1014,13 +1015,252 @@
     Z definicji każdej macierzy $C_{u_1, u_2}$ wpisy odpowiadają dokładnie brakującym krawędziom. Jeśli na końcu algorytm utworzy macierz $K$ zgodnie z opisem, to po dodaniu tych krawędzi w $G_2$ wszystkie odwzorowania skonstruowane przez algorytm staną się izomorficznymi (liczbowo zgodnymi) kopiami $G_1$. Zatem algorytm zwraca dopuszczalne rozwiązanie. \\ \\
     Niestety nie ma dowodu, że algorytm daje rozwiązanie optymalne, ani że ma stałą gwarancję aproksymacji. To heurystyka zachłanna — lokalnie wybiera najtańsze mapowanie — ale problem minimalnego rozszerzenia (znalezienie najmniejszego zbioru dodatkowych krawędzi, by powstały $m$ kopii) jest kombinatorycznie trudny i algorytm zachłanny może prowadzić do lokalnie optymalnych, ale globalnie złych decyzji.
 
+% --------------------------------- ALGORYTM APROKSYMACYJNY 2 ---------------------------------
+\subsection{Aproksymacyjne minimalne rozszerzenie multigrafu - algorytm drugi}
+\label{sec:minimalne_rozszerzenie_approx_2}
+
+Algorytm polega na losowym wybraniu $n$ k-elementowych podzbiorów wierzchołków z grafu $G$, a następnie użyciu pewnej heurystyki do stworzenia macierzy kosztów przypisania pomiędzy konkretnymi wierzchołkami z grafu $P$, oraz grafu $G$. Następnie na tej macierzy wywoływany jest Algorytm Węgierski, który znajduje najlepsze mapowanie wierzchołków, w sensie przyjętej heurystyki. Ta operacja jest powtarzana na każdym z $n$ podzbiorów, tak żeby uzyskać wymagane n podgrafów grafu $G$, różniących się przynajmniej jednym wierzchołkiem.
+
+\subsubsection{Heurystyczna Funkcja Kosztu}
+
+Algorytm Węgierski operuje na macierzy kosztów $M$, która stanowi heurystyczną aproksymację rzeczywistego kosztu rozszerzenia. Wybór tej heurystyki ma kluczowy wpływ na jakość znajdowanych rozwiązań -- lepsza heurystyka (bliższa rzeczywistemu kosztowi) sprawi, że najlepsze rozwiązania heurystyczne będzą z większym prawdopodobieństwem odpowiadać najlepszym rozwiązaniom rzeczywistym. \\
+
+Poniżej przedstawiono sześć propozycji heurystyk do obliczania macierzy kosztów $M$, które chcielibyśmy poddać testom w celu wybrania funkcji dającej najlepsze rezultaty.
+
+\begin{enumerate}
+    \item \textbf{Heurystyka Różnicy Stopni.}
+    Jest to najprostsza i najszybsza heurystyka. Zakłada, że wierzchołki o podobnej łącznej liczbie połączeń (niezależnie od kierunku) powinny być ze sobą mapowane. 
+    
+    \textbf{Wzór:}
+    $$ M[i, j] = |\text{deg}_{\text{total}}(p_i) - \text{deg}_{\text{total}}(g_j)| $$
+    gdzie $\text{deg}_{\text{total}}(v) = \text{deg}_{in}(v) + \text{deg}_{out}(v)$.
+    
+    \textbf{Złożoność budowy:} $\mathcal{O}(N^2 + k^2 + kN)$. Zdominowana przez wstępne obliczenie stopni: $\mathcal{O}(N^2)$.
+
+    \item \textbf{Heurystyka Dopasowania Stopni Skierowanych.} % TODO: Dodaj opcje z roznym ignorowaniem roznicy, jesli w G jest wiecej niz w P
+    Nieco bardziej zaawansowana wersja dla grafów skierowanych. Koszt $M[i, j]$ jest sumą absolutnych różnic stopni wejściowych i wyjściowych.
+    
+    \textbf{Wzór:}
+    $$ M[i, j] = |\text{deg}_{in}(p_i) - \text{deg}_{in}(g_j)| + |\text{deg}_{out}(p_i) - \text{deg}_{out}(g_j)| $$
+    
+    \textbf{Złożoność budowy:} $\mathcal{O}(N^2 + k^2 + kN)$. Również zdominowana przez $\mathcal{O}(N^2)$.
+
+    \item \textbf{Heurystyka Dopasowania Stopni Skierowanych z Ignorowaniem Nadmiaru.}
+    Wersja modyfikowana poprzedniej heurystyki, która ignoruje nadmiar stopni w większym grafie. Pomaga to uniknąć karania wierzchołków w $G$ o większych stopniach niż ich odpowiedniki w $P$.
+
+    \textbf{Wzór:}
+    $$ M[i, j] = \max(0, \text{deg}_{in}(p_i) - \text{deg}_{in}(g_j)) + \max(0, \text{deg}_{out}(p_i) - \text{deg}_{out}(g_j)) $$
+
+    \textbf{Złożoność budowy:} $\mathcal{O}(N^2 + k^2 + kN)$. Również zdominowana przez $\mathcal{O}(N^2)$.
+
+    \item \textbf{Heurystyka Histogramu Stopni Sąsiadów.} % TODO: Sprawdz jak tworzyc te histogramy i liczyc ich odleglosc
+    Ta heurystyka analizuje najbliższe otoczenie. Dla każdego wierzchołka $p_i$ i $g_j$ tworzony jest histogram stopni ich bezpośrednich sąsiadów. Koszt $M[i, j]$ to odległość między tymi dwoma rozkładami.
+    
+    \textbf{Wzór:}
+    Niech $H_P(p_i)$ będzie histogramem stopni sąsiadów $p_i$, a $H_G(g_j)$ analogicznym histogramem dla $g_j$. Niech $S$ będzie większą z dwóch wartości stopni wierzchołków. Wtedy:
+    $$ M[i, j] = \sum_{s=0}^{S} |H_P(p_i)[s] - H_G(g_j)[s]| $$
+    Zakładamy, że histogramy są normalizowane do tej samej długości $S$.
+    
+    \textbf{Złożoność budowy:} Wymaga obliczenia stopni ($\mathcal{O}(N^2)$), zbudowania $N+k$ histogramów (w $\mathcal{O}(N^2)$) oraz obliczenia $kN$ odległości (w $\mathcal{O}(kN^2)$). Całkowity koszt to $\mathcal{O}(N^2 + kN^2)$.
+
+    \item \textbf{Heurystyka Dopasowania Struktury (Liczba Trójkątów).}
+    Ta heurystyka próbuje uchwycić naturę problemu przez mierzenie lokalnej struktury. Wierzchołek $p_i$ będący częścią wielu trójkątów powinien być mapowany na $g_j$, który również uczestniczy w wielu trójkątach.
+    
+    \textbf{Wzór:}
+    $$ M[i, j] = \alpha \cdot |\text{deg}(p_i) - \text{deg}(g_j)| + \beta \cdot \max(0, \text{triangles}(p_i) - \text{triangles}(g_j)) $$
+    gdzie $\text{triangles}(v)$ to liczba trójkątów, w których uczestniczy wierzchołek $v$. Karany jest tylko niedobór trójkątów w $g_j$ względem $p_i$.
+    
+    \textbf{Złożoność budowy:} Zdominowana przez koszt zliczania trójkątów w grafie $G$, który wynosi $\mathcal{O}(N^3)$ (przy użyciu mnożenia macierzy).
+
+    \item \textbf{Heurystyka Zachłannego Dopasowywania Sąsiadów.}
+    Najbardziej złożona obliczeniowo, ale potencjalnie najdokładniejsza heurystyka. Próbuje bezpośrednio oszacować koszt w najbliższym otoczeniu. Koszt $M[i, j]$ jest sumą "najlepszych" możliwych dopasowań dla sąsiadów $p_i$ wśród sąsiadów $g_j$.
+    
+    \textbf{Wzór (koncepcyjny):}
+    $$ M[i, j] = \sum_{p_k \in \mathcal{N}(p_i)} \left( \min_{g_l \in \mathcal{N}(g_j)} C(p_k, g_l) \right) $$
+    gdzie $\mathcal{N}(v)$ to sąsiedztwo $v$, a $C$ to prosta heurystyka kosztu (np. z Opcji 1).
+    
+    \textbf{Złożoność budowy:} Dla prostej heurystyki wypełnienie tymczasowej macierzy kosztów, to koszt $\mathcal{O}(N^2)$. Wypełnienie jednej komórki $M[i, j]$ kosztuje $\mathcal{O}(\text{deg}(p_i) \cdot \text{deg}(g_j))$. W najgorszym przypadku dla grafów gęstych (gdy $\text{deg} \approx k$ lub $N$), całkowity koszt wypełnienia $kN$ komórek wynosi $\mathcal{O}(k^2 N^2)$. Czyli koszt całej heurystyki to $\mathcal{O}(N^2 + k^2 N^2)$, czyli $\mathcal{O}(k^2 N^2)$.
+\end{enumerate}
+
+\subsubsection{Opis Algorytmów}
+
+Ta część opisuje dwie części algorytmu aproksymacyjnego: fazę generowania k-elementowych podzbiorów wierzchołków większego grafu oraz fazę znajdowania najlepszych mapowań dla tych podzbiorów. Lepsze rozwiązanie można uzyskać poprzez iterowanie po podzbiorach i znajdowanie najlepszych mapowań dla każdego z nich, np. korzystając z Algorytmu Murty'ego, jednak z powodu ograniczenia wielomianowej złożoności czasowej, w tej wersji algorytmu generujemy tylko $n$ podzbiorów.
+
+\begin{enumerate}
+    \item \textbf{Faza 1:} Najpierw generowana jest lista $\mathcal{L}$ $n$ $k$-elementowych podzbiorów wierzchołków z $G$ ($S \subset V_G$).
+    \item \textbf{Faza 2:} Następnie, algorytm iteruje $n$ razy. W każdej iteracji $i$, bierze $i$-ty podzbiór $S_i$ z listy $\mathcal{L}$ i rozwiązuje dla niego \emph{mały} ($k \times k$) problem przypisania (Algorytmem Węgierskim), aby znaleźć najlepsze mapowanie $f_i: V_P \to S_i$. Znalezione rozszerzenie jest dodawane do grafu $G$.
+\end{enumerate}
+
+\textbf{Algorytm Fazy 1: Generowanie Podzbiorów}
+
+Celem tej fazy jest szybkie wygenerowanie listy $\mathcal{L}$ $n$ unikalnych $k$-elementowych podzbiorów $V_G$.
+
+\begin{algorithm}[H]
+    \caption{Faza 1: Generowanie $n$ Pierwszych Podzbiorów Leksygograficznych}
+    \label{alg:generate_subsets_lexical}
+    \begin{algorithmic}[1]
+        \Require Graf $G$ (o $N$ wierzchołkach, $V_G = \{v_1, \dots, v_N\}$), Liczba podzbiorów $n$, Rozmiar podzbioru $k$
+        \Ensure Lista $\mathcal{L}$ (do $n$) unikalnych $k$-elementowych podzbiorów $V_G$
+        
+        \State $\mathcal{L} \gets []$
+        
+        \If{$n = 0$ \textbf{or} $k > N$}
+            \State \Return $\mathcal{L}$
+        \EndIf
+        
+        \State $\mathcal{C} \gets \Call{CombinationsGenerator}{V_G, k}$ \Comment{Inicjalizuj generator kombinacji $\binom{N}{k}$}
+        
+        \For{$i \gets 1$ \textbf{to} $n$}
+            \If{$\mathcal{C}.\text{hasNext}()$}
+                \State $S \gets \mathcal{C}.\text{next}()$ \Comment{Pobierz następny podzbiór, np. $\{v_1, ..., v_k\}$}
+                \State $\mathcal{L}.\text{append}(S)$
+            \Else
+                \State \textbf{break} \Comment{Zakończ, jeśli jest mniej niż $n$ możliwych kombinacji}
+            \EndIf
+        \EndFor
+        
+        \State \Return $\mathcal{L}$
+    \end{algorithmic}
+\end{algorithm}
+
+\textbf*{Dowód Poprawności (Faza 1)}
+Poprawność procedury oznacza gwarancję zakończenia i zwrócenia listy $\mathcal{L}$ zawierającej $n$ (lub mniej, jeśli niemożliwe) unikalnych $k$-elementowych podzbiorów.
+\begin{itemize}
+    \item \textbf{Zakończenie:} Pętla \texttt{for} (linia 6) jest ściśle ograniczona przez $n$. W każdej iteracji wywoływana jest operacja \texttt{next()} generatora kombinacji. Generator ten zakończy działanie (zwracając \texttt{false} w linii 7) po wygenerowaniu wszystkich $\binom{N}{k}$ kombinacji. Ponieważ $n$ jest skończone, algorytm zawsze się zakończy.
+    \item \textbf{Unikalność:} Standardowy generator kombinacji (leksykograficzny) z definicji produkuje każdą kombinację (podzbiór) dokładnie jeden raz. Ponieważ algorytm tylko pobiera elementy z tego generatora, lista $\mathcal{L}$ z definicji zawiera unikalne podzbiory.
+    \item \textbf{Ilość Wyjścia:} Algorytm próbuje pobrać $n$ podzbiorów. Jeśli $n > \binom{N}{k}$, generator wyczerpie się wcześniej, a pętla zostanie przerwana (linia 10). Algorytm poprawnie zwróci $\binom{N}{k}$ podzbiorów, czyli wszystkie, które istnieją. W przeciwnym razie zwróci dokładnie $n$ podzbiorów.
+\end{itemize}
+
+\textbf*{Analiza Złożoności (Faza 1)}
+Analiza ta dotyczy kosztu wygenerowania $n$ podzbiorów.
+\begin{itemize}
+    \item \textbf{Inicjalizacja (linie 1-5):} Generator jest inicjowany na pierwszym elemencie, np. $\{v_1, \dots, v_k\}$ w czasie $\mathcal{O}(k)$.
+    \item \textbf{Pętla Główna (linie 6-12):} Wykonuje się $n$ razy.
+    \item \textbf{Operacje w pętli:}
+        \item Wygenerowanie \texttt{next()} (linia 8): Koszt wygenerowania następnej kombinacji leksykograficznej z poprzedniej jest w zamortyzowanym czasie stałym $\mathcal{O}(1)$, a w najgorszym przypadku wynosi $\mathcal{O}(k)$.
+        \item Dodanie do listy $\mathcal{L}$ (linia 9): Wymaga skopiowania podzbioru o rozmiarze $k$, co ma koszt $\mathcal{O}(k)$.
+    \item Koszt pętli wynosi $n \cdot \mathcal{O}(k)$.
+\end{itemize}
+\textbf{Całkowita złożoność obliczeniowa (Faza 1): $\mathcal{O}(n \cdot k)$.}
+
+\textbf{Algorytm Fazy 2: Iteracyjne Rozwiązywanie i Rozszerzanie}
+
+Faza 2 pobiera listę $\mathcal{L}$ $n$ podzbiorów-kandydatów i iteracyjnie znajduje najlepsze mapowanie $V_P \to S_i$ dla każdego $S_i \in \mathcal{L}$, stosując rozszerzenie do grafu $G$.
+
+\begin{algorithm}[H]
+    \caption{Faza 2: Iteracyjne Rozwiązywanie na Podzbiorach}
+    \label{alg:solve_subsets}
+    \begin{algorithmic}[1]
+        \Require Lista podzbiorów $\mathcal{L}$, Oryginalny graf $A_G$, Wzorzec $A_P$
+        \Ensure Końcowa macierz $A_{final}$, Całkowity koszt $C_{total}$
+        
+        \State $A_{curr} \gets \Call{copy}{A_G}$
+        \State $C_{total} \gets 0$
+        
+        \For{\textbf{each} $S_i$ \textbf{in} $\mathcal{L}$} \Comment{Iteruj $n$ razy}
+            \State
+            \State $D_{curr} \gets \Call{GetDegrees}{A_{curr}}$ \Comment{Tablica stopni wierzchołków w $A_{curr}$}
+            \State $D_{P} \gets \Call{GetDegrees}{A_{P}}$ \Comment{Tablica stopni wierzchołków w $P$}
+            \State
+            \State $M_{sub} \gets \Call{Heurystyka}{S_i, A_{curr}, A_{P}, D_{curr}, D_{P}}$ \Comment{Wypełnij $M_{sub}$ wagami}
+            \State
+            \State $f_i \gets \Call{HungarianAlgorithm}{M_{sub}}$ \Comment{Wywołaj Algorytm Węgierski}
+            
+            \State
+            \State $cost_i \gets 0$ \Comment{Zastosuj rozszerzenie dla tego mapowania}
+            \For{$u \gets 1$ \textbf{to} $k$} \Comment{Iteruj $k \times k$ w macierzy wzorca $P$}
+                \For{$v \gets 1$ \textbf{to} $k$}
+                    \State $g_u \gets f_i(u)$
+                    \State $g_v \gets f_i(v)$
+                    \State $w_{needed} \leftarrow A_P[u, v]$
+                    \State $w_{current} \leftarrow A_{curr}[g_u, g_v]$
+                    \If{$w_{needed} > w_{current}$}
+                        \State $w_{missing} \leftarrow w_{needed} - w_{current}$
+                        \State $A_{curr}[g_u, g_v] \leftarrow w_{needed}$
+                        \State $cost_i \gets cost_i + w_{missing}$
+                    \EndIf
+                \EndFor
+            \EndFor
+            \State $C_{total} \gets C_{total} + cost_i$
+        \EndFor
+        
+        \State $A_{final} \gets A_{curr}$
+        \State \Return $A_{final}, C_{total}$
+    \end{algorithmic}
+\end{algorithm}
+
+\paragraph{Dowód Poprawności (Faza 2)}
+Poprawność procedury (Algorytm \ref{alg:solve_subsets}) opiera się na dwóch głównych filarach: gwarancji zakończenia oraz poprawności iteracyjnego rozszerzania grafu.
+
+\begin{itemize}
+    \item \textbf{Zakończenie:} 
+    Algorytm składa się z jednej głównej pętli \texttt{for} (linia 2), która iteruje po liście $\mathcal{L}$. Ponieważ lista $\mathcal{L}$ jest skończona (zawiera $n$ podzbiorów), pętla \texttt{for} wykona się $n$ razy.
+    Musimy przeanalizować operacje wewnątrz pętli:
+    \begin{enumerate}
+        \item \texttt{GetDegrees} (linie 5-6): Obliczenie stopni dla macierzy $N \times N$ i $k \times k$ jest operacją o skończonej, wielomianowej złożoności (odpowiednio $\mathcal{O}(N^2)$ i $\mathcal{O}(k^2)$).
+        \item \texttt{Heurystyka} (linia 8): Wypełnienie macierzy $k \times k$ jest operacją o złożoności zależnej od wybranej heurystyki. Dla prostszych heurystyk, jak liczenie różnicy stopni, przy podanej macierzy stopni i przy wielkości macierzy kosztów $k \times k$, jej złożoność to $\mathcal{O}(k^2)$.
+        \item \texttt{HungarianAlgorithm} (linia 10): Wywołanie Algorytmu Węgierskiego na macierzy $k \times k$ ma złożoność wielomianową $\mathcal{O}(k^3)$.
+        \item Pętla rozszerzenia (linie 13-25): Jest to zagnieżdżona pętla wykonująca $k \times k = k^2$ operacji $\mathcal{O}(1)$, stąd jej koszt to $\mathcal{O}(k^2)$.
+    \end{enumerate}
+    Ponieważ $n, k, N$ są skończone, a wszystkie operacje wewnątrz pętli głównej mają skończoną, wielomianową złożoność, cały algorytm gwarantuje zakończenie działania.
+
+    \item \textbf{Poprawność Rozszerzenia:} 
+    Musimy udowodnić, że końcowy graf $A_{final}$ zawiera $n$ podgrafów izomorficznych z $P$, zgodnie ze znalezionymi mapowaniami $f_1, \dots, f_n$.
+    Niech $A_{curr}^{(i)}$ będzie stanem macierzy $A_{curr}$ na \emph{początku} $i$-tej iteracji pętli \texttt{for} (gdzie $A_{curr}^{(1)} = A_G$). Niezmiennik: $A_{curr}^{(i)}$ zawiera podgrafy $f_1, \dots, f_{i-1}$.
+    \begin{itemize}
+        \item \textbf{Baza ($i=1$):} $A_{curr}^{(1)} = A_G$. Niezmiennik jest trywialnie prawdziwy (zawiera 0 podgrafów).
+        \item \textbf{Krok Indukcyjny:} Zakładamy, że $A_{curr}^{(i)}$ zawiera $f_1, \dots, f_{i-1}$. W $i$-tej iteracji algorytm znajduje nowe mapowanie $f_i$ (linie 5-10). Następnie pętla rozszerzenia (linie 13-25) iteruje przez wszystkie $k^2$ par w $P$. W linii 19, algorytm sprawdza, czy wymagana krawędź $(f_i(u), f_i(v))$ o krotności $w_{needed}$ istnieje. Jeśli nie ($w_{needed} > w_{current}$), algorytm \emph{dodaje} brakujące krawędzie (lub zwiększa krotność) w linii 21 ($A_{curr}[g_u, g_v] \leftarrow w_{needed}$). 
+        \item Operacja ta jest monotoniczna: krotności krawędzi w $A_{curr}$ nigdy nie maleją ($A_{curr}^{(i+1)} \ge A_{curr}^{(i)}$).
+        \item Zatem, po zakończeniu pętli (linii 13-25), graf $A_{curr}^{(i+1)}$ gwarantuje zawarcie podgrafu $f_i$. Ponieważ krawędzie są tylko dodawane, $A_{curr}^{(i+1)}$ nadal zawiera wszystkie poprzednie podgrafy $f_1, \dots, f_{i-1}$.
+        \item \textbf{Zakończenie:} Po $n$ iteracjach, $A_{final} = A_{curr}^{(n+1)}$ zawiera wszystkie $n$ podgrafów $f_1, \dots, f_n$.
+    \end{itemize}
+    Algorytm poprawnie również sumuje koszt $C_{total}$ jako sumę kosztów $cost_i$ poniesionych w każdej iteracji, odzwierciedlając fakt, że krawędzie dodane we wcześniejszych iteracjach zmniejszają koszt rozszerzeń w późniejszych iteracjach.
+\end{itemize}
+
+\paragraph{Analiza Złożoności (Faza 2)}
+Analizujemy koszt obliczeniowy (czasowy) Algorytmu \ref{alg:solve_subsets} w zależności od $N$ (rozmiar $G$), $k$ (rozmiar $P$) oraz $n$ (liczba podzbiorów w $\mathcal{L}$).
+
+\begin{itemize}
+    \item \textbf{Operacje Wstępne (linie 1-2):} Kopiowanie macierzy $A_G$ ma koszt $\mathcal{O}(N^2)$.
+    
+    \item \textbf{Pętla Główna (linia 4):} Pętla \texttt{for} wykonuje się $n$ razy. Musimy przeanalizować koszt \emph{jednej} iteracji.
+    
+    \item \textbf{Koszt jednej iteracji (linie 6-27):}
+    \begin{itemize}
+        \item Linia 6, \texttt{GetDegrees(A\_curr)}: Wymaga przejścia przez macierz $N \times N$, aby obliczyć stopnie dla $A_{curr}$. Koszt: $\mathcal{O}(N^2)$.
+        \item Linia 7, \texttt{GetDegrees(A\_P)}: Wymaga przejścia przez macierz $k \times k$. Koszt: $\mathcal{O}(k^2)$.
+        \item Linia 9, \texttt{Heurystyka}: Wypełnia macierz $M_{sub}$ o rozmiarze $k \times k$. Zakładając, że stopnie są już obliczone, każda z $k^2$ komórek jest obliczana w czasie $\mathcal{O}(1)$. Koszt: $\mathcal{O}(k^2)$.
+        \item Linia 11, \texttt{HungarianAlgorithm(M\_sub)}: Wywołanie Algorytmu Węgierskiego na macierzy $k \times k$. Koszt: $\mathcal{O}(k^3)$.
+        \item Linie 14-26, Pętla rozszerzenia: Zagnieżdżone pętle \texttt{for} wykonują $k \times k$ iteracji. Wszystkie operacje wewnątrz (mapowanie, odczyt, zapis) mają koszt $\mathcal{O}(1)$. Koszt: $\mathcal{O}(k^2)$.
+    \end{itemize}
+    
+    \item \textbf{Koszt całkowity jednej iteracji:} Sumując powyższe kroki:
+    $$ C_{\text{iteracja}} = \mathcal{O}(N^2 + k^2 + k^2 + k^3 + k^2) = \mathcal{O}(N^2 + k^3) $$
+    
+    \item \textbf{Koszt Całkowity Fazy 2:} Całkowity koszt to koszt inicjalizacji plus $n$ razy koszt jednej iteracji.
+    $$ C_{\text{Faza 2}} = \mathcal{O}(N^2) + \mathcal{O}(n \cdot (N^2 + k^3)) = \mathcal{O}(N^2 + n \cdot N^2 + n \cdot k^3) $$
+\end{itemize}
+\textbf{Całkowita złożoność obliczeniowa (Faza 2): $\mathcal{O}(n \cdot N^2 + n \cdot k^3)$.}
+
+\subsubsection{Końcowa Analiza Złożoności}
+\label{sec:final_complexity_v4}
+
+Całkowity koszt algorytmu aproksymacyjnego v.4 to suma kosztów obu faz:
+$$C_{\text{total}} = C_{\text{Faza 1}} + C_{\text{Faza 2}}$$
+$$C_{\text{total}} = \mathcal{O}(nk) + \mathcal{O}(n \cdot N^2 + n \cdot k^3)$$
+
+\textbf{Całkowita złożoność obliczeniowa algorytmu: $\mathcal{O}(nk) + \mathcal{O}(n \cdot N^2 + n \cdot k^3)$.}
+
+\textbf*{Uwaga}
+Złożoność ta jest drastycznie niższa niż $\mathcal{O}(J \cdot k \cdot N^3)$ poprzedniego algorytmu. Ceną za tę szybkość jest jakość heurystyki. Poprzedni algorytm (oparty na Murty'm) gwarantował znalezienie $n$ najlepszych rozwiązań (w sensie heurystyki $M$) spośród \emph{wszystkich} $\binom{N}{k}$ podzbiorów. Ten algorytm przeszukuje tylko $n$ preselekcjonowanych podzbiorów; jeśli optymalne rozwiązanie leży poza nimi, algorytm ten go nie znajdzie.
+
 % \section{Testy}
 % \section{Podsumowanie}
 
 
     \section{Bibliografia}
 
-    \bibliographystyle{plain}
-    \bibliography{refs}
+% \bibliographystyle{plain}
+% \bibliography{refs}
 
 \end{document}
