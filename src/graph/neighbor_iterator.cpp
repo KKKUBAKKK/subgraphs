@@ -2,43 +2,36 @@
 
 namespace Subgraphs {
 
-// NeighborIterator (for out-neighbors)
-NeighborIterator::NeighborIterator(const std::vector<uint8_t>& neighbors, int64_t position)
+OutNeighborIterator::OutNeighborIterator(const std::vector<uint8_t>& neighbors, int64_t position)
     : neighbors(&neighbors), position(position) {
     skipZeros();
 }
 
-void NeighborIterator::skipZeros() {
+void OutNeighborIterator::skipZeros() {
     while (position < static_cast<int64_t>(neighbors->size()) && (*neighbors)[position] == 0) {
         ++position;
     }
 }
 
-NeighborIterator::value_type NeighborIterator::operator*() const {
+OutNeighborIterator::value_type OutNeighborIterator::operator*() const {
     return {position, (*neighbors)[position]};
 }
 
-NeighborIterator& NeighborIterator::operator++() {
+OutNeighborIterator& OutNeighborIterator::operator++() {
     ++position;
     skipZeros();
     return *this;
 }
 
-NeighborIterator NeighborIterator::operator++(int) {
-    NeighborIterator tmp = *this;
-    ++(*this);
-    return tmp;
-}
-
-bool NeighborIterator::operator==(const NeighborIterator& other) const {
+bool OutNeighborIterator::operator==(const OutNeighborIterator& other) const {
     return neighbors == other.neighbors && position == other.position;
 }
 
-bool NeighborIterator::operator!=(const NeighborIterator& other) const {
+bool OutNeighborIterator::operator!=(const OutNeighborIterator& other) const {
     return !(*this == other);
 }
 
-// InNeighborIterator (for in-neighbors)
+// InNeighborIterator
 InNeighborIterator::InNeighborIterator(const std::vector<std::vector<uint8_t>>& adjMatrix,
                                        int64_t vertex, int64_t position)
     : adjMatrix(&adjMatrix), vertex(vertex), position(position) {
@@ -60,12 +53,6 @@ InNeighborIterator& InNeighborIterator::operator++() {
     ++position;
     skipZeros();
     return *this;
-}
-
-InNeighborIterator InNeighborIterator::operator++(int) {
-    InNeighborIterator tmp = *this;
-    ++(*this);
-    return tmp;
 }
 
 bool InNeighborIterator::operator==(const InNeighborIterator& other) const {

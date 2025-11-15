@@ -2,6 +2,14 @@
 # Source Files Configuration
 # ---------------------------------
 
+set(SUBGRAPHS_LIB_SOURCES
+    graph/multigraph.cpp
+    graph/neighbor_iterator.cpp
+    graph/neighbor_range.cpp
+    graph/permutation_iterator.cpp
+    graph/combination_iterator.cpp
+)
+
 set(SUBGRAPHS_SOURCES
     main.cpp
 )
@@ -10,15 +18,24 @@ set(SUBGRAPHS_HEADERS
 )
 
 set(SUBGRAPHS_INCLUDE_DIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/include
 )
+
+# ---------------------------------
+# Create Library for Reuse in Tests
+# ---------------------------------
+
+add_library(subgraphs_lib STATIC ${SUBGRAPHS_LIB_SOURCES})
+target_include_directories(subgraphs_lib PUBLIC ${SUBGRAPHS_INCLUDE_DIRS})
+target_compile_features(subgraphs_lib PUBLIC cxx_std_20)
 
 # ---------------------------------
 # Create Executable
 # ---------------------------------
 
 add_executable(${PROJECT_NAME} ${SUBGRAPHS_SOURCES} ${SUBGRAPHS_HEADERS})
+target_link_libraries(${PROJECT_NAME} PRIVATE subgraphs_lib)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"

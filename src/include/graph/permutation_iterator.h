@@ -1,23 +1,51 @@
 #pragma once
 
+#include <cstdint>
 #include <vector>
-
-#include "multigraph.h"
 
 namespace Subgraphs {
 
+class Multigraph;
+
+/**
+ * @brief Iterator for generating all permutations of vertex indices
+ *
+ * Generates permutations lazily using next_permutation algorithm.
+ * Does not store all permutations in memory.
+ */
 class PermutationIterator {
   public:
-    PermutationIterator(const Multigraph& graph, bool end = false);
+    using iterator_category = std::input_iterator_tag;
+    using value_type = std::vector<int64_t>;
+    using difference_type = std::ptrdiff_t;
+    using pointer = const value_type*;
+    using reference = const value_type&;
 
-    Multigraph operator*() const;
+    PermutationIterator(int64_t n, bool end = false);
+
+    const std::vector<int64_t>& operator*() const;
     PermutationIterator& operator++();
+    bool operator==(const PermutationIterator& other) const;
     bool operator!=(const PermutationIterator& other) const;
 
   private:
-    const Multigraph& graph;
-    std::vector<int> permutation;
+    std::vector<int64_t> permutation;
+    int64_t n;
     bool isEnd;
+};
+
+/**
+ * @brief Range wrapper for permutation iteration
+ */
+class PermutationRange {
+  public:
+    explicit PermutationRange(int64_t n);
+
+    PermutationIterator begin() const;
+    PermutationIterator end() const;
+
+  private:
+    int64_t n;
 };
 
 } // namespace Subgraphs

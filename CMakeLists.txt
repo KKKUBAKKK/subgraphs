@@ -15,10 +15,16 @@ set(CMAKE_C_STANDARD 17)
 add_subdirectory(src)
 
 # ---------------------------------
+# Enable testing
+# ---------------------------------
+
+enable_testing()
+
+# ---------------------------------
 # Add tests directory
 # ---------------------------------
 
-# add_subdirectory(tests)
+add_subdirectory(tests)
 
 # ---------------------------------
 # Setup compile options

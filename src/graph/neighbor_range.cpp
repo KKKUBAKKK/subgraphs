@@ -2,19 +2,17 @@
 
 namespace Subgraphs {
 
-// NeighborRange (for out-neighbors)
-NeighborRange::NeighborRange(const std::vector<uint8_t>& neighbors) : neighbors(&neighbors) {
+OutNeighborRange::OutNeighborRange(const std::vector<uint8_t>& neighbors) : neighbors(&neighbors) {
 }
 
-NeighborIterator NeighborRange::begin() const {
-    return NeighborIterator(*neighbors, 0);
+OutNeighborIterator OutNeighborRange::begin() const {
+    return OutNeighborIterator(*neighbors, 0);
 }
 
-NeighborIterator NeighborRange::end() const {
-    return NeighborIterator(*neighbors, static_cast<int64_t>(neighbors->size()));
+OutNeighborIterator OutNeighborRange::end() const {
+    return OutNeighborIterator(*neighbors, static_cast<int64_t>(neighbors->size()));
 }
 
-// InNeighborRange
 InNeighborRange::InNeighborRange(const std::vector<std::vector<uint8_t>>& adjMatrix, int64_t vertex)
     : adjMatrix(&adjMatrix), vertex(vertex) {
 }

@@ -33,12 +33,11 @@ class Multigraph {
     std::vector<std::pair<int64_t, uint8_t>> getInNeighbors(int64_t v) const;
     std::vector<std::pair<int64_t, uint8_t>> getOutNeighbors(int64_t v) const;
 
-    NeighborRange neighbors(int64_t v) const;
     InNeighborRange inNeighbors(int64_t v) const;
     OutNeighborRange outNeighbors(int64_t v) const;
 
-    PermutationIterator permutations() const;
-    CombinationIterator combinations() const;
+    PermutationRange permutations() const;
+    CombinationRange combinations(int64_t k) const;
 
     int64_t getVertexCount() const;
     int64_t getEdgeCount() const;

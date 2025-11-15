@@ -23,13 +23,11 @@ Multigraph::Multigraph(const Multigraph& other)
 
 Multigraph::~Multigraph() = default;
 
-// TODO: maybe some error handling?
 void Multigraph::addEdges(int64_t source, int64_t destination, uint8_t count) {
     edgeCount += count;
     adjMatrix[source][destination] += count;
 }
 
-// TODO: the same with error
 uint8_t Multigraph::getEdges(int64_t source, int64_t destination) const {
     return adjMatrix[source][destination];
 }
@@ -74,16 +72,20 @@ std::vector<std::pair<int64_t, uint8_t>> Multigraph::getOutNeighbors(int64_t v) 
     return neighbors;
 }
 
-NeighborRange Multigraph::neighbors(int64_t v) const {
-    return outNeighbors(v);
-}
-
 InNeighborRange Multigraph::inNeighbors(int64_t v) const {
     return InNeighborRange(adjMatrix, v);
 }
 
 OutNeighborRange Multigraph::outNeighbors(int64_t v) const {
     return OutNeighborRange(adjMatrix[v]);
+}
+
+PermutationRange Multigraph::permutations() const {
+    return PermutationRange(vertexCount);
+}
+
+CombinationRange Multigraph::combinations(int64_t k) const {
+    return CombinationRange(vertexCount, k);
 }
 
 int64_t Multigraph::getVertexCount() const {
