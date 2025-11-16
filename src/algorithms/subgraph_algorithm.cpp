@@ -47,20 +47,28 @@ std::vector<Edge> SubgraphAlgorithm::findMinimalExtension(
 
     for (auto combs : CombinationRange(G.combinationsCount(P.getVertexCount()), n)) {
         for (auto perms : SequenceRange(P.permutationsCount(), n)) {
-            std::unordered_map<Edge, uint64_t> edgeCountMap{};
-            uint64_t currentSize = 0;
+            std::unordered_map<Edge, uint64_t> edgeFreqMap{};
 
             for (int i = 0; i < n; ++i) {
+                std::unordered_map<Edge, uint64_t> localFreq{};
                 for (const auto& edge : allMissingEdges[perms[i]][combs[i]]) {
-                    edgeCountMap[edge] += edge.count;
-                    currentSize += edge.count;
+                    localFreq[edge] += edge.count;
                 }
+
+                for (const auto& [edge, freq] : localFreq) {
+                    edgeFreqMap[edge] = std::max(edgeFreqMap[edge], freq);
+                }
+            }
+
+            uint64_t currentSize = 0;
+            for (const auto& [edge, freq] : edgeFreqMap) {
+                currentSize += freq;
             }
 
             if (currentSize < minSize) {
                 minSize = currentSize;
                 minimalExtension.clear();
-                for (const auto& [edge, count] : edgeCountMap) {
+                for (const auto& [edge, count] : edgeFreqMap) {
                     minimalExtension.emplace_back(edge.source, edge.destination, count);
                 }
             }

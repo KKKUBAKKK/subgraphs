@@ -80,3 +80,7 @@ Makefile
 # Generated PDF files
 # You may want to comment this out if you wish to track the final PDF in git
 # *.pdf
+
+# CLion IDE files
+.idea/
+cmake-build-*/
