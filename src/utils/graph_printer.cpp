@@ -20,7 +20,15 @@ void GraphPrinter::printAdjacencyMatrix(const std::vector<std::vector<uint8_t>>&
     }
 }
 
-void GraphPrinter::printToTerminal(const std::vector<Edge>& extension) {
+void GraphPrinter::printGraph(const Multigraph& graph, const std::string& title) {
+    std::cout << "=== " << title << " ===" << std::endl;
+    std::cout << "Vertices: " << graph.getVertexCount() << std::endl;
+    std::cout << "Edges: " << graph.getEdgeCount() << std::endl;
+    std::cout << "Adjacency Matrix:" << std::endl;
+    graph.printAdjacencyMatrix();
+}
+
+void GraphPrinter::printExtension(const std::vector<Edge>& extension) {
     std::cout << "\n=== Graph Extension (edges to be added) ===\n";
     if (extension.empty()) {
         std::cout << "No edges need to be added (pattern already exists in target graph).\n";
@@ -36,14 +44,30 @@ void GraphPrinter::printToTerminal(const std::vector<Edge>& extension) {
     std::cout << "Total extension cost: " << totalCost << " edge(s)\n";
 }
 
-// void GraphPrinter::printToFile(const std::vector<std::vector<uint8_t>>& adjMatrix,
-//                                const std::filesystem::path& filePath) {
-//     std::ofstream out(filePath);
-//     if (!out.is_open()) {
-//         throw std::runtime_error("Could not open file for writing: " + filePath.string());
-//     }
+void GraphPrinter::printResults(const Multigraph& patternGraph, const Multigraph& targetGraph,
+                                const std::vector<Edge>& extension) {
+    // Print pattern graph
+    printGraph(patternGraph, "Pattern Graph (P)");
 
-//     printAdjacencyMatrix(adjMatrix, out);
-// }
+    // Print target graph
+    std::cout << std::endl;
+    printGraph(targetGraph, "Target Graph (G)");
+
+    // Print extension
+    printExtension(extension);
+
+    // Create and print modified graph
+    Multigraph modifiedGraph(targetGraph);
+    for (const auto& [source, dest, count] : extension) {
+        modifiedGraph.addEdges(source, dest, count);
+    }
+
+    std::cout << std::endl;
+    printGraph(modifiedGraph, "Modified Target Graph (after adding extension)");
+}
+
+void GraphPrinter::printToTerminal(const std::vector<Edge>& extension) {
+    printExtension(extension);
+}
 
 } // namespace Subgraphs

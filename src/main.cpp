@@ -1,3 +1,4 @@
+#include <chrono>
 #include <iostream>
 
 #include "algorithms/subgraph_algorithm.h"
@@ -13,27 +14,14 @@ int main(int argc, char** argv) {
 
     std::string inputGraphFile = argv[1];
 
+    auto start = std::chrono::high_resolution_clock::now();
     try {
         // Load both graphs from file
         std::cout << "Loading graphs from: " << inputGraphFile << "\n" << std::endl;
         auto [patternGraph, targetGraph] = Subgraphs::GraphLoader::loadFromFile(inputGraphFile);
 
-        // Print pattern graph (smaller one)
-        std::cout << "=== Pattern Graph (P) ===" << std::endl;
-        std::cout << "Vertices: " << patternGraph.getVertexCount() << std::endl;
-        std::cout << "Edges: " << patternGraph.getEdgeCount() << std::endl;
-        std::cout << "Adjacency Matrix:" << std::endl;
-        patternGraph.printAdjacencyMatrix();
-
-        // Print target graph (larger one)
-        std::cout << "\n=== Target Graph (G) ===" << std::endl;
-        std::cout << "Vertices: " << targetGraph.getVertexCount() << std::endl;
-        std::cout << "Edges: " << targetGraph.getEdgeCount() << std::endl;
-        std::cout << "Adjacency Matrix:" << std::endl;
-        targetGraph.printAdjacencyMatrix();
-
         // Run subgraph algorithm
-        std::cout << "\n=== Running Subgraph Algorithm ===" << std::endl;
+        std::cout << "=== Running Subgraph Algorithm ===" << std::endl;
         auto result = Subgraphs::SubgraphAlgorithm::run(1, patternGraph, targetGraph);
 
         if (result.empty() || result[0].empty()) {
@@ -41,27 +29,17 @@ int main(int argc, char** argv) {
             return 0;
         }
 
-        // Print extension details
+        // Print all results
         const auto& extension = result[0][0];
-        Subgraphs::GraphPrinter::printToTerminal(extension);
-
-        // Create a copy of target graph and apply the extension
-        Subgraphs::Multigraph modifiedGraph(targetGraph);
-        for (const auto& [source, dest, count] : extension) {
-            modifiedGraph.addEdges(source, dest, count);
-        }
-
-        // Print modified graph
-        std::cout << "\n=== Modified Target Graph (after adding extension) ===" << std::endl;
-        std::cout << "Vertices: " << modifiedGraph.getVertexCount() << std::endl;
-        std::cout << "Edges: " << modifiedGraph.getEdgeCount() << std::endl;
-        std::cout << "Adjacency Matrix:" << std::endl;
-        modifiedGraph.printAdjacencyMatrix();
+        Subgraphs::GraphPrinter::printResults(patternGraph, targetGraph, extension);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::cout << "\nExecution time: " << duration.count() << " ms" << std::endl;
 
     return 0;
 }
