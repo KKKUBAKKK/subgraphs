@@ -1,0 +1,5 @@
+# Ignore downloaded dependencies
+gtest/
+googletest/
+*-src/
+*-build/
