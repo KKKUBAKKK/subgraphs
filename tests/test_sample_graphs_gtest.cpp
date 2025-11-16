@@ -36,7 +36,6 @@ TYPED_TEST(SampleGraphTest, SampleGraph0_OneCopy) {
 
     const auto& extension = result[0][0];
 
-    // TODO: Fill in expected values after running the algorithm
     // Expected number of edges to add:
     EXPECT_EQ(extension.size(), 1);
 
@@ -59,7 +58,6 @@ TYPED_TEST(SampleGraphTest, SampleGraph0_TwoCopies) {
 
     const auto& extension = result[0][0];
 
-    // TODO: Fill in expected values for 2 copies
     EXPECT_EQ(extension.size(), 2);
 
     int totalEdges = 0;
@@ -88,7 +86,6 @@ TYPED_TEST(SampleGraphTest, SampleGraph1_OneCopy) {
 
     const auto& extension = result[0][0];
 
-    // TODO: Fill in expected values
     EXPECT_EQ(extension.size(), 4);
 
     int totalEdges = 0;
@@ -109,7 +106,6 @@ TYPED_TEST(SampleGraphTest, SampleGraph1_TwoCopies) {
 
     const auto& extension = result[0][0];
 
-    // TODO: Fill in expected values for 2 copies
     EXPECT_EQ(extension.size(), 6);
 
     int totalEdges = 0;
@@ -138,7 +134,6 @@ TYPED_TEST(SampleGraphTest, SampleGraph2_OneCopy) {
 
     const auto& extension = result[0][0];
 
-    // TODO: Fill in expected values
     EXPECT_EQ(extension.size(), 3);
 
     int totalEdges = 0;
