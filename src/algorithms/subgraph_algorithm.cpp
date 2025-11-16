@@ -1,4 +1,5 @@
 #include "algorithms/subgraph_algorithm.h"
+#include "graph/sequence_iterator.h"
 #include <numeric>
 
 namespace Subgraphs {
@@ -42,16 +43,26 @@ std::vector<Edge> SubgraphAlgorithm::findMinimalExtension(
     int n, Multigraph& P, Multigraph& G,
     const std::vector<std::vector<std::vector<Edge>>>& allMissingEdges) {
     std::vector<Edge> minimalExtension;
-    size_t minSize = SIZE_MAX;
+    int64_t minSize = INT64_MAX;
 
-    for (const auto& combination : allMissingEdges) {
-        for (const auto& missingEdges : combination) {
-            auto tempSize =
-                std::accumulate(missingEdges.begin(), missingEdges.end(), 0,
-                                [](size_t sum, const Edge& e) { return sum + e.count; });
-            if (tempSize < minSize) {
-                minSize = tempSize;
-                minimalExtension = missingEdges;
+    for (auto combs : CombinationRange(G.combinationsCount(P.getVertexCount()), n)) {
+        for (auto perms : SequenceRange(P.permutationsCount(), n)) {
+            std::unordered_map<Edge, uint64_t> edgeCountMap{};
+            uint64_t currentSize = 0;
+
+            for (int i = 0; i < n; ++i) {
+                for (const auto& edge : allMissingEdges[perms[i]][combs[i]]) {
+                    edgeCountMap[edge] += edge.count;
+                    currentSize += edge.count;
+                }
+            }
+
+            if (currentSize < minSize) {
+                minSize = currentSize;
+                minimalExtension.clear();
+                for (const auto& [edge, count] : edgeCountMap) {
+                    minimalExtension.emplace_back(edge.source, edge.destination, count);
+                }
             }
         }
     }

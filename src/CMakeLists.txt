@@ -8,6 +8,7 @@ set(SUBGRAPHS_LIB_SOURCES
     graph/neighbor_range.cpp
     graph/permutation_iterator.cpp
     graph/combination_iterator.cpp
+    graph/sequence_iterator.cpp
     utils/graph_loader.cpp
     utils/graph_printer.cpp
     algorithms/subgraph_algorithm.cpp
