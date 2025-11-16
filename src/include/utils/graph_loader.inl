@@ -46,7 +46,6 @@ GraphLoader<IndexType>::loadFromFile(const std::filesystem::path& filePath) {
         throw std::runtime_error("Could not open file: " + filePath.string());
     }
 
-    // Read first matrix size
     std::string line;
     int n1 = 0;
     while (std::getline(infile, line)) {
@@ -58,7 +57,6 @@ GraphLoader<IndexType>::loadFromFile(const std::filesystem::path& filePath) {
         throw std::runtime_error("Invalid or missing first matrix size in file: " +
                                  filePath.string());
 
-    // Read first matrix
     std::vector<std::vector<uint8_t>> matrix1;
     for (int i = 0; i < n1; ++i) {
         if (!std::getline(infile, line))
@@ -76,7 +74,6 @@ GraphLoader<IndexType>::loadFromFile(const std::filesystem::path& filePath) {
         matrix1.push_back(std::move(row));
     }
 
-    // Read second matrix size
     int n2 = 0;
     while (std::getline(infile, line)) {
         std::istringstream iss(line);
@@ -87,7 +84,6 @@ GraphLoader<IndexType>::loadFromFile(const std::filesystem::path& filePath) {
         throw std::runtime_error("Invalid or missing second matrix size in file: " +
                                  filePath.string());
 
-    // Read second matrix
     std::vector<std::vector<uint8_t>> matrix2;
     for (int i = 0; i < n2; ++i) {
         if (!std::getline(infile, line))
@@ -108,7 +104,6 @@ GraphLoader<IndexType>::loadFromFile(const std::filesystem::path& filePath) {
     Multigraph<IndexType> g1(std::move(matrix1));
     Multigraph<IndexType> g2(std::move(matrix2));
 
-    // Return smaller graph as pattern (P) and larger as target (G)
     if (g1 < g2) {
         return {std::move(g1), std::move(g2)};
     }
@@ -147,13 +142,6 @@ void GraphLoader<IndexType>::saveToFile(
         }
         outfile << "\n";
     }
-
-    // Optionally, save extension and subgraphsCount if needed
-    // (not specified in your sample, so left as a placeholder)
-    // outfile << subgraphsCount << "\n";
-    // for (const auto& [u, v, w] : extension) {
-    //     outfile << u << " " << v << " " << static_cast<int>(w) << "\n";
-    // }
 }
 
 } // namespace Subgraphs

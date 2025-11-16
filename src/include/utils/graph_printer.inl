@@ -47,17 +47,13 @@ template <typename IndexType>
 void GraphPrinter<IndexType>::printResults(const Multigraph<IndexType>& patternGraph,
                                            const Multigraph<IndexType>& targetGraph,
                                            const std::vector<Edge<IndexType>>& extension) {
-    // Print pattern graph
     printGraph(patternGraph, "Pattern Graph (P)");
 
-    // Print target graph
     std::cout << std::endl;
     printGraph(targetGraph, "Target Graph (G)");
 
-    // Print extension
     printExtension(extension);
 
-    // Create and print modified graph
     Multigraph<IndexType> modifiedGraph(targetGraph);
     for (const auto& [source, dest, count] : extension) {
         modifiedGraph.addEdges(source, dest, count);
