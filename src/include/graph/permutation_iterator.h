@@ -5,14 +5,6 @@
 
 namespace Subgraphs {
 
-class Multigraph;
-
-/**
- * @brief Iterator for generating all permutations of vertex indices
- *
- * Generates permutations lazily using next_permutation algorithm.
- * Does not store all permutations in memory.
- */
 class PermutationIterator {
   public:
     using iterator_category = std::input_iterator_tag;
@@ -34,9 +26,6 @@ class PermutationIterator {
     bool isEnd;
 };
 
-/**
- * @brief Range wrapper for permutation iteration
- */
 class PermutationRange {
   public:
     explicit PermutationRange(int64_t n);

@@ -1,0 +1,72 @@
+#include "algorithms/subgraph_algorithm.h"
+#include <numeric>
+
+namespace Subgraphs {
+
+std::vector<std::vector<std::vector<Edge>>> SubgraphAlgorithm::getAllMissingEdges(Multigraph& P,
+                                                                                  Multigraph& G) {
+    int64_t numPerms = P.permutationsCount();
+    int64_t numCombs = G.combinationsCount(P.getVertexCount());
+    std::vector<std::vector<std::vector<Edge>>> missingEdges(
+        numPerms, std::vector<std::vector<Edge>>(numCombs));
+
+    int64_t permIdx = 0;
+    for (const auto& perm : P.permutations()) {
+        int64_t combIdx = 0;
+        for (const auto& comb : G.combinations(P.getVertexCount())) {
+            for (int64_t i = 0; i < P.getVertexCount(); ++i) {
+                for (int64_t j = 0; j < P.getVertexCount(); ++j) {
+                    uint64_t pu = perm[i];
+                    uint64_t pv = perm[j];
+                    uint64_t gu = comb[i];
+                    uint64_t gv = comb[j];
+
+                    uint8_t pEdges = P.getEdges(pu, pv);
+                    uint8_t gEdges = G.getEdges(gu, gv);
+
+                    if (pEdges > gEdges) {
+                        uint8_t delta = pEdges - gEdges;
+                        missingEdges[permIdx][combIdx].emplace_back(gu, gv, delta);
+                    }
+                }
+            }
+            ++combIdx;
+        }
+        ++permIdx;
+    }
+
+    return missingEdges;
+};
+
+std::vector<Edge> SubgraphAlgorithm::findMinimalExtension(
+    int n, Multigraph& P, Multigraph& G,
+    const std::vector<std::vector<std::vector<Edge>>>& allMissingEdges) {
+    std::vector<Edge> minimalExtension;
+    size_t minSize = SIZE_MAX;
+
+    for (const auto& combination : allMissingEdges) {
+        for (const auto& missingEdges : combination) {
+            auto tempSize =
+                std::accumulate(missingEdges.begin(), missingEdges.end(), 0,
+                                [](size_t sum, const Edge& e) { return sum + e.count; });
+            if (tempSize < minSize) {
+                minSize = tempSize;
+                minimalExtension = missingEdges;
+            }
+        }
+    }
+
+    return minimalExtension;
+}
+
+std::vector<std::vector<std::vector<Edge>>> SubgraphAlgorithm::run(int n, Multigraph& P,
+                                                                   Multigraph& G) {
+    auto allMissingEdges = getAllMissingEdges(P, G);
+
+    std::vector<std::vector<std::vector<Edge>>> result;
+    auto extension = findMinimalExtension(n, P, G, allMissingEdges);
+
+    result.push_back({extension});
+    return result;
+}
+} // namespace Subgraphs

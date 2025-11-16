@@ -5,14 +5,6 @@
 
 namespace Subgraphs {
 
-class Multigraph;
-
-/**
- * @brief Iterator for generating all k-combinations of n vertices
- *
- * Generates combinations lazily without storing all combinations in memory.
- * Uses the standard algorithm to generate next combination.
- */
 class CombinationIterator {
   public:
     using iterator_category = std::input_iterator_tag;
@@ -37,9 +29,6 @@ class CombinationIterator {
     bool isEnd;
 };
 
-/**
- * @brief Range wrapper for combination iteration
- */
 class CombinationRange {
   public:
     CombinationRange(int64_t n, int64_t k);

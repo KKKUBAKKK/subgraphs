@@ -1,5 +1,7 @@
 #include "graph/multigraph.h"
 
+#include <iostream>
+
 namespace Subgraphs {
 
 Multigraph::Multigraph(std::vector<std::vector<uint8_t>>&& adjMatrix)
@@ -88,12 +90,64 @@ CombinationRange Multigraph::combinations(int64_t k) const {
     return CombinationRange(vertexCount, k);
 }
 
+int64_t Multigraph::permutationsCount() const {
+    int64_t result = 1;
+    for (int64_t i = 2; i <= vertexCount; ++i) {
+        result *= i;
+    }
+    return result;
+}
+
+int64_t Multigraph::combinationsCount(int64_t k) const {
+    if (k > vertexCount || k < 0) {
+        return 0;
+    }
+    if (k == 0 || k == vertexCount) {
+        return 1;
+    }
+
+    int64_t numerator = 1;
+    int64_t denominator = 1;
+    for (int64_t i = 0; i < k; ++i) {
+        numerator *= (vertexCount - i);
+        denominator *= (i + 1);
+    }
+    return numerator / denominator;
+}
+
 int64_t Multigraph::getVertexCount() const {
     return vertexCount;
 }
 
 int64_t Multigraph::getEdgeCount() const {
     return edgeCount;
+}
+
+bool Multigraph::operator==(const Multigraph& other) const {
+    return vertexCount == other.vertexCount && edgeCount == other.edgeCount;
+}
+
+bool Multigraph::operator!=(const Multigraph& other) const {
+    return !(*this == other);
+}
+
+bool Multigraph::operator<(const Multigraph& other) const {
+    return vertexCount < other.vertexCount ||
+           (vertexCount == other.vertexCount && edgeCount < other.edgeCount);
+}
+
+
+void Multigraph::printAdjacencyMatrix() const {
+    int n = static_cast<int>(adjMatrix.size());
+    std::cout << n << "\n";
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            std::cout << static_cast<int>(adjMatrix[i][j]);
+            if (j + 1 < n)
+                std::cout << " ";
+        }
+        std::cout << "\n";
+    }
 }
 
 } // namespace Subgraphs

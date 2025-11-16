@@ -2,11 +2,9 @@
 
 namespace Subgraphs {
 
-// CombinationIterator
 CombinationIterator::CombinationIterator(int64_t n, int64_t k, bool end)
     : combination(k), n(n), k(k), isEnd(end) {
     if (!isEnd && k > 0 && k <= n) {
-        // Initialize with [0, 1, 2, ..., k-1]
         for (int64_t i = 0; i < k; ++i) {
             combination[i] = i;
         }
@@ -20,22 +18,17 @@ const std::vector<int64_t>& CombinationIterator::operator*() const {
 }
 
 bool CombinationIterator::nextCombination() {
-    // Generate next combination in lexicographic order
-    // Find the rightmost element that can be incremented
     int64_t i = k - 1;
     while (i >= 0 && combination[i] == n - k + i) {
         --i;
     }
 
-    // If no element can be incremented, we're done
     if (i < 0) {
         return false;
     }
 
-    // Increment this element
     ++combination[i];
 
-    // Set all elements to the right of i to their minimum possible values
     for (int64_t j = i + 1; j < k; ++j) {
         combination[j] = combination[j - 1] + 1;
     }
@@ -69,7 +62,6 @@ bool CombinationIterator::operator!=(const CombinationIterator& other) const {
     return !(*this == other);
 }
 
-// CombinationRange
 CombinationRange::CombinationRange(int64_t n, int64_t k) : n(n), k(k) {
 }
 

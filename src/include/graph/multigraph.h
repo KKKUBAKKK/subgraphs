@@ -39,8 +39,18 @@ class Multigraph {
     PermutationRange permutations() const;
     CombinationRange combinations(int64_t k) const;
 
+    int64_t permutationsCount() const;
+    int64_t combinationsCount(int64_t k) const;
+
     int64_t getVertexCount() const;
     int64_t getEdgeCount() const;
+
+    bool operator==(const Multigraph& other) const;
+    bool operator!=(const Multigraph& other) const;
+    bool operator<(const Multigraph& other) const;
+
+    void printAdjacencyMatrix() const;
+
 
   private:
     int64_t vertexCount{};

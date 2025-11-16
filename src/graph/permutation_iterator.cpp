@@ -4,10 +4,8 @@
 
 namespace Subgraphs {
 
-// PermutationIterator
 PermutationIterator::PermutationIterator(int64_t n, bool end) : permutation(n), n(n), isEnd(end) {
     if (!isEnd && n > 0) {
-        // Initialize with [0, 1, 2, ..., n-1]
         std::iota(permutation.begin(), permutation.end(), 0);
     }
 }
@@ -21,7 +19,6 @@ PermutationIterator& PermutationIterator::operator++() {
         return *this;
     }
 
-    // Generate next permutation using std::next_permutation
     if (!std::next_permutation(permutation.begin(), permutation.end())) {
         isEnd = true;
     }
@@ -43,7 +40,6 @@ bool PermutationIterator::operator!=(const PermutationIterator& other) const {
     return !(*this == other);
 }
 
-// PermutationRange
 PermutationRange::PermutationRange(int64_t n) : n(n) {
 }
 
