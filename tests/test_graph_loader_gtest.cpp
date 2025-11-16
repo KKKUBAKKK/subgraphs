@@ -61,7 +61,6 @@ TYPED_TEST(GraphLoaderTest, LoadGraphWithEdges) {
 
     auto [pattern, target] = GraphLoader<TypeParam>::loadFromFile(this->testFilePath);
 
-    // Smaller graph should be pattern
     EXPECT_EQ(pattern.getVertexCount(), 2);
     EXPECT_EQ(target.getVertexCount(), 3);
 
@@ -118,7 +117,6 @@ TYPED_TEST(GraphLoaderTest, SaveAndLoadGraph) {
 
     auto [loaded1, loaded2] = GraphLoader<TypeParam>::loadFromFile(this->testFilePath);
 
-    // Note: loadFromFile returns smaller graph first
     if (loaded1.getVertexCount() > loaded2.getVertexCount()) {
         std::swap(loaded1, loaded2);
     }
@@ -139,18 +137,15 @@ TYPED_TEST(GraphLoaderTest, LoadGraphPreservesEdgeCounts) {
 
     auto [pattern, target] = GraphLoader<TypeParam>::loadFromFile(this->testFilePath);
 
-    // Smaller graph (size 2) should be pattern
     EXPECT_EQ(pattern.getVertexCount(), 2);
     EXPECT_EQ(pattern.getEdges(0, 1), 5);
     EXPECT_EQ(pattern.getEdges(1, 0), 2);
 
-    // Larger graph (size 3) should be target
     EXPECT_EQ(target.getVertexCount(), 3);
     EXPECT_EQ(target.getEdges(0, 1), 1);
     EXPECT_EQ(target.getEdges(1, 2), 3);
 }
 
-// Main function
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

@@ -28,7 +28,7 @@ TYPED_TEST(PermutationIteratorTest, BasicIteration) {
         count++;
     }
 
-    EXPECT_EQ(count, 6); // 3! = 6
+    EXPECT_EQ(count, 6);
     EXPECT_EQ(uniquePerms.size(), 6);
 }
 
@@ -40,7 +40,6 @@ TYPED_TEST(PermutationIteratorTest, AllPermutationsGenerated) {
         uniquePerms.insert(perm);
     }
 
-    // Check all expected permutations exist
     EXPECT_TRUE(uniquePerms.count({0, 1, 2}) == 1);
     EXPECT_TRUE(uniquePerms.count({0, 2, 1}) == 1);
     EXPECT_TRUE(uniquePerms.count({1, 0, 2}) == 1);
@@ -71,7 +70,7 @@ TYPED_TEST(PermutationIteratorTest, EmptySet) {
         count++;
     }
 
-    EXPECT_EQ(count, 1); // Empty permutation
+    EXPECT_EQ(count, 1);
 }
 
 TYPED_TEST(PermutationIteratorTest, LargerSet) {
@@ -83,7 +82,7 @@ TYPED_TEST(PermutationIteratorTest, LargerSet) {
         count++;
     }
 
-    EXPECT_EQ(count, 24); // 4! = 24
+    EXPECT_EQ(count, 24);
 }
 
 TYPED_TEST(PermutationIteratorTest, EarlyTermination) {
@@ -122,7 +121,7 @@ TYPED_TEST(CombinationIteratorTest, BasicIteration) {
         count++;
     }
 
-    EXPECT_EQ(count, 10); // C(5,3) = 10
+    EXPECT_EQ(count, 10);
     EXPECT_EQ(uniqueCombs.size(), 10);
 }
 
@@ -235,7 +234,7 @@ TYPED_TEST(SequenceIteratorTest, BasicIteration) {
         count++;
     }
 
-    EXPECT_EQ(count, 9); // 3^2 = 9
+    EXPECT_EQ(count, 9);
 }
 
 TYPED_TEST(SequenceIteratorTest, AllSequencesGenerated) {
@@ -246,7 +245,7 @@ TYPED_TEST(SequenceIteratorTest, AllSequencesGenerated) {
         uniqueSeqs.insert(seq);
     }
 
-    EXPECT_EQ(uniqueSeqs.size(), 4); // 2^2 = 4
+    EXPECT_EQ(uniqueSeqs.size(), 4);
     EXPECT_TRUE(uniqueSeqs.count({0, 0}) == 1);
     EXPECT_TRUE(uniqueSeqs.count({0, 1}) == 1);
     EXPECT_TRUE(uniqueSeqs.count({1, 0}) == 1);
@@ -314,10 +313,9 @@ TYPED_TEST(SequenceIteratorTest, LargerSequence) {
         count++;
     }
 
-    EXPECT_EQ(count, 27); // 3^3 = 27
+    EXPECT_EQ(count, 27);
 }
 
-// Main function
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

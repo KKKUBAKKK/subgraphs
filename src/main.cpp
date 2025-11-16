@@ -8,7 +8,6 @@
 
 using GRAPH_INDEX_TYPE = uint16_t;
 
-// TODO: later add checking if task is possible, if not add vertices to big graph
 int main(int argc, char** argv) {
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <input_graph_file>" << std::endl;
@@ -27,6 +26,12 @@ int main(int argc, char** argv) {
         std::cout << "Loading graphs from: " << inputGraphFile << "\n" << std::endl;
         auto [patternGraph, targetGraph] =
             Subgraphs::GraphLoader<GRAPH_INDEX_TYPE>::loadFromFile(inputGraphFile);
+
+        if (targetGraph.combinationsCount(patternGraph.getVertexCount()) < subgraphsCount) {
+            std::cerr << "Error: Target graph does not have enough vertices to host "
+                      << subgraphsCount << " copies of the pattern graph." << std::endl;
+            return 1;
+        }
 
         std::cout << "=== Running Subgraph Algorithm ===" << std::endl;
         auto result = Subgraphs::SubgraphAlgorithm<GRAPH_INDEX_TYPE>::run(

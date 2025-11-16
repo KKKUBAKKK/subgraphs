@@ -21,8 +21,4 @@ set_tests_properties(GraphLoaderGTests PROPERTIES TIMEOUT 15)
 add_executable(test_sample_graphs_gtest test_sample_graphs_gtest.cpp)
 target_link_libraries(test_sample_graphs_gtest PRIVATE subgraphs_lib GTest::gtest_main)
 add_test(NAME SampleGraphGTests COMMAND test_sample_graphs_gtest)
-set_tests_properties(SampleGraphGTests PROPERTIES
-    TIMEOUT 15
-    SKIP_RETURN_CODE 124  # Skip if timeout
-)
-
+set_tests_properties(SampleGraphGTests PROPERTIES TIMEOUT 15)

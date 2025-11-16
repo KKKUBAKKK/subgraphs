@@ -4,7 +4,6 @@
 
 using namespace Subgraphs;
 
-// Test fixture for Multigraph tests
 template <typename T> class MultigraphTest : public ::testing::Test {
   protected:
     void SetUp() override {
@@ -13,7 +12,6 @@ template <typename T> class MultigraphTest : public ::testing::Test {
     }
 };
 
-// Test with different types
 using TestTypes = ::testing::Types<int32_t, int64_t, uint32_t>;
 TYPED_TEST_SUITE(MultigraphTest, TestTypes);
 
@@ -84,10 +82,10 @@ TYPED_TEST(MultigraphTest, GetDegree) {
 
 TYPED_TEST(MultigraphTest, PermutationsCount) {
     Multigraph<TypeParam> graph3(3);
-    EXPECT_EQ(graph3.permutationsCount(), 6); // 3! = 6
+    EXPECT_EQ(graph3.permutationsCount(), 6);
 
     Multigraph<TypeParam> graph4(4);
-    EXPECT_EQ(graph4.permutationsCount(), 24); // 4! = 24
+    EXPECT_EQ(graph4.permutationsCount(), 24);
 
     Multigraph<TypeParam> graph1(1);
     EXPECT_EQ(graph1.permutationsCount(), 1);
@@ -96,11 +94,11 @@ TYPED_TEST(MultigraphTest, PermutationsCount) {
 TYPED_TEST(MultigraphTest, CombinationsCount) {
     Multigraph<TypeParam> graph(5);
 
-    EXPECT_EQ(graph.combinationsCount(2), 10); // C(5,2) = 10
-    EXPECT_EQ(graph.combinationsCount(3), 10); // C(5,3) = 10
-    EXPECT_EQ(graph.combinationsCount(5), 1);  // C(5,5) = 1
-    EXPECT_EQ(graph.combinationsCount(0), 1);  // C(5,0) = 1
-    EXPECT_EQ(graph.combinationsCount(6), 0);  // C(5,6) = 0
+    EXPECT_EQ(graph.combinationsCount(2), 10);
+    EXPECT_EQ(graph.combinationsCount(3), 10);
+    EXPECT_EQ(graph.combinationsCount(5), 1);
+    EXPECT_EQ(graph.combinationsCount(0), 1);
+    EXPECT_EQ(graph.combinationsCount(6), 0);
 }
 
 TYPED_TEST(MultigraphTest, CopyConstructor) {
@@ -172,7 +170,6 @@ TYPED_TEST(MultigraphTest, GetOutNeighbors) {
     EXPECT_TRUE(found2);
 }
 
-// Main function
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
