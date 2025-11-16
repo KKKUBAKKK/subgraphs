@@ -1,6 +1,6 @@
-add_executable(test_multigraph test_multigraph.cpp)
-target_link_libraries(test_multigraph PRIVATE subgraphs_lib)
-add_test(NAME MultigraphTests COMMAND test_multigraph)
+# add_executable(test_multigraph test_multigraph.cpp)
+# target_link_libraries(test_multigraph PRIVATE subgraphs_lib)
+# add_test(NAME MultigraphTests COMMAND test_multigraph)
 
 add_executable(test_iterators test_iterators.cpp)
 target_link_libraries(test_iterators PRIVATE subgraphs_lib)

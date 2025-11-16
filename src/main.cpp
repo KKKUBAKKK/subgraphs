@@ -6,6 +6,8 @@
 #include "utils/graph_loader.h"
 #include "utils/graph_printer.h"
 
+using GRAPH_INDEX_TYPE = uint16_t;
+
 // TODO: later add checking if task is possible, if not add vertices to big graph
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -23,10 +25,12 @@ int main(int argc, char** argv) {
     auto start = std::chrono::high_resolution_clock::now();
     try {
         std::cout << "Loading graphs from: " << inputGraphFile << "\n" << std::endl;
-        auto [patternGraph, targetGraph] = Subgraphs::GraphLoader::loadFromFile(inputGraphFile);
+        auto [patternGraph, targetGraph] =
+            Subgraphs::GraphLoader<GRAPH_INDEX_TYPE>::loadFromFile(inputGraphFile);
 
         std::cout << "=== Running Subgraph Algorithm ===" << std::endl;
-        auto result = Subgraphs::SubgraphAlgorithm::run(subgraphsCount, patternGraph, targetGraph);
+        auto result = Subgraphs::SubgraphAlgorithm<GRAPH_INDEX_TYPE>::run(
+            subgraphsCount, patternGraph, targetGraph);
 
         if (result.empty() || result[0].empty()) {
             std::cout << "No extensions found." << std::endl;
@@ -34,7 +38,8 @@ int main(int argc, char** argv) {
         }
 
         const auto& extension = result[0][0];
-        Subgraphs::GraphPrinter::printResults(patternGraph, targetGraph, extension);
+        Subgraphs::GraphPrinter<GRAPH_INDEX_TYPE>::printResults(patternGraph, targetGraph,
+                                                                extension);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

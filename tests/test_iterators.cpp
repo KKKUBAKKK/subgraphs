@@ -10,7 +10,7 @@ void testPermutationIterator() {
     std::cout << "Testing: Permutation iterator...\n";
 
     // Test with n=3, should generate 3! = 6 permutations
-    Subgraphs::PermutationRange range(3);
+    Subgraphs::PermutationRange<int64_t> range(3);
 
     std::set<std::vector<int64_t>> uniquePerms;
     int count = 0;
@@ -38,7 +38,7 @@ void testPermutationIterator() {
 void testPermutationSingleElement() {
     std::cout << "Testing: Permutation with single element...\n";
 
-    Subgraphs::PermutationRange range(1);
+    Subgraphs::PermutationRange<int64_t> range(1);
     int count = 0;
 
     for (const auto& perm : range) {
@@ -54,7 +54,7 @@ void testPermutationSingleElement() {
 void testPermutationEmpty() {
     std::cout << "Testing: Permutation with empty set...\n";
 
-    Subgraphs::PermutationRange range(0);
+    Subgraphs::PermutationRange<int64_t> range(0);
     int count = 0;
 
     for (const auto& perm : range) {
@@ -70,7 +70,7 @@ void testCombinationIterator() {
     std::cout << "Testing: Combination iterator...\n";
 
     // Test C(5, 3) = 10 combinations
-    Subgraphs::CombinationRange range(5, 3);
+    Subgraphs::CombinationRange<int64_t> range(5, 3);
 
     std::set<std::vector<int64_t>> uniqueCombs;
     int count = 0;
@@ -106,7 +106,7 @@ void testCombinationKEqualsN() {
     std::cout << "Testing: Combination with k=n...\n";
 
     // C(4, 4) = 1 combination
-    Subgraphs::CombinationRange range(4, 4);
+    Subgraphs::CombinationRange<int64_t> range(4, 4);
     int count = 0;
 
     for (const auto& comb : range) {
@@ -126,7 +126,7 @@ void testCombinationKEquals1() {
     std::cout << "Testing: Combination with k=1...\n";
 
     // C(5, 1) = 5 combinations
-    Subgraphs::CombinationRange range(5, 1);
+    Subgraphs::CombinationRange<int64_t> range(5, 1);
     int count = 0;
 
     for (const auto& comb : range) {
@@ -143,7 +143,7 @@ void testCombinationInvalid() {
     std::cout << "Testing: Combination with invalid k...\n";
 
     // k > n, should produce no combinations
-    Subgraphs::CombinationRange range1(3, 5);
+    Subgraphs::CombinationRange<int64_t> range1(3, 5);
     int count1 = 0;
     for (const auto& comb : range1) {
         (void)comb;
@@ -152,7 +152,7 @@ void testCombinationInvalid() {
     assert(count1 == 0);
 
     // k = 0, should produce no combinations
-    Subgraphs::CombinationRange range2(5, 0);
+    Subgraphs::CombinationRange<int64_t> range2(5, 0);
     int count2 = 0;
     for (const auto& comb : range2) {
         (void)comb;
@@ -167,7 +167,7 @@ void testLazyEvaluation() {
     std::cout << "Testing: Lazy evaluation (memory efficiency)...\n";
 
     // Create iterator for large n without generating all at once
-    Subgraphs::PermutationRange permRange(10);
+    Subgraphs::PermutationRange<int64_t> permRange(10);
     auto permIt = permRange.begin();
 
     // Get first permutation without generating all 10! = 3,628,800 permutations
@@ -184,7 +184,7 @@ void testLazyEvaluation() {
     }
 
     // For combinations
-    Subgraphs::CombinationRange combRange(10, 5);
+    Subgraphs::CombinationRange<int64_t> combRange(10, 5);
     auto combIt = combRange.begin();
 
     // Get first combination without generating all C(10,5) = 252 combinations
@@ -200,7 +200,7 @@ void testEarlyTermination() {
     std::cout << "Testing: Early termination...\n";
 
     // Test that we can stop iteration early without generating all
-    Subgraphs::PermutationRange range(5);
+    Subgraphs::PermutationRange<int64_t> range(5);
     int count = 0;
 
     for (const auto& perm : range) {

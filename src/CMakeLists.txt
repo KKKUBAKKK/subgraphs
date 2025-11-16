@@ -2,23 +2,8 @@
 # Source Files Configuration
 # ---------------------------------
 
-set(SUBGRAPHS_LIB_SOURCES
-    graph/multigraph.cpp
-    graph/neighbor_iterator.cpp
-    graph/neighbor_range.cpp
-    graph/permutation_iterator.cpp
-    graph/combination_iterator.cpp
-    graph/sequence_iterator.cpp
-    utils/graph_loader.cpp
-    utils/graph_printer.cpp
-    algorithms/subgraph_algorithm.cpp
-)
-
 set(SUBGRAPHS_SOURCES
     main.cpp
-)
-
-set(SUBGRAPHS_HEADERS
 )
 
 set(SUBGRAPHS_INCLUDE_DIRS
@@ -27,18 +12,18 @@ set(SUBGRAPHS_INCLUDE_DIRS
 )
 
 # ---------------------------------
-# Create Library for Reuse in Tests
+# Create Header-Only Library for Reuse in Tests
 # ---------------------------------
 
-add_library(subgraphs_lib STATIC ${SUBGRAPHS_LIB_SOURCES})
-target_include_directories(subgraphs_lib PUBLIC ${SUBGRAPHS_INCLUDE_DIRS})
-target_compile_features(subgraphs_lib PUBLIC cxx_std_20)
+add_library(subgraphs_lib INTERFACE)
+target_include_directories(subgraphs_lib INTERFACE ${SUBGRAPHS_INCLUDE_DIRS})
+target_compile_features(subgraphs_lib INTERFACE cxx_std_20)
 
 # ---------------------------------
 # Create Executable
 # ---------------------------------
 
-add_executable(${PROJECT_NAME} ${SUBGRAPHS_SOURCES} ${SUBGRAPHS_HEADERS})
+add_executable(${PROJECT_NAME} ${SUBGRAPHS_SOURCES})
 target_link_libraries(${PROJECT_NAME} PRIVATE subgraphs_lib)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
