@@ -23,8 +23,7 @@ template <typename IndexType> struct hash<Subgraphs::Edge<IndexType>> {
     std::size_t operator()(const Subgraphs::Edge<IndexType>& e) const noexcept {
         std::size_t h1 = std::hash<IndexType>{}(e.source);
         std::size_t h2 = std::hash<IndexType>{}(e.destination);
-        std::size_t h3 = std::hash<uint8_t>{}(e.count);
-        return h1 ^ (h2 << 1) ^ (h3 << 2);
+        return h1 ^ (h2 << 1);
     }
 };
 } // namespace std

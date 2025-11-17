@@ -45,31 +45,47 @@ std::vector<Edge<IndexType>> SubgraphAlgorithm<IndexType>::findMinimalExtension(
     int n, Multigraph<IndexType>& P, Multigraph<IndexType>& G,
     const std::vector<std::vector<std::vector<Edge<IndexType>>>>& allMissingEdges) {
     std::vector<Edge<IndexType>> minimalExtension;
-    int64_t minSize = INT64_MAX;
+    IndexType minSize = std::numeric_limits<IndexType>::max();
+
+    std::unordered_map<Edge<IndexType>, uint64_t> edgeFreqMap;
+    edgeFreqMap.reserve(n * P.getEdgeCount());
+
+    std::unordered_map<Edge<IndexType>, uint64_t> localFreq;
+    localFreq.reserve(n * P.getEdgeCount());
 
     for (auto combs : CombinationRange<IndexType>(G.combinationsCount(P.getVertexCount()), n)) {
         for (auto perms : SequenceRange<IndexType>(P.permutationsCount(), n)) {
-            std::unordered_map<Edge<IndexType>, uint64_t> edgeFreqMap{};
+            edgeFreqMap.clear();
+
+            IndexType currentSize = 0;
 
             for (int i = 0; i < n; ++i) {
-                std::unordered_map<Edge<IndexType>, uint64_t> localFreq{};
-                for (const auto& edge : allMissingEdges[perms[i]][combs[i]]) {
+                localFreq.clear();
+
+                const auto& missingEdges = allMissingEdges[perms[i]][combs[i]];
+
+                for (const auto& edge : missingEdges) {
                     localFreq[edge] += edge.count;
                 }
 
                 for (const auto& [edge, freq] : localFreq) {
-                    edgeFreqMap[edge] = std::max(edgeFreqMap[edge], freq);
+                    auto it = edgeFreqMap.find(edge);
+                    if (it == edgeFreqMap.end()) {
+                        edgeFreqMap[edge] = freq;
+                        currentSize += freq;
+                    } else {
+                        if (freq > it->second) {
+                            currentSize += (freq - it->second);
+                            it->second = freq;
+                        }
+                    }
                 }
-            }
-
-            uint64_t currentSize = 0;
-            for (const auto& [edge, freq] : edgeFreqMap) {
-                currentSize += freq;
             }
 
             if (currentSize < minSize) {
                 minSize = currentSize;
                 minimalExtension.clear();
+                minimalExtension.reserve(edgeFreqMap.size());
                 for (const auto& [edge, count] : edgeFreqMap) {
                     minimalExtension.emplace_back(edge.source, edge.destination, count);
                 }
