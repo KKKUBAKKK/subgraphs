@@ -26,11 +26,8 @@ TYPED_TEST(SubgraphAlgorithmTest, SimpleExtension) {
     auto result = SubgraphAlgorithm<TypeParam>::run(1, P, G);
 
     ASSERT_FALSE(result.empty());
-    ASSERT_FALSE(result[0].empty());
 
-    const auto& extension = result[0][0];
-    EXPECT_EQ(extension.size(), 1);
-    EXPECT_EQ(extension[0].count, 1);
+    EXPECT_EQ(result.size(), 1);
 }
 
 TYPED_TEST(SubgraphAlgorithmTest, NoExtensionNeeded) {
@@ -43,10 +40,7 @@ TYPED_TEST(SubgraphAlgorithmTest, NoExtensionNeeded) {
     auto result = SubgraphAlgorithm<TypeParam>::run(1, P, G);
 
     ASSERT_FALSE(result.empty());
-    ASSERT_FALSE(result[0].empty());
-
-    const auto& extension = result[0][0];
-    EXPECT_EQ(extension.size(), 0);
+    EXPECT_EQ(result.size(), 0);
 }
 
 TYPED_TEST(SubgraphAlgorithmTest, MultipleEdgesToAdd) {
@@ -59,13 +53,10 @@ TYPED_TEST(SubgraphAlgorithmTest, MultipleEdgesToAdd) {
     auto result = SubgraphAlgorithm<TypeParam>::run(1, P, G);
 
     ASSERT_FALSE(result.empty());
-    ASSERT_FALSE(result[0].empty());
-
-    const auto& extension = result[0][0];
-    EXPECT_GT(extension.size(), 0);
+    EXPECT_GT(result.size(), 0);
 
     int totalEdges = 0;
-    for (const auto& edge : extension) {
+    for (const auto& edge : result) {
         totalEdges += edge.count;
     }
     EXPECT_GT(totalEdges, 0);
@@ -82,7 +73,6 @@ TYPED_TEST(SubgraphAlgorithmTest, LargerTargetGraph) {
     auto result = SubgraphAlgorithm<TypeParam>::run(1, P, G);
 
     ASSERT_FALSE(result.empty());
-    ASSERT_FALSE(result[0].empty());
 }
 
 TYPED_TEST(SubgraphAlgorithmTest, MultipleCopies) {
@@ -95,10 +85,7 @@ TYPED_TEST(SubgraphAlgorithmTest, MultipleCopies) {
     auto result = SubgraphAlgorithm<TypeParam>::run(2, P, G);
 
     ASSERT_FALSE(result.empty());
-    ASSERT_FALSE(result[0].empty());
-
-    const auto& extension = result[0][0];
-    EXPECT_GT(extension.size(), 0);
+    EXPECT_GT(result.size(), 0);
 }
 
 TYPED_TEST(SubgraphAlgorithmTest, SelfLoops) {
@@ -111,13 +98,10 @@ TYPED_TEST(SubgraphAlgorithmTest, SelfLoops) {
     auto result = SubgraphAlgorithm<TypeParam>::run(1, P, G);
 
     ASSERT_FALSE(result.empty());
-    ASSERT_FALSE(result[0].empty());
-
-    const auto& extension = result[0][0];
-    EXPECT_EQ(extension.size(), 1);
+    EXPECT_EQ(result.size(), 1);
 
     bool foundSelfLoop = false;
-    for (const auto& edge : extension) {
+    for (const auto& edge : result) {
         if (edge.source == edge.destination) {
             foundSelfLoop = true;
             EXPECT_EQ(edge.count, 1);
@@ -135,9 +119,7 @@ TYPED_TEST(SubgraphAlgorithmTest, EdgeStructure) {
 
     auto result = SubgraphAlgorithm<TypeParam>::run(1, P, G);
 
-    const auto& extension = result[0][0];
-
-    for (const auto& edge : extension) {
+    for (const auto& edge : result) {
         EXPECT_GE(edge.source, 0);
         EXPECT_LT(edge.source, G.getVertexCount());
         EXPECT_GE(edge.destination, 0);

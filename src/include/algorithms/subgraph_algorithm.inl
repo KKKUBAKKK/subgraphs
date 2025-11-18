@@ -85,14 +85,10 @@ std::vector<Edge<IndexType>> SubgraphAlgorithm<IndexType>::findMinimalExtension(
 }
 
 template <typename IndexType>
-std::vector<std::vector<std::vector<Edge<IndexType>>>>
-SubgraphAlgorithm<IndexType>::run(int n, Multigraph<IndexType>& P, Multigraph<IndexType>& G) {
+std::vector<Edge<IndexType>> SubgraphAlgorithm<IndexType>::run(int n, Multigraph<IndexType>& P,
+                                                               Multigraph<IndexType>& G) {
     auto allMissingEdges = getAllMissingEdges(P, G);
-
-    std::vector<std::vector<std::vector<Edge<IndexType>>>> result;
-    auto extension = findMinimalExtension(n, P, G, allMissingEdges);
-
-    result.push_back({extension});
+    auto result = findMinimalExtension(n, P, G, allMissingEdges);
     return result;
 }
 

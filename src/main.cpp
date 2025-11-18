@@ -37,14 +37,12 @@ int main(int argc, char** argv) {
         auto result = Subgraphs::SubgraphAlgorithm<GRAPH_INDEX_TYPE>::run(
             subgraphsCount, patternGraph, targetGraph);
 
-        if (result.empty() || result[0].empty()) {
-            std::cout << "No extensions found." << std::endl;
+        if (result.empty()) {
+            std::cout << "No extensions needed." << std::endl;
             return 0;
         }
 
-        const auto& extension = result[0][0];
-        Subgraphs::GraphPrinter<GRAPH_INDEX_TYPE>::printResults(patternGraph, targetGraph,
-                                                                extension);
+        Subgraphs::GraphPrinter<GRAPH_INDEX_TYPE>::printResults(patternGraph, targetGraph, result);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

@@ -30,14 +30,10 @@ TYPED_TEST(SampleGraphTest, SampleGraph0_OneCopy) {
     auto result = SubgraphAlgorithm<TypeParam>::run(1, pattern, target);
 
     ASSERT_FALSE(result.empty());
-    ASSERT_FALSE(result[0].empty());
-
-    const auto& extension = result[0][0];
-
-    EXPECT_EQ(extension.size(), 1);
+    EXPECT_EQ(result.size(), 1);
 
     int totalEdges = 0;
-    for (const auto& edge : extension) {
+    for (const auto& edge : result) {
         totalEdges += edge.count;
     }
     EXPECT_EQ(totalEdges, 2);
@@ -50,14 +46,10 @@ TYPED_TEST(SampleGraphTest, SampleGraph0_TwoCopies) {
     auto result = SubgraphAlgorithm<TypeParam>::run(2, pattern, target);
 
     ASSERT_FALSE(result.empty());
-    ASSERT_FALSE(result[0].empty());
-
-    const auto& extension = result[0][0];
-
-    EXPECT_EQ(extension.size(), 2);
+    EXPECT_EQ(result.size(), 2);
 
     int totalEdges = 0;
-    for (const auto& edge : extension) {
+    for (const auto& edge : result) {
         totalEdges += edge.count;
     }
     EXPECT_EQ(totalEdges, 3);
@@ -77,14 +69,10 @@ TYPED_TEST(SampleGraphTest, SampleGraph1_OneCopy) {
     auto result = SubgraphAlgorithm<TypeParam>::run(1, pattern, target);
 
     ASSERT_FALSE(result.empty());
-    ASSERT_FALSE(result[0].empty());
-
-    const auto& extension = result[0][0];
-
-    EXPECT_EQ(extension.size(), 4);
+    EXPECT_EQ(result.size(), 4);
 
     int totalEdges = 0;
-    for (const auto& edge : extension) {
+    for (const auto& edge : result) {
         totalEdges += edge.count;
     }
     EXPECT_EQ(totalEdges, 4);
@@ -97,14 +85,10 @@ TYPED_TEST(SampleGraphTest, SampleGraph1_TwoCopies) {
     auto result = SubgraphAlgorithm<TypeParam>::run(2, pattern, target);
 
     ASSERT_FALSE(result.empty());
-    ASSERT_FALSE(result[0].empty());
-
-    const auto& extension = result[0][0];
-
-    EXPECT_EQ(extension.size(), 6);
+    EXPECT_EQ(result.size(), 6);
 
     int totalEdges = 0;
-    for (const auto& edge : extension) {
+    for (const auto& edge : result) {
         totalEdges += edge.count;
     }
     EXPECT_EQ(totalEdges, 7);
@@ -124,14 +108,10 @@ TYPED_TEST(SampleGraphTest, SampleGraph2_OneCopy) {
     auto result = SubgraphAlgorithm<TypeParam>::run(1, pattern, target);
 
     ASSERT_FALSE(result.empty());
-    ASSERT_FALSE(result[0].empty());
-
-    const auto& extension = result[0][0];
-
-    EXPECT_EQ(extension.size(), 3);
+    EXPECT_EQ(result.size(), 3);
 
     int totalEdges = 0;
-    for (const auto& edge : extension) {
+    for (const auto& edge : result) {
         totalEdges += edge.count;
     }
     EXPECT_EQ(totalEdges, 3);
@@ -224,14 +204,10 @@ TYPED_TEST(SampleGraphTest, SampleGraph4_OneCopy) {
     auto result = SubgraphAlgorithm<TypeParam>::run(1, pattern, target);
 
     ASSERT_FALSE(result.empty());
-    ASSERT_FALSE(result[0].empty());
-
-    const auto& extension = result[0][0];
-
-    EXPECT_EQ(extension.size(), 2);
+    EXPECT_EQ(result.size(), 2);
 
     int totalEdges = 0;
-    for (const auto& edge : extension) {
+    for (const auto& edge : result) {
         totalEdges += edge.count;
     }
     EXPECT_EQ(totalEdges, 2);
@@ -244,14 +220,10 @@ TYPED_TEST(SampleGraphTest, SampleGraph4_TwoCopies) {
     auto result = SubgraphAlgorithm<TypeParam>::run(2, pattern, target);
 
     ASSERT_FALSE(result.empty());
-    ASSERT_FALSE(result[0].empty());
-
-    const auto& extension = result[0][0];
-
-    EXPECT_EQ(extension.size(), 4);
+    EXPECT_EQ(result.size(), 4);
 
     int totalEdges = 0;
-    for (const auto& edge : extension) {
+    for (const auto& edge : result) {
         totalEdges += edge.count;
     }
     EXPECT_EQ(totalEdges, 4);
@@ -271,14 +243,10 @@ TYPED_TEST(SampleGraphTest, SampleGraph5_OneCopy) {
     auto result = SubgraphAlgorithm<TypeParam>::run(1, pattern, target);
 
     ASSERT_FALSE(result.empty());
-    ASSERT_FALSE(result[0].empty());
-
-    const auto& extension = result[0][0];
-
-    EXPECT_EQ(extension.size(), 0);
+    EXPECT_EQ(result.size(), 0);
 
     int totalEdges = 0;
-    for (const auto& edge : extension) {
+    for (const auto& edge : result) {
         totalEdges += edge.count;
     }
     EXPECT_EQ(totalEdges, 0);
@@ -291,14 +259,10 @@ TYPED_TEST(SampleGraphTest, SampleGraph5_TwoCopies) {
     auto result = SubgraphAlgorithm<TypeParam>::run(2, pattern, target);
 
     ASSERT_FALSE(result.empty());
-    ASSERT_FALSE(result[0].empty());
-
-    const auto& extension = result[0][0];
-
-    EXPECT_EQ(extension.size(), 3);
+    EXPECT_EQ(result.size(), 3);
 
     int totalEdges = 0;
-    for (const auto& edge : extension) {
+    for (const auto& edge : result) {
         totalEdges += edge.count;
     }
     EXPECT_EQ(totalEdges, 4);
