@@ -17,18 +17,17 @@ SubgraphAlgorithm<IndexType>::getAllMissingEdges(Multigraph<IndexType>& P,
         for (const auto& comb : G.combinations(P.getVertexCount())) {
             for (IndexType i = 0; i < P.getVertexCount(); ++i) {
                 for (IndexType j = 0; j < P.getVertexCount(); ++j) {
-                    uint64_t pu = perm[i];
-                    uint64_t pv = perm[j];
-                    uint64_t gu = comb[i];
-                    uint64_t gv = comb[j];
+                    IndexType pu = perm[i];
+                    IndexType pv = perm[j];
+                    IndexType gu = comb[i];
+                    IndexType gv = comb[j];
 
                     uint8_t pEdges = P.getEdges(pu, pv);
                     uint8_t gEdges = G.getEdges(gu, gv);
 
                     if (pEdges > gEdges) {
                         uint8_t delta = pEdges - gEdges;
-                        missingEdges[permIdx][combIdx].emplace_back(
-                            static_cast<IndexType>(gu), static_cast<IndexType>(gv), delta);
+                        missingEdges[permIdx][combIdx].emplace_back(gu, gv, delta);
                     }
                 }
             }
@@ -50,9 +49,6 @@ std::vector<Edge<IndexType>> SubgraphAlgorithm<IndexType>::findMinimalExtension(
     std::unordered_map<Edge<IndexType>, uint64_t> edgeFreqMap;
     edgeFreqMap.reserve(n * P.getEdgeCount());
 
-    std::unordered_map<Edge<IndexType>, uint64_t> localFreq;
-    localFreq.reserve(n * P.getEdgeCount());
-
     for (auto combs : CombinationRange<IndexType>(G.combinationsCount(P.getVertexCount()), n)) {
         for (auto perms : SequenceRange<IndexType>(P.permutationsCount(), n)) {
             edgeFreqMap.clear();
@@ -60,23 +56,15 @@ std::vector<Edge<IndexType>> SubgraphAlgorithm<IndexType>::findMinimalExtension(
             IndexType currentSize = 0;
 
             for (int i = 0; i < n; ++i) {
-                localFreq.clear();
-
-                const auto& missingEdges = allMissingEdges[perms[i]][combs[i]];
-
-                for (const auto& edge : missingEdges) {
-                    localFreq[edge] += edge.count;
-                }
-
-                for (const auto& [edge, freq] : localFreq) {
+                for (const auto& edge : allMissingEdges[perms[i]][combs[i]]) {
                     auto it = edgeFreqMap.find(edge);
                     if (it == edgeFreqMap.end()) {
-                        edgeFreqMap[edge] = freq;
-                        currentSize += freq;
+                        edgeFreqMap[edge] = edge.count;
+                        currentSize += edge.count;
                     } else {
-                        if (freq > it->second) {
-                            currentSize += (freq - it->second);
-                            it->second = freq;
+                        if (edge.count > it->second) {
+                            currentSize += (edge.count - it->second);
+                            it->second = edge.count;
                         }
                     }
                 }
