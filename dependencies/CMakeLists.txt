@@ -27,7 +27,8 @@ FetchContent_Declare(
 # FetchContent_Declare(
 #     discreture
 #     GIT_REPOSITORY https://github.com/mraggi/discreture.git
-#     # TODO
+#     GIT_TAG v1.2
+#     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/discreture
 # )
 
 FetchContent_MakeAvailable(

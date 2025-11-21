@@ -1,6 +1,6 @@
 
 namespace Subgraphs {
-
+// TODO: optimize combination and permutation iterations
 template <typename IndexType>
 std::vector<std::vector<std::vector<Edge<IndexType>>>>
 SubgraphAlgorithm<IndexType>::getAllMissingEdges(Multigraph<IndexType>& P,
@@ -9,7 +9,8 @@ SubgraphAlgorithm<IndexType>::getAllMissingEdges(Multigraph<IndexType>& P,
     IndexType numCombs = G.combinationsCount(P.getVertexCount());
     std::vector<std::vector<std::vector<Edge<IndexType>>>> missingEdges(
         static_cast<size_t>(numPerms),
-        std::vector<std::vector<Edge<IndexType>>>(static_cast<size_t>(numCombs)));
+        std::vector<std::vector<Edge<IndexType>>>(
+            static_cast<size_t>(numCombs))); // TODO: use better structure ???
 
     IndexType permIdx = 0;
     for (const auto& perm : P.permutations()) {
@@ -17,7 +18,7 @@ SubgraphAlgorithm<IndexType>::getAllMissingEdges(Multigraph<IndexType>& P,
         for (const auto& comb : G.combinations(P.getVertexCount())) {
             for (IndexType i = 0; i < P.getVertexCount(); ++i) {
                 for (IndexType j = 0; j < P.getVertexCount(); ++j) {
-                    IndexType pu = perm[i];
+                    IndexType pu = perm[i]; // TODO: delete the temporary variables
                     IndexType pv = perm[j];
                     IndexType gu = comb[i];
                     IndexType gv = comb[j];
@@ -27,7 +28,8 @@ SubgraphAlgorithm<IndexType>::getAllMissingEdges(Multigraph<IndexType>& P,
 
                     if (pEdges > gEdges) {
                         uint8_t delta = pEdges - gEdges;
-                        missingEdges[permIdx][combIdx].emplace_back(gu, gv, delta);
+                        missingEdges[permIdx][combIdx].emplace_back(
+                            gu, gv, delta); // TODO: do sth better, maybe preallocate
                     }
                 }
             }
@@ -46,7 +48,7 @@ std::vector<Edge<IndexType>> SubgraphAlgorithm<IndexType>::findMinimalExtension(
     std::vector<Edge<IndexType>> minimalExtension;
     IndexType minSize = std::numeric_limits<IndexType>::max();
 
-    std::unordered_map<Edge<IndexType>, uint64_t> edgeFreqMap;
+    std::unordered_map<Edge<IndexType>, uint64_t> edgeFreqMap; // TODO: change to sth more efficient
     edgeFreqMap.reserve(n * P.getEdgeCount());
 
     for (auto combs : CombinationRange<IndexType>(G.combinationsCount(P.getVertexCount()), n)) {
@@ -58,7 +60,7 @@ std::vector<Edge<IndexType>> SubgraphAlgorithm<IndexType>::findMinimalExtension(
             for (int i = 0; i < n; ++i) {
                 for (const auto& edge : allMissingEdges[perms[i]][combs[i]]) {
                     auto it = edgeFreqMap.find(edge);
-                    if (it == edgeFreqMap.end()) {
+                    if (it == edgeFreqMap.end()) { // TODO: try to do it better
                         edgeFreqMap[edge] = edge.count;
                         currentSize += edge.count;
                     } else {
@@ -75,7 +77,9 @@ std::vector<Edge<IndexType>> SubgraphAlgorithm<IndexType>::findMinimalExtension(
                 minimalExtension.clear();
                 minimalExtension.reserve(edgeFreqMap.size());
                 for (const auto& [edge, count] : edgeFreqMap) {
-                    minimalExtension.emplace_back(edge.source, edge.destination, count);
+                    minimalExtension.emplace_back(
+                        edge.source, edge.destination,
+                        count); // TODO: try to do it by using std::move or sth similar
                 }
             }
         }
