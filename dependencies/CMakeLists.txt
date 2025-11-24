@@ -46,3 +46,18 @@ FetchContent_MakeAvailable(
     # discreture
 )
 
+# ---------------------------------
+# Create hungarian_algorithm library target
+# ---------------------------------
+# The hungarian-algorithm-cpp repo doesn't provide CMake config,
+# so we need to create the library target manually
+
+add_library(hungarian_algorithm STATIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/hungarian-algorithm-cpp/Hungarian.cpp
+)
+
+target_include_directories(hungarian_algorithm PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/hungarian-algorithm-cpp
+)
+
+target_compile_features(hungarian_algorithm PUBLIC cxx_std_11)
