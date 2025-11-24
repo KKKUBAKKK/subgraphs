@@ -18,6 +18,7 @@ set(SUBGRAPHS_INCLUDE_DIRS
 add_library(subgraphs_lib INTERFACE)
 target_include_directories(subgraphs_lib INTERFACE ${SUBGRAPHS_INCLUDE_DIRS})
 target_compile_features(subgraphs_lib INTERFACE cxx_std_20)
+target_link_libraries(subgraphs_lib INTERFACE hungarian_algorithm)
 
 # ---------------------------------
 # Create Executable

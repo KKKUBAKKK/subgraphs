@@ -10,6 +10,13 @@ FetchContent_Declare(
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gtest
 )
 
+FetchContent_Declare(
+    hungarian_algorithm
+    GIT_REPOSITORY https://github.com/mcximing/hungarian-algorithm-cpp.git
+    GIT_TAG master
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/hungarian-algorithm-cpp
+)
+
 # FetchContent_Declare(
 #     boostgraph
 #     GIT_REPOSITORY https://github.com/boostorg/graph.git
@@ -33,7 +40,9 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(
     googletest
+    hungarian_algorithm
     # boostgraph
     # eigen
     # discreture
 )
+

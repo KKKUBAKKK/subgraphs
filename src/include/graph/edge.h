@@ -11,6 +11,9 @@ template <typename IndexType = int64_t> struct Edge {
     IndexType destination;
     uint8_t count;
 
+    Edge() = default;
+    Edge(IndexType s, IndexType d, uint8_t c) : source(s), destination(d), count(c) {}
+
     bool operator==(const Edge& other) const {
         return source == other.source && destination == other.destination && count == other.count;
     }

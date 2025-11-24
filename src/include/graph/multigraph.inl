@@ -57,6 +57,34 @@ template <typename IndexType> IndexType Multigraph<IndexType>::getOutDegree(Inde
     return degree;
 }
 
+// TODO(jakubkindracki): Optimize degree getters
+template <typename IndexType>
+std::vector<IndexType> Multigraph<IndexType>::getInDegrees() const {
+    std::vector<IndexType> degrees(vertexCount);
+    for (IndexType i = 0; i < vertexCount; ++i) {
+        degrees[i] = getInDegree(i);
+    }
+    return degrees;
+}
+
+template <typename IndexType>
+std::vector<IndexType> Multigraph<IndexType>::getOutDegrees() const {
+    std::vector<IndexType> degrees(vertexCount);
+    for (IndexType i = 0; i < vertexCount; ++i) {
+        degrees[i] = getOutDegree(i);
+    }
+    return degrees;
+}
+
+template <typename IndexType>
+std::vector<IndexType> Multigraph<IndexType>::getDegrees() const {
+    std::vector<IndexType> degrees(vertexCount);
+    for (IndexType i = 0; i < vertexCount; ++i) {
+        degrees[i] = getInDegree(i) + getOutDegree(i);
+    }
+    return degrees;
+}
+
 template <typename IndexType>
 std::vector<std::pair<IndexType, uint8_t>>
 Multigraph<IndexType>::getInNeighbors(IndexType v) const {
@@ -137,6 +165,11 @@ bool Multigraph<IndexType>::operator!=(const Multigraph& other) const {
 template <typename IndexType> bool Multigraph<IndexType>::operator<(const Multigraph& other) const {
     return vertexCount < other.vertexCount ||
            (vertexCount == other.vertexCount && edgeCount < other.edgeCount);
+}
+
+template <typename IndexType>
+std::vector<std::vector<uint8_t>> Multigraph<IndexType>::getAdjacencyMatrix() const {
+    return adjMatrix;
 }
 
 template <typename IndexType> void Multigraph<IndexType>::printAdjacencyMatrix() const {

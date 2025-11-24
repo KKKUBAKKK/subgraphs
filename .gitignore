@@ -84,3 +84,5 @@ Makefile
 # CLion IDE files
 .idea/
 cmake-build-*/
+
+.cache/
