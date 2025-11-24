@@ -6,6 +6,7 @@
 #include "Hungarian.h"
 #include "heuristic.h"
 #include <numeric>
+#include <unordered_set>
 
 namespace Subgraphs {
 
@@ -16,6 +17,8 @@ class SubgraphAlgorithm {
                                             Multigraph<IndexType>& G);
     static std::vector<Edge<IndexType>> run_approx_v2(int n, Multigraph<IndexType>& P,
                                             Multigraph<IndexType>& G, HeuristicType heuristic = HeuristicType::DEGREE_DIFFERENCE);
+    static std::vector<Edge<IndexType>> run_approx_v1(int n, Multigraph<IndexType>& P,
+                                            Multigraph<IndexType>& G);
 
   private:
     static std::vector<std::vector<std::vector<Edge<IndexType>>>>
