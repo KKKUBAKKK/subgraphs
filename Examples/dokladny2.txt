@@ -1,0 +1,21 @@
+4
+0 0 0 1
+2 0 1 0
+0 2 0 1
+0 0 0 0
+6
+0 0 0 0 0 1
+2 0 0 0 1 0
+0 2 0 0 0 0
+0 0 1 0 2 0
+0 0 0 0 0 1
+0 0 0 0 0 0
+
+Żeby w G2 znaleźć 2 kopie G1, trzeba dołożyć 4 krawędzie,
+wg następującej macierzy przekształcenia G2:
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 1 0 0
+0 0 1 0 0 0
+0 2 0 0 0 0 
+0 0 0 0 0 0
