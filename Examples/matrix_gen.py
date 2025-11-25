@@ -19,7 +19,7 @@ def generate_multigraph_matrices(n, m, filename):
                 if i == j:
                     row.append(0)
                 else:
-                    row.append(random.randint(0, 100))
+                    row.append(random.randint(0, 20))
             f.write(' '.join(map(str, row)) + '\n')
 
         # Druga macierz (m x m)
@@ -30,11 +30,11 @@ def generate_multigraph_matrices(n, m, filename):
                 if i == j:
                     row.append(0)
                 else:
-                    row.append(random.randint(0, 100))
+                    row.append(random.randint(0, 20))
             f.write(' '.join(map(str, row)) + '\n')
 
 if __name__ == '__main__':
     #generate_multigraph_matrices(5, 7, "approx1.txt")
-    generate_multigraph_matrices(80, 100, "approx1.txt")
-    generate_multigraph_matrices(400, 1000, "approx2.txt")
+    generate_multigraph_matrices(10, 20, "approx3.txt")
+    generate_multigraph_matrices(35, 40, "approx4.txt")
     print("Wygenerowano pliki")
