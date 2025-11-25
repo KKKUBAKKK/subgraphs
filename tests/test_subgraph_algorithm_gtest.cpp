@@ -39,7 +39,6 @@ TYPED_TEST(SubgraphAlgorithmTest, NoExtensionNeeded) {
 
     auto result = SubgraphAlgorithm<TypeParam>::run(1, P, G);
 
-    ASSERT_FALSE(result.empty());
     EXPECT_EQ(result.size(), 0);
 }
 

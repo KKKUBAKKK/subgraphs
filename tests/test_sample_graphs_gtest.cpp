@@ -125,15 +125,12 @@ TYPED_TEST(SampleGraphTest, SampleGraph2_OneCopy) {
 //     auto result = SubgraphAlgorithm<TypeParam>::run(2, pattern, target);
 
 //     ASSERT_FALSE(result.empty());
-//     ASSERT_FALSE(result[0].empty());
-
-//     const auto& extension = result[0][0];
 
 //     // TODO: Fill in expected values for 2 copies
-//     EXPECT_EQ(extension.size(), 0);
+//     EXPECT_EQ(result.size(), 0);
 
 //     int totalEdges = 0;
-//     for (const auto& edge : extension) {
+//     for (const auto& edge : result) {
 //         totalEdges += edge.count;
 //     }
 //     EXPECT_EQ(totalEdges, 0);
@@ -154,15 +151,12 @@ TYPED_TEST(SampleGraphTest, SampleGraph2_OneCopy) {
 //     auto result = SubgraphAlgorithm<TypeParam>::run(1, pattern, target);
 
 //     ASSERT_FALSE(result.empty());
-//     ASSERT_FALSE(result[0].empty());
-
-//     const auto& extension = result[0][0];
 
 //     // TODO: Fill in expected values
-//     EXPECT_EQ(extension.size(), 0);
+//     EXPECT_EQ(result.size(), 0);
 
 //     int totalEdges = 0;
-//     for (const auto& edge : extension) {
+//     for (const auto& edge : result) {
 //         totalEdges += edge.count;
 //     }
 //     EXPECT_EQ(totalEdges, 0);
@@ -176,15 +170,12 @@ TYPED_TEST(SampleGraphTest, SampleGraph2_OneCopy) {
 //     auto result = SubgraphAlgorithm<TypeParam>::run(2, pattern, target);
 
 //     ASSERT_FALSE(result.empty());
-//     ASSERT_FALSE(result[0].empty());
-
-//     const auto& extension = result[0][0];
 
 //     // TODO: Fill in expected values for 2 copies
-//     EXPECT_EQ(extension.size(), 0);
+//     EXPECT_EQ(result.size(), 0);
 
 //     int totalEdges = 0;
-//     for (const auto& edge : extension) {
+//     for (const auto& edge : result) {
 //         totalEdges += edge.count;
 //     }
 //     EXPECT_EQ(totalEdges, 0);
@@ -242,7 +233,6 @@ TYPED_TEST(SampleGraphTest, SampleGraph5_OneCopy) {
 
     auto result = SubgraphAlgorithm<TypeParam>::run(1, pattern, target);
 
-    ASSERT_FALSE(result.empty());
     EXPECT_EQ(result.size(), 0);
 
     int totalEdges = 0;
