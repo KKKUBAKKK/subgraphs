@@ -57,7 +57,6 @@ template <typename IndexType> IndexType Multigraph<IndexType>::getOutDegree(Inde
     return degree;
 }
 
-// TODO(jakubkindracki): Optimize degree getters
 template <typename IndexType>
 std::vector<IndexType> Multigraph<IndexType>::getInDegrees() const {
     std::vector<IndexType> degrees(vertexCount);
@@ -83,6 +82,18 @@ std::vector<IndexType> Multigraph<IndexType>::getDegrees() const {
         degrees[i] = getInDegree(i) + getOutDegree(i);
     }
     return degrees;
+}
+
+template <typename IndexType>
+std::vector<std::pair<IndexType, uint8_t>>
+Multigraph<IndexType>::getNeighbors(IndexType v) const {
+    std::vector<std::pair<IndexType, uint8_t>> neighbors;
+    for (IndexType i = 0; i < vertexCount; ++i) {
+        if (adjMatrix[v][i] > 0 || adjMatrix[i][v] > 0) {
+            neighbors.emplace_back(i, adjMatrix[v][i] + adjMatrix[i][v]);
+        }
+    }
+    return neighbors;
 }
 
 template <typename IndexType>

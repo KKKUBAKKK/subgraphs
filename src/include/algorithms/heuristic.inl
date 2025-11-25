@@ -17,8 +17,7 @@ std::vector<std::vector<double>> Heuristic<IndexType>::createWeightMatrix_Degree
         for (IndexType j = 0; j < k; ++j) {
             IndexType pVertex = i;
             IndexType gVertex = subset[j];
-            matrix[i][j] = std::abs(static_cast<double>(totalDegreesP[pVertex]) -
-                                   static_cast<double>(totalDegreesG[gVertex]));
+            matrix[i][j] = static_cast<double>(std::abs(totalDegreesP[pVertex] - totalDegreesG[gVertex]));
         }
     }
 
@@ -43,10 +42,8 @@ std::vector<std::vector<double>> Heuristic<IndexType>::createWeightMatrix_Direct
         for (IndexType j = 0; j < k; ++j) {
             IndexType pVertex = i;
             IndexType gVertex = subset[j];
-            double inDiff = std::abs(static_cast<double>(inDegreesP[pVertex]) -
-                                    static_cast<double>(inDegreesG[gVertex]));
-            double outDiff = std::abs(static_cast<double>(outDegreesP[pVertex]) -
-                                     static_cast<double>(outDegreesG[gVertex]));
+            double inDiff = static_cast<double>(std::abs(inDegreesP[pVertex] - inDegreesG[gVertex]));
+            double outDiff = static_cast<double>(std::abs(outDegreesP[pVertex] - outDegreesG[gVertex]));
             matrix[i][j] = inDiff + outDiff;
         }
     }
@@ -72,10 +69,8 @@ std::vector<std::vector<double>> Heuristic<IndexType>::createWeightMatrix_Direct
         for (IndexType j = 0; j < k; ++j) {
             IndexType pVertex = i;
             IndexType gVertex = subset[j];
-            double inDeficit = std::max(0.0, static_cast<double>(inDegreesP[pVertex]) -
-                                           static_cast<double>(inDegreesG[gVertex]));
-            double outDeficit = std::max(0.0, static_cast<double>(outDegreesP[pVertex]) -
-                                            static_cast<double>(outDegreesG[gVertex]));
+            double inDeficit = std::max(0.0, static_cast<double>(inDegreesP[pVertex] - inDegreesG[gVertex]));
+            double outDeficit = std::max(0.0, static_cast<double>(outDegreesP[pVertex] - outDegreesG[gVertex]));
             matrix[i][j] = inDeficit + outDeficit;
         }
     }
@@ -105,26 +100,18 @@ std::vector<std::vector<double>> Heuristic<IndexType>::createWeightMatrix_Neighb
 
     for (IndexType i = 0; i < k; ++i) {
         std::vector<IndexType> histP(maxDegree + 1, 0);
-        auto neighborsP = P.getOutNeighbors(i);
+        auto neighborsP = P.getNeighbors(i);
         for (const auto& [neighbor, count] : neighborsP) {
-            histP[totalDegreesP[neighbor]] += count;
-        }
-        auto inNeighborsP = P.getInNeighbors(i);
-        for (const auto& [neighbor, count] : inNeighborsP) {
-            histP[totalDegreesP[neighbor]] += count;
+            histP[count] += 1;
         }
 
         for (IndexType j = 0; j < k; ++j) {
             IndexType gVertex = subset[j];
 
             std::vector<IndexType> histG(maxDegree + 1, 0);
-            auto neighborsG = G.getOutNeighbors(gVertex);
+            auto neighborsG = G.getNeighbors(gVertex);
             for (const auto& [neighbor, count] : neighborsG) {
-                histG[totalDegreesG[neighbor]] += count;
-            }
-            auto inNeighborsG = G.getInNeighbors(gVertex);
-            for (const auto& [neighbor, count] : inNeighborsG) {
-                histG[totalDegreesG[neighbor]] += count;
+                histG[count] += 1;
             }
 
             double distance = 0.0;
@@ -138,7 +125,26 @@ std::vector<std::vector<double>> Heuristic<IndexType>::createWeightMatrix_Neighb
     return matrix;
 }
 
-// Heuristic 5: Structure Matching (Triangle counting)
+template <typename T>
+std::vector<std::vector<T>> multiplyAdjacency(
+    const std::vector<std::vector<uint8_t>>& A,
+    const std::vector<std::vector<uint8_t>>& B) {
+
+    size_t n = A.size();
+    std::vector<std::vector<T>> result(n, std::vector<T>(n, 0));
+
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            for (size_t k = 0; k < n; ++k) {
+                result[i][j] += static_cast<T>(A[i][k]) * static_cast<T>(B[k][j]);
+            }
+        }
+    }
+
+    return result;
+}
+
+// Heuristic 5: Structure Matching (Triangle counting using matrix multiplication)
 template <typename IndexType>
 std::vector<std::vector<double>> Heuristic<IndexType>::createWeightMatrix_StructureMatching(
     const Multigraph<IndexType>& P, const Multigraph<IndexType>& G,
@@ -150,33 +156,27 @@ std::vector<std::vector<double>> Heuristic<IndexType>::createWeightMatrix_Struct
     auto totalDegreesP = P.getDegrees();
     auto totalDegreesG = G.getDegrees();
 
-    std::vector<IndexType> trianglesP(P.getVertexCount(), 0);
+    auto adjP = P.getAdjacencyMatrix();
+    auto adjG = G.getAdjacencyMatrix();
+
+    auto adjP2 = multiplyAdjacency<IndexType>(adjP, adjP);
+    auto adjG2 = multiplyAdjacency<IndexType>(adjG, adjG);
+
+    std::vector<IndexType> trianglesP(k, 0);
     std::vector<IndexType> trianglesG(G.getVertexCount(), 0);
 
-    for (IndexType u = 0; u < P.getVertexCount(); ++u) {
-        auto neighborsU = P.getOutNeighbors(u);
-        for (const auto& [v, count1] : neighborsU) {
-            auto neighborsV = P.getOutNeighbors(v);
-            for (const auto& [w, count2] : neighborsV) {
-                if (P.getEdges(w, u) > 0) {
-                    trianglesP[u]++;
-                    trianglesP[v]++;
-                    trianglesP[w]++;
-                }
+    for (IndexType i = 0; i < k; ++i) {
+        for (IndexType j = 0; j < k; ++j) {
+            if (adjP2[i][j] > 0 && adjP[j][i] > 0) {
+                trianglesP[i] += adjP2[i][j];
             }
         }
     }
 
-    for (IndexType u = 0; u < G.getVertexCount(); ++u) {
-        auto neighborsU = G.getOutNeighbors(u);
-        for (const auto& [v, count1] : neighborsU) {
-            auto neighborsV = G.getOutNeighbors(v);
-            for (const auto& [w, count2] : neighborsV) {
-                if (G.getEdges(w, u) > 0) {
-                    trianglesG[u]++;
-                    trianglesG[v]++;
-                    trianglesG[w]++;
-                }
+    for (IndexType i = 0; i < G.getVertexCount(); ++i) {
+        for (IndexType j = 0; j < G.getVertexCount(); ++j) {
+            if (adjG2[i][j] > 0 && adjG[j][i] > 0) {
+                trianglesG[i] += adjG2[i][j];
             }
         }
     }
@@ -188,10 +188,8 @@ std::vector<std::vector<double>> Heuristic<IndexType>::createWeightMatrix_Struct
         for (IndexType j = 0; j < k; ++j) {
             IndexType pVertex = i;
             IndexType gVertex = subset[j];
-            double degreeDiff = std::abs(static_cast<double>(totalDegreesP[pVertex]) -
-                                        static_cast<double>(totalDegreesG[gVertex]));
-            double triangleDeficit = std::max(0.0, static_cast<double>(trianglesP[pVertex]) -
-                                                   static_cast<double>(trianglesG[gVertex]));
+            double degreeDiff = static_cast<double>(std::abs(totalDegreesP[pVertex] - totalDegreesG[gVertex]));
+            double triangleDeficit = std::max(0.0, static_cast<double>(trianglesP[pVertex] - trianglesG[gVertex]));
             matrix[i][j] = alpha * degreeDiff + beta * triangleDeficit;
         }
     }
@@ -199,7 +197,7 @@ std::vector<std::vector<double>> Heuristic<IndexType>::createWeightMatrix_Struct
     return matrix;
 }
 
-// Heuristic 6: Greedy Neighbor Matching
+// Heuristic 6: Exhaustive Neighbor Permutation Matching
 template <typename IndexType>
 std::vector<std::vector<double>> Heuristic<IndexType>::createWeightMatrix_GreedyNeighbor(
     const Multigraph<IndexType>& P, const Multigraph<IndexType>& G,
@@ -211,45 +209,66 @@ std::vector<std::vector<double>> Heuristic<IndexType>::createWeightMatrix_Greedy
     auto totalDegreesP = P.getDegrees();
     auto totalDegreesG = G.getDegrees();
 
+    auto baseCost = createWeightMatrix_DegreeDifference(P, G, subset);
+
     for (IndexType i = 0; i < k; ++i) {
         IndexType pVertex = i;
-
         auto pNeighbors = P.getOutNeighbors(pVertex);
-        auto pInNeighbors = P.getInNeighbors(pVertex);
 
         for (IndexType j = 0; j < k; ++j) {
             IndexType gVertex = subset[j];
-
             auto gNeighbors = G.getOutNeighbors(gVertex);
-            auto gInNeighbors = G.getInNeighbors(gVertex);
 
-            double cost = 0.0;
+            double minCost = std::numeric_limits<double>::max();
 
-            for (const auto& [pNeighbor, count] : pNeighbors) {
-                double minCost = std::numeric_limits<double>::max();
-                for (const auto& [gNeighbor, gCount] : gNeighbors) {
-                    double neighborCost = std::abs(static_cast<double>(totalDegreesP[pNeighbor]) -
-                                                   static_cast<double>(totalDegreesG[gNeighbor]));
-                    minCost = std::min(minCost, neighborCost);
+            if (!pNeighbors.empty() && !gNeighbors.empty()) {
+                size_t pSize = pNeighbors.size();
+                size_t gSize = gNeighbors.size();
+                std::vector<size_t> gIndices(gSize);
+                for (size_t idx = 0; idx < gSize; ++idx) {
+                    gIndices[idx] = idx;
                 }
-                if (minCost != std::numeric_limits<double>::max()) {
-                    cost += minCost;
+
+                do {
+                    double permCost = 0.0;
+
+                    for (size_t pi = 0; pi < pSize; ++pi) {
+                        IndexType pNeighborVertex = pNeighbors[pi].first;
+
+                        if (pi < gSize) {
+                            IndexType gNeighborVertex = gNeighbors[gIndices[pi]].first;
+                            permCost += baseCost[pNeighborVertex][gNeighborVertex];
+                        } else {
+                            permCost += totalDegreesP[pNeighborVertex];
+                        }
+                    }
+
+                    if (gSize > pSize) {
+                        for (size_t gi = pSize; gi < gSize; ++gi) {
+                            IndexType gNeighborVertex = gNeighbors[gIndices[gi]].first;
+                            permCost += totalDegreesG[gNeighborVertex];
+                        }
+                    }
+
+                    minCost = std::min(minCost, permCost);
+
+                } while (std::next_permutation(gIndices.begin(), gIndices.end()));
+
+            } else if (!pNeighbors.empty()) {
+                minCost = 0.0;
+                for (const auto& [pNeighbor, count] : pNeighbors) {
+                    minCost += totalDegreesP[pNeighbor];
                 }
+            } else if (!gNeighbors.empty()) {
+                minCost = 0.0;
+                for (const auto& [gNeighbor, count] : gNeighbors) {
+                    minCost += totalDegreesG[gNeighbor];
+                }
+            } else {
+                minCost = 0.0;
             }
 
-            for (const auto& [pNeighbor, count] : pInNeighbors) {
-                double minCost = std::numeric_limits<double>::max();
-                for (const auto& [gNeighbor, gCount] : gInNeighbors) {
-                    double neighborCost = std::abs(static_cast<double>(totalDegreesP[pNeighbor]) -
-                                                   static_cast<double>(totalDegreesG[gNeighbor]));
-                    minCost = std::min(minCost, neighborCost);
-                }
-                if (minCost != std::numeric_limits<double>::max()) {
-                    cost += minCost;
-                }
-            }
-
-            matrix[i][j] = cost;
+            matrix[i][j] = minCost;
         }
     }
 

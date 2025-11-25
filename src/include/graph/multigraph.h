@@ -33,6 +33,7 @@ template <typename IndexType = int64_t> class Multigraph {
     std::vector<IndexType> getInDegrees() const;
     std::vector<IndexType> getOutDegrees() const;
 
+    std::vector<std::pair<IndexType, uint8_t>> getNeighbors(IndexType v) const;
     std::vector<std::pair<IndexType, uint8_t>> getInNeighbors(IndexType v) const;
     std::vector<std::pair<IndexType, uint8_t>> getOutNeighbors(IndexType v) const;
 
