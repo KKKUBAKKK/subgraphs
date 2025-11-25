@@ -1,0 +1,76 @@
+---
+# Clang-Format configuration for subgraphs project
+# Supports GCC, Clang, and MSVC compatibility
+
+BasedOnStyle: LLVM
+Language: Cpp
+Standard: Latest
+
+# Indentation
+IndentWidth: 4
+UseTab: Never
+TabWidth: 4
+ContinuationIndentWidth: 4
+IndentCaseLabels: true
+IndentPPDirectives: AfterHash
+
+# Line length
+ColumnLimit: 100
+
+# Braces
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: false
+  AfterControlStatement: Never
+  AfterEnum: false
+  AfterFunction: false
+  AfterNamespace: false
+  AfterStruct: false
+  AfterUnion: false
+  BeforeCatch: false
+  BeforeElse: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyNamespace: false
+  SplitEmptyRecord: false
+AllowShortBlocksOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+
+# Pointer/Reference alignment
+PointerAlignment: Left
+
+# Include sorting
+SortIncludes: CaseInsensitive
+IncludeCategories:
+  - Regex: '^".*"'
+    Priority: 1
+  - Regex: '^<[a-z_]+>'
+    Priority: 2
+  - Regex: '^<[A-Z].*>'
+    Priority: 3
+  - Regex: '.*'
+    Priority: 4
+
+# Spacing
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpaceBeforeSquareBrackets: false
+SpacesInAngles: false
+SpacesInContainerLiterals: false
+SpacesInCStyleCastParentheses: false
+SpaceAfterCStyleCast: false
+SpaceAfterTemplateKeyword: true
+
+# Operators
+SpaceBeforeAssignmentOperators: true
+
+# Other settings
+AccessModifierOffset: -2
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 2
+NamespaceIndentation: None
+ReflowComments: true
+SortUsingDeclarations: true

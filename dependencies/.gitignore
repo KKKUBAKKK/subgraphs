@@ -1,0 +1,6 @@
+# Ignore downloaded dependencies
+gtest/
+googletest/
+hungarian-algorithm-cpp/
+*-src/
+*-build/
