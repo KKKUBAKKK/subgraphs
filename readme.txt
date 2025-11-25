@@ -34,7 +34,7 @@ FORMAT PLIKU WEJŚCIOWEGO:
   Kolejna liczba: liczba wierzchołków grafu docelowego
   Następne linie: macierz sąsiedztwa grafu docelowego
 
-PRZYKŁADY UŻYCIA:
+PRZYKŁADY UŻYCIA (UNIX):
   # Algorytm dokładny, 1 podgraf
   ./build/bin/release/subgraphs Examples/dokladny1.txt
 
@@ -49,6 +49,22 @@ PRZYKŁADY UŻYCIA:
 
   # Algorytm aproksymacyjny v2, 2 podgrafy, heurystyka structure
   ./build/bin/release/subgraphs Examples/approx2.txt 2 approx2 directed
+
+PRZYKŁADY UŻYCIA (WINDOWS):
+  # Algorytm dokładny, 1 podgraf
+  .\build\bin\release\subgraphs Examples\dokladny1.txt
+
+  # Algorytm dokładny, 3 podgrafy
+  .\build\bin\release\subgraphs Examples\dokladny1.txt 3
+
+  # Algorytm aproksymacyjny v1, 1 podgraf
+  .\build\bin\release\subgraphs Examples\approx1.txt 1 approx1
+
+  # Algorytm aproksymacyjny v2, 1 podgraf, heurystyka degree
+  .\build\bin\release\subgraphs Examples\approx2.txt 1 approx2 degree
+
+  # Algorytm aproksymacyjny v2, 2 podgrafy, heurystyka structure
+  .\build\bin\release\subgraphs Examples\approx3.txt 2 approx2 directed
 
 WYJŚCIE PROGRAMU:
   Program wyświetli:
