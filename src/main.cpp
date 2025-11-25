@@ -11,7 +11,7 @@ using GRAPH_INDEX_TYPE = uint16_t;
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <input_graph_file> [num_subgraphs] [algorithm: exact|approx|approx1] [heuristic: degree|directed|directed_ignore|histogram|structure|greedy]" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <input_graph_file> [num_subgraphs] [algorithm: exact|approx1|approx2] [heuristic: degree|directed|directed_ignore|histogram|structure|greedy]" << std::endl;
         return 1;
     }
 
@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
 
         std::cout << "=== Running Subgraph Algorithm ===" << std::endl;
         std::cout << "Algorithm: " << algorithm << std::endl;
-        if (algorithm == "approx") {
+        if (algorithm == "approx2") {
             std::cout << "Heuristic: " << static_cast<int>(heuristic) << std::endl;
         }
 
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
         if (algorithm == "exact") {
             result = Subgraphs::SubgraphAlgorithm<GRAPH_INDEX_TYPE>::run(
                 subgraphsCount, patternGraph, targetGraph);
-        } else if (algorithm == "approx") {
+        } else if (algorithm == "approx2") {
             result = Subgraphs::SubgraphAlgorithm<GRAPH_INDEX_TYPE>::run_approx_v2(
                 subgraphsCount, patternGraph, targetGraph, heuristic);
         } else if (algorithm == "approx1") {

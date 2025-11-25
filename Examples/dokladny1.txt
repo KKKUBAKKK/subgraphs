@@ -5,10 +5,10 @@
 4
 0 3 0 2
 1 0 2 0
-0 0 0 0 
+0 0 0 0
 0 0 1 0
 
-Żeby w G2 znaleźć 3 kopie G1, trzeba dołożyć 6 krawędzi,
+Żeby w G2 znaleźć 3 kopie G1, trzeba dołożyć 5 krawędzi,
 wg następującej macierzy przekształcenia G2:
 0 0 3 0
 0 0 0 0
