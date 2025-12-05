@@ -1199,7 +1199,7 @@ Poprawność procedury (Algorytm \ref{alg:solve_subsets}) opiera się na dwóch 
     \begin{enumerate}
         \item \texttt{GetDegrees} (linie 5-6): Obliczenie stopni dla macierzy $N \times N$ i $k \times k$ jest operacją o skończonej, wielomianowej złożoności (odpowiednio $\mathcal{O}(N^2)$ i $\mathcal{O}(k^2)$).
         \item \texttt{Heurystyka} (linia 8): Wypełnienie macierzy $k \times k$ jest operacją o złożoności zależnej od wybranej heurystyki. Dla prostszych heurystyk, jak liczenie różnicy stopni, przy podanej macierzy stopni i przy wielkości macierzy kosztów $k \times k$, jej złożoność to $\mathcal{O}(k^2)$.
-        \item \texttt{HungarianAlgorithm} (linia 10): Wywołanie Algorytmu Węgierskiego na macierzy $k \times k$ ma złożoność wielomianową $\mathcal{O}(k^3)$.
+        \item \texttt{HungarianAlgorithm} (linia 10): Wywołanie Algorytmu Węgierskiego~\cite{dynamic_hungarian} na macierzy $k \times k$ ma złożoność wielomianową $\mathcal{O}(k^3)$.
         \item Pętla rozszerzenia (linie 13-25): Jest to zagnieżdżona pętla wykonująca $k \times k = k^2$ operacji $\mathcal{O}(1)$, stąd jej koszt to $\mathcal{O}(k^2)$.
     \end{enumerate}
     Ponieważ $n, k, N$ są skończone, a wszystkie operacje wewnątrz pętli głównej mają skończoną, wielomianową złożoność, cały algorytm gwarantuje zakończenie działania.
@@ -1257,14 +1257,12 @@ Złożoność ta jest drastycznie niższa niż $\mathcal{O}(J \cdot k \cdot N^3)
 % \\section{Testy}
 % \\section{Podsumowanie}
 
+\newpage
+
 \section{Testy i wyniki eksperymentalne}
 \label{sec:testy}
 
-W celu weryfikacji poprawności i wydajności zaimplementowanych algorytmów przeprowadzono szereg testów eksperymentalnych. Testy obejmowały pomiary czasu wykonania algorytmów dla różnych rozmiarów grafów oraz porównanie jakości rozszerzeń znajdowanych przez poszczególne algorytmy.
-
-\subsection{Środowisko testowe}
-
-Testy przeprowadzono na komputerze z procesorem Apple M3 oraz 8GB pamięci RAM. Program został skompilowany z optymalizacjami (-O3) przy użyciu kompilatora Clang. Dla każdego testu mierzono czas wykonania algorytmu w milisekundach.
+W celu weryfikacji poprawności i wydajności zaimplementowanych algorytmów przeprowadzono szereg testów eksperymentalnych. Algorytmy aproksymacyjne oparte są na podejściu wykorzystującym ścieżki długości $r$ do przybliżonego izomorfizmu podgrafów~\cite{lerp_algorithm}. Testy obejmowały pomiary czasu wykonania algorytmów dla różnych rozmiarów grafów oraz porównanie jakości rozszerzeń znajdowanych przez poszczególne algorytmy.
 
 \subsection{Testy wydajnościowe algorytmów aproksymacyjnych}
 
@@ -1281,7 +1279,7 @@ Na Rysunku~\ref{fig:approx_dense} przedstawiono wyniki dla grafów gęstych, gdz
     \label{fig:approx_dense}
 \end{figure}
 
-Algorytm Aproksymacyjny v1 wykazuje znacznie dłuższy czas wykonania (do 30 sekund dla największych grafów), podczas gdy wszystkie warianty v2 pozostają bardzo szybkie (10-30 ms).
+Algorytm Aproksymacyjny v1 wykazuje znacznie dłuższy czas wykonania (do 30 sekund dla największych grafów), podczas gdy wszystkie warianty v2 pozostają bardzo szybkie (10-30 ms). Widzimy też, że czas wykonania wszytkich algorytmów aproksymacyjnych rośnie wraz z rozmiarem grafów.
 
 \subsubsection{Grafy rzadkie}
 
@@ -1294,7 +1292,7 @@ Rysunek~\ref{fig:approx_sparse} przedstawia wyniki dla grafów rzadkich z gęsto
     \label{fig:approx_sparse}
 \end{figure}
 
-Dla grafów rzadkich obserwujemy podobny wzorzec - algorytm v1 jest znacznie wolniejszy od wariantów v2.
+Dla grafów rzadkich obserwujemy podobny wzorzec - algorytm v1 jest znacznie wolniejszy od wariantów v2. Tutaj także możemy zaobserwować wzrost wraz z rozmiarem grafów. Widzimy też, że czas wykonania wszystkich algorytmów nie różni sie widocznie dla grafów rzadkich i gęstych.
 
 \subsubsection{Grafy mieszane}
 
@@ -1314,6 +1312,8 @@ Rysunki~\ref{fig:approx_sparse_dense} i~\ref{fig:approx_dense_sparse} pokazują 
     \label{fig:approx_dense_sparse}
 \end{figure}
 
+Na tych dwóch rysunkach widzimy podobny wzorzec - algorytm v1 jest znacznie wolniejszy od wariantów v2, ale dalej osiąga on akceptowalny czas wykonania. Warto też zauważyć, że czas nie różni się zauważalnie dla tych rysunków. Dla rysunku \ref{fig:approx_dense_sparse} widzimy jednak większe wachania w czasach wykonania algorytmu, co sugeruje, że oprócz rozmiarów na czas wykonania jednak ma wpływ także gęstość.
+
 \subsubsection{Zmiana liczby szukanych podgrafów}
 
 Rysunek~\ref{fig:approx_subgraph_var} przedstawia wpływ liczby szukanych podgrafów na czas wykonania. Test przeprowadzono dla ustalonego grafu (wzorzec: 10 wierzchołków, cel: 60 wierzchołków).
@@ -1324,7 +1324,7 @@ Rysunek~\ref{fig:approx_subgraph_var} przedstawia wpływ liczby szukanych podgra
     \caption{Wpływ liczby szukanych podgrafów (1-10) na czas wykonania algorytmów aproksymacyjnych.}
     \label{fig:approx_subgraph_var}
 \end{figure}
-
+% TODO: wyjasnij czemy taki szum i nie rosnie liniowo. moze usunac albo poprawic
 Czas wykonania rośnie liniowo z liczbą szukanych podgrafów dla wszystkich algorytmów.
 
 \subsection{Porównanie algorytmu dokładnego z aproksymacyjnymi}
@@ -1351,6 +1351,8 @@ Na Rysunku~\ref{fig:exact_dense} widać dramatyczną różnicę w czasie wykonan
     \label{fig:exact_sparse}
 \end{figure}
 
+Dla grafów rzadkich algorytm dokładny także jest znacznie wolniejszy od wariantów aproksymacyjnych, a jego czas wykonania rośnie wykładniczo z rozmiarem grafu. Widzimy, że dla bardzo małych grafów (1, 2, 3 wierzchołki) algorytm dokładny bardzo szybki, ale są to tak małe przypadki, że nie musi on wykonywać prawie żadnych obliczeń. Dla trochę większych grafów zaczynamy już widzieć odpowiednie zależności. Wachania w wynikach algorytmów aproksymacyjnych mogą być spowodowane danymi wejściowymi, ale są one na tyle małe, że można je zignorować. Mogą one być spowodowane również szumem towarzyszącym wokonaniu algorytmów i innych zadań na naszej maszynie
+
 \subsubsection{Grafy mieszane - porównanie z algorytmem dokładnym}
 
 \begin{figure}[H]
@@ -1367,6 +1369,8 @@ Na Rysunku~\ref{fig:exact_dense} widać dramatyczną różnicę w czasie wykonan
     \label{fig:exact_dense_sparse}
 \end{figure}
 
+Na rysunkach~\ref{fig:exact_sparse_dense} i~\ref{fig:exact_dense_sparse} widzimy, że algorytm dokładny jest znacznie wolniejszy od wariantów aproksymacyjnych, a jego czas wykonania rośnie wykładniczo z rozmiarem grafu. Wnioski są podobne do tych z poprzednich rysunków.
+
 \subsubsection{Zmiana liczby podgrafów - algorytm dokładny}
 
 \begin{figure}[H]
@@ -1376,7 +1380,7 @@ Na Rysunku~\ref{fig:exact_dense} widać dramatyczną różnicę w czasie wykonan
     \label{fig:exact_subgraph_var}
 \end{figure}
 
-Rysunek~\ref{fig:exact_subgraph_var} pokazuje, że algorytm dokładny dla grafu 4×8 potrzebuje:
+Rysunek~\ref{fig:exact_subgraph_var} pokazuje, że algorytm dokładny dla grafu wzorca 4 i celu 8 potrzebuje:
 \begin{itemize}
     \item 1 podgraf: 5.8 ms
     \item 2 podgrafy: 297 ms
@@ -1384,6 +1388,8 @@ Rysunek~\ref{fig:exact_subgraph_var} pokazuje, że algorytm dokładny dla grafu 
 \end{itemize}
 
 Algorytmy aproksymacyjne wykonują się w czasie 3-4 ms niezależnie od liczby podgrafów.
+
+Z tych obserwacji wynika, że na algorytm dokładny bardzo duży wpływ ma liczba szukanych podgrafów. Zgadza się to z naszymi założeniami.
 
 \subsection{Jakość rozszerzeń}
 
@@ -1428,19 +1434,18 @@ Dla większych grafów różnice między algorytmami są jeszcze bardziej widocz
 \subsection{Wnioski z testów}
 
 \begin{enumerate}
-    \item \textbf{Złożoność czasowa}: Algorytm dokładny wykazuje wykładniczą złożoność i jest praktycznie użyteczny tylko dla bardzo małych grafów (do 5 wierzchołków wzorca). Algorytmy aproksymacyjne są wielomianowe i skalują się dobrze.
+    \item \textbf{Złożoność czasowa}: Algorytm dokładny wykazuje wykładniczą złożoność i jest praktycznie użyteczny tylko dla małych grafów. Algorytmy aproksymacyjne są wielomianowe i skalują się dobrze. Z aproksymacyjnych v1 i v2 szybsze są algorytmy v2, ale kosztem skuteczności.
 
-    \item \textbf{Jakość rozszerzeń}: Algorytm dokładny znajduje optymalne rozwiązania. Wśród algorytmów aproksymacyjnych, v1 daje znacznie lepsze wyniki niż wszystkie heurystyki v2.
+    \item \textbf{Jakość rozszerzeń}: Algorytm dokładny znajduje optymalne rozwiązania. Wśród algorytmów aproksymacyjnych, v1 daje znacznie lepsze wyniki niż wszystkie heurystyki v2. Z heurystyk v2 dla mniejszych grafów i mniejszej ilości podgrafów nie widać większych różnic w jakości. Jednak dla większych grafów i większej ilości podgrafów algorytm v2 daje zdecydowanie najlepsze wyniki dla heurystyki bazującej na liczbie wchodzących i wychodzących krawędzi z ignorowaniem ich nadmiaru w grafie celu.
 
-    \item \textbf{Kompromis czas-jakość}: Algorytm v1 oferuje najlepszy kompromis - jest znacznie szybszy od dokładnego (tysiące razy) przy zachowaniu dobrej jakości rozszerzeń. Algorytmy v2 są najszybsze, ale jakość rozszerzeń jest znacznie gorsza.
-
-    \item \textbf{Rekomendacja}: Dla grafów wzorca do 5 wierzchołków warto użyć algorytmu dokładnego. Dla większych grafów zalecany jest algorytm aproksymacyjny v1 jako oferujący najlepszy stosunek jakości do czasu wykonania.
+    \item \textbf{Kompromis czas-jakość}: Algorytm v1 oferuje najlepszy kompromis - jest znacznie szybszy od dokładnego przy zachowaniu dobrej jakości rozszerzeń. Algorytmy v2 są najszybsze, ale jakość rozszerzeń jest znacznie gorsza.
 \end{enumerate}
 
+\newpage
 
-    \section{Bibliografia}
+\section{Bibliografia}
 
-% \bibliographystyle{plain}
-% \bibliography{refs}
+\bibliographystyle{plain}
+\bibliography{refs}
 
 \end{document}
