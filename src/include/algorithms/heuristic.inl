@@ -280,23 +280,23 @@ std::vector<std::vector<double>> Heuristic<IndexType>::createWeightMatrix_Struct
 }
 
 /**
- * Heuristic 6: Exhaustive Neighbor Permutation Matching (Most Accurate, Slowest)
+ * Heuristic 6: Greedy Neighbor Assignment (Fast and Effective)
  *
- * This is the most sophisticated heuristic. For each vertex pair (P_i, G_j),
- * it considers HOW WELL their neighbors can be matched to each other.
+ * For each vertex pair (P_i, G_j), this heuristic evaluates how well their
+ * neighbors can be matched using a GREEDY approach instead of exhaustive search.
  *
  * Algorithm:
  *   1. For each P vertex i and G vertex j:
  *      a. Get out-neighbors of both
- *      b. Create a base cost matrix using Heuristic 1 (degree difference)
- *      c. Try ALL k! permutations of mapping G neighbors to P neighbors
- *      d. For each permutation, compute total mapping cost
- *      e. Use the MINIMUM cost across all permutations
+ *      b. Use Base Cost Matrix using Heuristic 1 (degree difference)
+ *      c. For each P neighbor (in order), greedily assign the best unassigned G neighbor
+ *      d. Sum the assignment costs
  *   2. Handle size mismatches with penalties
  *
  * Cost Function:
- *   cost(P_i, G_j) = min over all permutations π of:
- *                    Σ baseCost(P_neighbor[k], G_neighbor[π(k)])
+ *   cost(P_i, G_j) = Σ baseCost(P_neighbor[k], bestUnassigned_G_neighbor[k])
+ *
+ * Complexity: O(n²) per vertex pair, compared to O(n!) for exhaustive search
  */
 template <typename IndexType>
 std::vector<std::vector<double>> Heuristic<IndexType>::createWeightMatrix_GreedyNeighbor(
@@ -321,73 +321,73 @@ std::vector<std::vector<double>> Heuristic<IndexType>::createWeightMatrix_Greedy
             IndexType gVertex = subset[j];
             auto gNeighbors = G.getOutNeighbors(gVertex);  // Get G vertex's out-neighbors
 
-            double minCost = std::numeric_limits<double>::max();
+            double totalCost = 0.0;
 
-            // Case 1: Both have neighbors - try all permutations
+            // Case 1: Both have neighbors - use greedy assignment
             if (!pNeighbors.empty() && !gNeighbors.empty()) {
                 size_t pSize = pNeighbors.size();
                 size_t gSize = gNeighbors.size();
 
-                // Create index array for permutations
-                std::vector<size_t> gIndices(gSize);
-                for (size_t idx = 0; idx < gSize; ++idx) {
-                    gIndices[idx] = idx;
+                // Track which G neighbors have been assigned
+                std::vector<bool> gAssigned(gSize, false);
+
+                // Greedy assignment: for each P neighbor, find best unassigned G neighbor
+                for (size_t pi = 0; pi < pSize; ++pi) {
+                    IndexType pNeighborVertex = pNeighbors[pi].first;
+
+                    double bestCost = std::numeric_limits<double>::max();
+                    size_t bestGIdx = gSize;  // Invalid index initially
+
+                    // Search for the best unassigned G neighbor
+                    for (size_t gi = 0; gi < gSize; ++gi) {
+                        if (!gAssigned[gi]) {
+                            IndexType gNeighborVertex = gNeighbors[gi].first;
+                            double cost = baseCost[pNeighborVertex][gNeighborVertex];
+                            if (cost < bestCost) {
+                                bestCost = cost;
+                                bestGIdx = gi;
+                            }
+                        }
+                    }
+
+                    if (bestGIdx < gSize) {
+                        // Found a match - mark as assigned and add cost
+                        gAssigned[bestGIdx] = true;
+                        totalCost += bestCost;
+                    } else {
+                        // No unassigned G neighbor available - add penalty
+                        totalCost += totalDegreesP[pNeighborVertex];
+                    }
                 }
 
-                // Try ALL permutations of G neighbor assignments
-                do {
-                    double permCost = 0.0;
-
-                    // Map each P neighbor to a G neighbor (or penalty if no match)
-                    for (size_t pi = 0; pi < pSize; ++pi) {
-                        IndexType pNeighborVertex = pNeighbors[pi].first;
-
-                        if (pi < gSize) {
-                            // Map to G neighbor at position gIndices[pi]
-                            IndexType gNeighborVertex = gNeighbors[gIndices[pi]].first;
-                            permCost += baseCost[pNeighborVertex][gNeighborVertex];
-                        } else {
-                            // P has more neighbors than G - penalty for unmatched
-                            permCost += totalDegreesP[pNeighborVertex];
-                        }
+                // Add penalty for any remaining unassigned G neighbors
+                for (size_t gi = 0; gi < gSize; ++gi) {
+                    if (!gAssigned[gi]) {
+                        IndexType gNeighborVertex = gNeighbors[gi].first;
+                        totalCost += totalDegreesG[gNeighborVertex];
                     }
-
-                    // If G has more neighbors than P, add penalty for extras
-                    if (gSize > pSize) {
-                        for (size_t gi = pSize; gi < gSize; ++gi) {
-                            IndexType gNeighborVertex = gNeighbors[gIndices[gi]].first;
-                            permCost += totalDegreesG[gNeighborVertex];
-                        }
-                    }
-
-                    // Track the minimum cost across all permutations
-                    minCost = std::min(minCost, permCost);
-
-                } while (std::next_permutation(gIndices.begin(), gIndices.end()));
+                }
 
             // Case 2: P has neighbors but G doesn't - full penalty
             } else if (!pNeighbors.empty()) {
-                minCost = 0.0;
                 for (const auto& [pNeighbor, count] : pNeighbors) {
-                    minCost += totalDegreesP[pNeighbor];
+                    totalCost += totalDegreesP[pNeighbor];
                 }
             // Case 3: G has neighbors but P doesn't - penalty for extras
             } else if (!gNeighbors.empty()) {
-                minCost = 0.0;
                 for (const auto& [gNeighbor, count] : gNeighbors) {
-                    minCost += totalDegreesG[gNeighbor];
+                    totalCost += totalDegreesG[gNeighbor];
                 }
-            // Case 4: Neither has neighbors - perfect match, zero cost
-            } else {
-                minCost = 0.0;
             }
+            // Case 4: Neither has neighbors - zero cost (default)
 
-            matrix[i][j] = minCost;
+            matrix[i][j] = totalCost;
         }
     }
 
     return matrix;
 }
+
 
 /**
  * Dispatcher Function: Route to Specific Heuristic
