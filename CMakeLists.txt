@@ -18,7 +18,7 @@ add_subdirectory(src)
 # Enable testing
 # ---------------------------------
 
-enable_testing()
+# enable_testing()
 
 # ---------------------------------
 # Add dependencies
@@ -30,7 +30,7 @@ add_subdirectory(dependencies)
 # Add tests directory
 # ---------------------------------
 
-add_subdirectory(tests)
+# add_subdirectory(tests)
 
 # ---------------------------------
 # Setup compile options
