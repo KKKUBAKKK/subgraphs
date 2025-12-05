@@ -1082,6 +1082,70 @@ Poniżej przedstawiono sześć propozycji heurystyk do obliczania macierzy koszt
     \textbf{Złożoność budowy:} Dla prostej heurystyki wypełnienie tymczasowej macierzy kosztów, to koszt $\mathcal{O}(N^2)$. Wypełnienie jednej komórki $M[i, j]$ kosztuje $\mathcal{O}(\text{deg}(p_i) \cdot \text{deg}(g_j))$. W najgorszym przypadku dla grafów gęstych (gdy $\text{deg} \approx k$ lub $N$), całkowity koszt wypełnienia $kN$ komórek wynosi $\mathcal{O}(k^2 N^2)$. Czyli koszt całej heurystyki to $\mathcal{O}(N^2 + k^2 N^2)$, czyli $\mathcal{O}(k^2 N^2)$.
 \end{enumerate}
 
+\subsubsection{Algorytm Węgierski}
+
+Algorytm Węgierski~\cite{dynamic_hungarian} rozwiązuje problem przydziału: mając macierz kosztów $C$ o wymiarach $n \times n$, znajdź przypisanie każdego wiersza do dokładnie jednej kolumny, minimalizując sumaryczny koszt.
+
+\begin{algorithm}[H]
+    \caption{Algorytm Węgierski}
+    \label{alg:hungarian}
+    \begin{algorithmic}[1]
+        \Require Macierz kosztów $C[n][n]$
+        \Ensure Wektor przypisań $assignment[n]$, koszt całkowity $cost$
+
+        \State \textit{// Krok 1: Redukcja wierszy i kolumn}
+        \For{każdy wiersz $i$}
+            \State $minVal \gets \min_j C[i][j]$
+            \For{każda kolumna $j$}
+                \State $C[i][j] \gets C[i][j] - minVal$
+            \EndFor
+        \EndFor
+
+        \State \textit{// Krok 2: Inicjalizacja gwiazdek (starred zeros)}
+        \State $starMatrix \gets$ macierz zer, $coveredCols \gets$ wektor false
+        \For{każde zero $C[i][j] = 0$}
+            \If{wiersz $i$ i kolumna $j$ nie są pokryte}
+                \State $starMatrix[i][j] \gets true$
+                \State $coveredCols[j] \gets true$
+            \EndIf
+        \EndFor
+
+        \State \textit{// Krok 3: Główna pętla}
+        \While{liczba pokrytych kolumn $< n$}
+            \State Znajdź niepokryte zero, oznacz jako \textit{primed}
+            \If{w wierszu tego zera jest \textit{starred} zero}
+                \State Odkryj kolumnę \textit{starred}, pokryj wiersz
+            \Else
+                \State \textit{// Krok 4: Przebudowa ścieżki}
+                \State Stwórz naprzemienną ścieżkę \textit{primed} $\leftrightarrow$ \textit{starred}
+                \State Zamień \textit{starred} $\leftrightarrow$ \textit{primed} wzdłuż ścieżki
+            \EndIf
+            \If{brak niepokrytych zer}
+                \State \textit{// Krok 5: Modyfikacja macierzy}
+                \State $h \gets$ minimum niepokrytych elementów
+                \State Dodaj $h$ do pokrytych wierszy
+                \State Odejmij $h$ od niepokrytych kolumn
+            \EndIf
+        \EndWhile
+
+        \State \textit{// Odczyt rozwiązania}
+        \For{każdy wiersz $i$}
+            \State $assignment[i] \gets$ kolumna z $starMatrix[i][j] = true$
+        \EndFor
+        \State \Return $assignment$, $\sum_i C_{orig}[i][assignment[i]]$
+    \end{algorithmic}
+\end{algorithm}
+
+\textbf{Dowód poprawności:}
+Algorytm zachowuje niezmiennik, że suma zredukowanych kosztów optymalnego przypisania pozostaje stała po każdej modyfikacji macierzy (Krok 5). Redukcja wierszy i kolumn nie zmienia optymalnego rozwiązania, gdyż dodanie/odjęcie stałej od wiersza lub kolumny przesuwa wszystkie przypisania o tę samą wartość. Algorytm kończy się, gdy znajdzie $n$ niezależnych zer (każde w innym wierszu i kolumnie), co odpowiada optymalnemu przypisaniu.
+
+\textbf{Złożoność obliczeniowa:}
+\begin{itemize}
+    \item Krok 1 (redukcja): $\mathcal{O}(n^2)$
+    \item Kroki 2-5: Każda iteracja głównej pętli pokrywa co najmniej jedną nową kolumnę lub modyfikuje macierz. Modyfikacja macierzy (Krok 5) może wystąpić co najwyżej $\mathcal{O}(n^2)$ razy. Każda iteracja to $\mathcal{O}(n^2)$.
+    \item \textbf{Całkowita złożoność: $\mathcal{O}(n^3)$}
+\end{itemize}
+
 \subsubsection{Opis Algorytmów}
 
 Ta część opisuje dwie części algorytmu aproksymacyjnego: fazę generowania k-elementowych podzbiorów wierzchołków większego grafu oraz fazę znajdowania najlepszych mapowań dla tych podzbiorów. Lepsze rozwiązanie można uzyskać poprzez iterowanie po podzbiorach i znajdowanie najlepszych mapowań dla każdego z nich, np. korzystając z Algorytmu Murty'ego, jednak z powodu ograniczenia wielomianowej złożoności czasowej, w tej wersji algorytmu generujemy tylko $n$ podzbiorów.
