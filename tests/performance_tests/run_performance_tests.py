@@ -2,6 +2,7 @@
 """
 Performance testing script for specific plot requirements.
 Tests algorithms according to POTRZEBNE.md.
+10 data points for approx, 5 for exact.
 """
 
 import subprocess
@@ -15,14 +16,14 @@ from typing import List, Dict, Tuple, Optional
 EXECUTABLE_PATH = '../../build/bin/release/subgraphs'
 RESULTS_DIR = Path('results')
 RESULTS_FILE = RESULTS_DIR / 'performance_results.csv'
-TIMEOUT_EXACT = 120  # Longer timeout for exact
+TIMEOUT_EXACT = 180  # 3 minutes for exact algorithm
 TIMEOUT_APPROX = 60
 
-# Approximation algorithms only (no exact)
+# Approximation algorithms (all 6 heuristics)
 APPROX_ALGORITHMS = {
     'approx1': {'heuristics': [None], 'timeout': TIMEOUT_APPROX},
     'approx2': {
-        'heuristics': ['degree', 'directed', 'directed_ignore', 'histogram', 'structure'],
+        'heuristics': ['degree', 'directed', 'directed_ignore', 'histogram', 'structure', 'greedy'],
         'timeout': TIMEOUT_APPROX
     }
 }
@@ -79,7 +80,7 @@ def test_graph_set(set_name: str, algorithms: dict, num_subgraphs: int = 1) -> L
 
     for graph_file in graph_files:
         pattern_size, target_size = parse_graph_filename(graph_file.name)
-        print(f"  Graph: p={pattern_size}, t={target_size}, subgraphs={num_subgraphs}")
+        print(f"  Graph: p={pattern_size}, t={target_size}")
 
         for algorithm, config in algorithms.items():
             for heuristic in config['heuristics']:
@@ -120,6 +121,7 @@ def test_subgraph_variation(set_name: str, algorithms: dict, subgraph_counts: Li
 
     graph_file = list(set_dir.glob('*.txt'))[0]
     pattern_size, target_size = parse_graph_filename(graph_file.name)
+    print(f"  Graph: p={pattern_size}, t={target_size}")
 
     for num_subgraphs in subgraph_counts:
         print(f"  Subgraphs: {num_subgraphs}")
@@ -180,10 +182,10 @@ def main():
     all_results = []
 
     # =========================================================================
-    # APPROXIMATION ONLY TESTS (5 scenarios)
+    # APPROXIMATION ONLY TESTS (10 data points each)
     # =========================================================================
     print("\n" + "=" * 60)
-    print("WYKRESY APROKSYMACYJNE")
+    print("WYKRESY APROKSYMACYJNE (10 punktów danych)")
     print("=" * 60)
 
     print("\n📊 1. Approx na grafach gęstych...")
@@ -198,30 +200,31 @@ def main():
     print("\n📊 4. Approx: gęsty mały + rzadki duży...")
     all_results.extend(test_graph_set('approx_dense_sparse', APPROX_ALGORITHMS))
 
-    print("\n📊 5. Approx: zmiana liczby podgrafów...")
-    all_results.extend(test_subgraph_variation('approx_subgraph_var', APPROX_ALGORITHMS, [1, 2, 3, 4, 5, 6]))
+    print("\n📊 5. Approx: zmiana liczby podgrafów (10 wartości)...")
+    all_results.extend(test_subgraph_variation('approx_subgraph_var', APPROX_ALGORITHMS,
+                                                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))
 
     # =========================================================================
-    # EXACT + APPROXIMATION TESTS (5 scenarios)
+    # EXACT + APPROXIMATION TESTS (5 data points each)
     # =========================================================================
     print("\n" + "=" * 60)
-    print("WYKRESY DOKŁADNEGO + APROKSYMACYJNE")
+    print("WYKRESY DOKŁADNEGO + APROKSYMACYJNE (5 punktów danych)")
     print("=" * 60)
 
-    print("\n📊 6. Exact + Approx na grafach gęstych (max 15)...")
+    print("\n📊 6. Exact + Approx na grafach gęstych (p=1-5)...")
     all_results.extend(test_graph_set('exact_dense', ALL_ALGORITHMS))
 
-    print("\n📊 7. Exact + Approx na grafach rzadkich (max 15)...")
+    print("\n📊 7. Exact + Approx na grafach rzadkich (p=1-5)...")
     all_results.extend(test_graph_set('exact_sparse', ALL_ALGORITHMS))
 
-    print("\n📊 8. Exact + Approx: rzadki mały + gęsty duży (max 15)...")
+    print("\n📊 8. Exact + Approx: rzadki mały + gęsty duży (p=1-5)...")
     all_results.extend(test_graph_set('exact_sparse_dense', ALL_ALGORITHMS))
 
-    print("\n📊 9. Exact + Approx: gęsty mały + rzadki duży (max 15)...")
+    print("\n📊 9. Exact + Approx: gęsty mały + rzadki duży (p=1-5)...")
     all_results.extend(test_graph_set('exact_dense_sparse', ALL_ALGORITHMS))
 
-    print("\n📊 10. Exact + Approx: zmiana liczby podgrafów (p=4, t=8)...")
-    all_results.extend(test_subgraph_variation('exact_subgraph_var', ALL_ALGORITHMS, [1, 2]))
+    print("\n📊 10. Exact + Approx: zmiana liczby podgrafów (p=4, t=8, 5 wartości)...")
+    all_results.extend(test_subgraph_variation('exact_subgraph_var', ALL_ALGORITHMS, [1, 2, 3, 4, 5]))
 
     save_results(all_results)
 
