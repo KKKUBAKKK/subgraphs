@@ -1029,20 +1029,20 @@ Poniżej przedstawiono sześć propozycji heurystyk do obliczania macierzy koszt
 
 \begin{enumerate}
     \item \textbf{Heurystyka Różnicy Stopni.}
-    Jest to najprostsza i najszybsza heurystyka. Zakłada, że wierzchołki o podobnej łącznej liczbie połączeń (niezależnie od kierunku) powinny być ze sobą mapowane. 
-    
+    Jest to najprostsza i najszybsza heurystyka. Zakłada, że wierzchołki o podobnej łącznej liczbie połączeń (niezależnie od kierunku) powinny być ze sobą mapowane.
+
     \textbf{Wzór:}
     $$ M[i, j] = |\text{deg}_{\text{total}}(p_i) - \text{deg}_{\text{total}}(g_j)| $$
     gdzie $\text{deg}_{\text{total}}(v) = \text{deg}_{in}(v) + \text{deg}_{out}(v)$.
-    
+
     \textbf{Złożoność budowy:} $\mathcal{O}(N^2 + k^2 + kN)$. Zdominowana przez wstępne obliczenie stopni: $\mathcal{O}(N^2)$.
 
     \item \textbf{Heurystyka Dopasowania Stopni Skierowanych.} % TODO: Dodaj opcje z roznym ignorowaniem roznicy, jesli w G jest wiecej niz w P
     Nieco bardziej zaawansowana wersja dla grafów skierowanych. Koszt $M[i, j]$ jest sumą absolutnych różnic stopni wejściowych i wyjściowych.
-    
+
     \textbf{Wzór:}
     $$ M[i, j] = |\text{deg}_{in}(p_i) - \text{deg}_{in}(g_j)| + |\text{deg}_{out}(p_i) - \text{deg}_{out}(g_j)| $$
-    
+
     \textbf{Złożoność budowy:} $\mathcal{O}(N^2 + k^2 + kN)$. Również zdominowana przez $\mathcal{O}(N^2)$.
 
     \item \textbf{Heurystyka Dopasowania Stopni Skierowanych z Ignorowaniem Nadmiaru.}
@@ -1055,30 +1055,30 @@ Poniżej przedstawiono sześć propozycji heurystyk do obliczania macierzy koszt
 
     \item \textbf{Heurystyka Histogramu Stopni Sąsiadów.} % TODO: Sprawdz jak tworzyc te histogramy i liczyc ich odleglosc
     Ta heurystyka analizuje najbliższe otoczenie. Dla każdego wierzchołka $p_i$ i $g_j$ tworzony jest histogram stopni ich bezpośrednich sąsiadów. Koszt $M[i, j]$ to odległość między tymi dwoma rozkładami.
-    
+
     \textbf{Wzór:}
     Niech $H_P(p_i)$ będzie histogramem stopni sąsiadów $p_i$, a $H_G(g_j)$ analogicznym histogramem dla $g_j$. Niech $S$ będzie większą z dwóch wartości stopni wierzchołków. Wtedy:
     $$ M[i, j] = \sum_{s=0}^{S} |H_P(p_i)[s] - H_G(g_j)[s]| $$
     Zakładamy, że histogramy są normalizowane do tej samej długości $S$.
-    
+
     \textbf{Złożoność budowy:} Wymaga obliczenia stopni ($\mathcal{O}(N^2)$), zbudowania $N+k$ histogramów (w $\mathcal{O}(N^2)$) oraz obliczenia $kN$ odległości (w $\mathcal{O}(kN^2)$). Całkowity koszt to $\mathcal{O}(N^2 + kN^2)$.
 
     \item \textbf{Heurystyka Dopasowania Struktury (Liczba Trójkątów).}
     Ta heurystyka próbuje uchwycić naturę problemu przez mierzenie lokalnej struktury. Wierzchołek $p_i$ będący częścią wielu trójkątów powinien być mapowany na $g_j$, który również uczestniczy w wielu trójkątach.
-    
+
     \textbf{Wzór:}
     $$ M[i, j] = \alpha \cdot |\text{deg}(p_i) - \text{deg}(g_j)| + \beta \cdot \max(0, \text{triangles}(p_i) - \text{triangles}(g_j)) $$
     gdzie $\text{triangles}(v)$ to liczba trójkątów, w których uczestniczy wierzchołek $v$. Karany jest tylko niedobór trójkątów w $g_j$ względem $p_i$.
-    
+
     \textbf{Złożoność budowy:} Zdominowana przez koszt zliczania trójkątów w grafie $G$, który wynosi $\mathcal{O}(N^3)$ (przy użyciu mnożenia macierzy).
 
     \item \textbf{Heurystyka Zachłannego Dopasowywania Sąsiadów.}
     Najbardziej złożona obliczeniowo, ale potencjalnie najdokładniejsza heurystyka. Próbuje bezpośrednio oszacować koszt w najbliższym otoczeniu. Koszt $M[i, j]$ jest sumą "najlepszych" możliwych dopasowań dla sąsiadów $p_i$ wśród sąsiadów $g_j$.
-    
+
     \textbf{Wzór (koncepcyjny):}
     $$ M[i, j] = \sum_{p_k \in \mathcal{N}(p_i)} \left( \min_{g_l \in \mathcal{N}(g_j)} C(p_k, g_l) \right) $$
     gdzie $\mathcal{N}(v)$ to sąsiedztwo $v$, a $C$ to prosta heurystyka kosztu (np. z Opcji 1).
-    
+
     \textbf{Złożoność budowy:} Dla prostej heurystyki wypełnienie tymczasowej macierzy kosztów, to koszt $\mathcal{O}(N^2)$. Wypełnienie jednej komórki $M[i, j]$ kosztuje $\mathcal{O}(\text{deg}(p_i) \cdot \text{deg}(g_j))$. W najgorszym przypadku dla grafów gęstych (gdy $\text{deg} \approx k$ lub $N$), całkowity koszt wypełnienia $kN$ komórek wynosi $\mathcal{O}(k^2 N^2)$. Czyli koszt całej heurystyki to $\mathcal{O}(N^2 + k^2 N^2)$, czyli $\mathcal{O}(k^2 N^2)$.
 \end{enumerate}
 
@@ -1101,15 +1101,15 @@ Celem tej fazy jest szybkie wygenerowanie listy $\mathcal{L}$ $n$ unikalnych $k$
     \begin{algorithmic}[1]
         \Require Graf $G$ (o $N$ wierzchołkach, $V_G = \{v_1, \dots, v_N\}$), Liczba podzbiorów $n$, Rozmiar podzbioru $k$
         \Ensure Lista $\mathcal{L}$ (do $n$) unikalnych $k$-elementowych podzbiorów $V_G$
-        
+
         \State $\mathcal{L} \gets []$
-        
+
         \If{$n = 0$ \textbf{or} $k > N$}
             \State \Return $\mathcal{L}$
         \EndIf
-        
+
         \State $\mathcal{C} \gets \Call{CombinationsGenerator}{V_G, k}$ \Comment{Inicjalizuj generator kombinacji $\binom{N}{k}$}
-        
+
         \For{$i \gets 1$ \textbf{to} $n$}
             \If{$\mathcal{C}.\text{hasNext}()$}
                 \State $S \gets \mathcal{C}.\text{next}()$ \Comment{Pobierz następny podzbiór, np. $\{v_1, ..., v_k\}$}
@@ -1118,7 +1118,7 @@ Celem tej fazy jest szybkie wygenerowanie listy $\mathcal{L}$ $n$ unikalnych $k$
                 \State \textbf{break} \Comment{Zakończ, jeśli jest mniej niż $n$ możliwych kombinacji}
             \EndIf
         \EndFor
-        
+
         \State \Return $\mathcal{L}$
     \end{algorithmic}
 \end{algorithm}
@@ -1153,10 +1153,10 @@ Faza 2 pobiera listę $\mathcal{L}$ $n$ podzbiorów-kandydatów i iteracyjnie zn
     \begin{algorithmic}[1]
         \Require Lista podzbiorów $\mathcal{L}$, Oryginalny graf $A_G$, Wzorzec $A_P$
         \Ensure Końcowa macierz $A_{final}$, Całkowity koszt $C_{total}$
-        
+
         \State $A_{curr} \gets \Call{copy}{A_G}$
         \State $C_{total} \gets 0$
-        
+
         \For{\textbf{each} $S_i$ \textbf{in} $\mathcal{L}$} \Comment{Iteruj $n$ razy}
             \State
             \State $D_{curr} \gets \Call{GetDegrees}{A_{curr}}$ \Comment{Tablica stopni wierzchołków w $A_{curr}$}
@@ -1165,7 +1165,7 @@ Faza 2 pobiera listę $\mathcal{L}$ $n$ podzbiorów-kandydatów i iteracyjnie zn
             \State $M_{sub} \gets \Call{Heurystyka}{S_i, A_{curr}, A_{P}, D_{curr}, D_{P}}$ \Comment{Wypełnij $M_{sub}$ wagami}
             \State
             \State $f_i \gets \Call{HungarianAlgorithm}{M_{sub}}$ \Comment{Wywołaj Algorytm Węgierski}
-            
+
             \State
             \State $cost_i \gets 0$ \Comment{Zastosuj rozszerzenie dla tego mapowania}
             \For{$u \gets 1$ \textbf{to} $k$} \Comment{Iteruj $k \times k$ w macierzy wzorca $P$}
@@ -1183,7 +1183,7 @@ Faza 2 pobiera listę $\mathcal{L}$ $n$ podzbiorów-kandydatów i iteracyjnie zn
             \EndFor
             \State $C_{total} \gets C_{total} + cost_i$
         \EndFor
-        
+
         \State $A_{final} \gets A_{curr}$
         \State \Return $A_{final}, C_{total}$
     \end{algorithmic}
@@ -1193,7 +1193,7 @@ Faza 2 pobiera listę $\mathcal{L}$ $n$ podzbiorów-kandydatów i iteracyjnie zn
 Poprawność procedury (Algorytm \ref{alg:solve_subsets}) opiera się na dwóch głównych filarach: gwarancji zakończenia oraz poprawności iteracyjnego rozszerzania grafu.
 
 \begin{itemize}
-    \item \textbf{Zakończenie:} 
+    \item \textbf{Zakończenie:}
     Algorytm składa się z jednej głównej pętli \texttt{for} (linia 2), która iteruje po liście $\mathcal{L}$. Ponieważ lista $\mathcal{L}$ jest skończona (zawiera $n$ podzbiorów), pętla \texttt{for} wykona się $n$ razy.
     Musimy przeanalizować operacje wewnątrz pętli:
     \begin{enumerate}
@@ -1204,12 +1204,12 @@ Poprawność procedury (Algorytm \ref{alg:solve_subsets}) opiera się na dwóch 
     \end{enumerate}
     Ponieważ $n, k, N$ są skończone, a wszystkie operacje wewnątrz pętli głównej mają skończoną, wielomianową złożoność, cały algorytm gwarantuje zakończenie działania.
 
-    \item \textbf{Poprawność Rozszerzenia:} 
+    \item \textbf{Poprawność Rozszerzenia:}
     Musimy udowodnić, że końcowy graf $A_{final}$ zawiera $n$ podgrafów izomorficznych z $P$, zgodnie ze znalezionymi mapowaniami $f_1, \dots, f_n$.
     Niech $A_{curr}^{(i)}$ będzie stanem macierzy $A_{curr}$ na \emph{początku} $i$-tej iteracji pętli \texttt{for} (gdzie $A_{curr}^{(1)} = A_G$). Niezmiennik: $A_{curr}^{(i)}$ zawiera podgrafy $f_1, \dots, f_{i-1}$.
     \begin{itemize}
         \item \textbf{Baza ($i=1$):} $A_{curr}^{(1)} = A_G$. Niezmiennik jest trywialnie prawdziwy (zawiera 0 podgrafów).
-        \item \textbf{Krok Indukcyjny:} Zakładamy, że $A_{curr}^{(i)}$ zawiera $f_1, \dots, f_{i-1}$. W $i$-tej iteracji algorytm znajduje nowe mapowanie $f_i$ (linie 5-10). Następnie pętla rozszerzenia (linie 13-25) iteruje przez wszystkie $k^2$ par w $P$. W linii 19, algorytm sprawdza, czy wymagana krawędź $(f_i(u), f_i(v))$ o krotności $w_{needed}$ istnieje. Jeśli nie ($w_{needed} > w_{current}$), algorytm \emph{dodaje} brakujące krawędzie (lub zwiększa krotność) w linii 21 ($A_{curr}[g_u, g_v] \leftarrow w_{needed}$). 
+        \item \textbf{Krok Indukcyjny:} Zakładamy, że $A_{curr}^{(i)}$ zawiera $f_1, \dots, f_{i-1}$. W $i$-tej iteracji algorytm znajduje nowe mapowanie $f_i$ (linie 5-10). Następnie pętla rozszerzenia (linie 13-25) iteruje przez wszystkie $k^2$ par w $P$. W linii 19, algorytm sprawdza, czy wymagana krawędź $(f_i(u), f_i(v))$ o krotności $w_{needed}$ istnieje. Jeśli nie ($w_{needed} > w_{current}$), algorytm \emph{dodaje} brakujące krawędzie (lub zwiększa krotność) w linii 21 ($A_{curr}[g_u, g_v] \leftarrow w_{needed}$).
         \item Operacja ta jest monotoniczna: krotności krawędzi w $A_{curr}$ nigdy nie maleją ($A_{curr}^{(i+1)} \ge A_{curr}^{(i)}$).
         \item Zatem, po zakończeniu pętli (linii 13-25), graf $A_{curr}^{(i+1)}$ gwarantuje zawarcie podgrafu $f_i$. Ponieważ krawędzie są tylko dodawane, $A_{curr}^{(i+1)}$ nadal zawiera wszystkie poprzednie podgrafy $f_1, \dots, f_{i-1}$.
         \item \textbf{Zakończenie:} Po $n$ iteracjach, $A_{final} = A_{curr}^{(n+1)}$ zawiera wszystkie $n$ podgrafów $f_1, \dots, f_n$.
@@ -1222,9 +1222,9 @@ Analizujemy koszt obliczeniowy (czasowy) Algorytmu \ref{alg:solve_subsets} w zal
 
 \begin{itemize}
     \item \textbf{Operacje Wstępne (linie 1-2):} Kopiowanie macierzy $A_G$ ma koszt $\mathcal{O}(N^2)$.
-    
+
     \item \textbf{Pętla Główna (linia 4):} Pętla \texttt{for} wykonuje się $n$ razy. Musimy przeanalizować koszt \emph{jednej} iteracji.
-    
+
     \item \textbf{Koszt jednej iteracji (linie 6-27):}
     \begin{itemize}
         \item Linia 6, \texttt{GetDegrees(A\_curr)}: Wymaga przejścia przez macierz $N \times N$, aby obliczyć stopnie dla $A_{curr}$. Koszt: $\mathcal{O}(N^2)$.
@@ -1233,10 +1233,10 @@ Analizujemy koszt obliczeniowy (czasowy) Algorytmu \ref{alg:solve_subsets} w zal
         \item Linia 11, \texttt{HungarianAlgorithm(M\_sub)}: Wywołanie Algorytmu Węgierskiego na macierzy $k \times k$. Koszt: $\mathcal{O}(k^3)$.
         \item Linie 14-26, Pętla rozszerzenia: Zagnieżdżone pętle \texttt{for} wykonują $k \times k$ iteracji. Wszystkie operacje wewnątrz (mapowanie, odczyt, zapis) mają koszt $\mathcal{O}(1)$. Koszt: $\mathcal{O}(k^2)$.
     \end{itemize}
-    
+
     \item \textbf{Koszt całkowity jednej iteracji:} Sumując powyższe kroki:
     $$ C_{\text{iteracja}} = \mathcal{O}(N^2 + k^2 + k^2 + k^3 + k^2) = \mathcal{O}(N^2 + k^3) $$
-    
+
     \item \textbf{Koszt Całkowity Fazy 2:} Całkowity koszt to koszt inicjalizacji plus $n$ razy koszt jednej iteracji.
     $$ C_{\text{Faza 2}} = \mathcal{O}(N^2) + \mathcal{O}(n \cdot (N^2 + k^3)) = \mathcal{O}(N^2 + n \cdot N^2 + n \cdot k^3) $$
 \end{itemize}
@@ -1254,8 +1254,188 @@ $$C_{\text{total}} = \mathcal{O}(nk) + \mathcal{O}(n \cdot N^2 + n \cdot k^3)$$
 \textbf*{Uwaga}
 Złożoność ta jest drastycznie niższa niż $\mathcal{O}(J \cdot k \cdot N^3)$ poprzedniego algorytmu. Ceną za tę szybkość jest jakość heurystyki. Poprzedni algorytm (oparty na Murty'm) gwarantował znalezienie $n$ najlepszych rozwiązań (w sensie heurystyki $M$) spośród \emph{wszystkich} $\binom{N}{k}$ podzbiorów. Ten algorytm przeszukuje tylko $n$ preselekcjonowanych podzbiorów; jeśli optymalne rozwiązanie leży poza nimi, algorytm ten go nie znajdzie.
 
-% \section{Testy}
-% \section{Podsumowanie}
+% \\section{Testy}
+% \\section{Podsumowanie}
+
+\section{Testy i wyniki eksperymentalne}
+\label{sec:testy}
+
+W celu weryfikacji poprawności i wydajności zaimplementowanych algorytmów przeprowadzono szereg testów eksperymentalnych. Testy obejmowały pomiary czasu wykonania algorytmów dla różnych rozmiarów grafów oraz porównanie jakości rozszerzeń znajdowanych przez poszczególne algorytmy.
+
+\subsection{Środowisko testowe}
+
+Testy przeprowadzono na komputerze z procesorem Apple M3 oraz 8GB pamięci RAM. Program został skompilowany z optymalizacjami (-O3) przy użyciu kompilatora Clang. Dla każdego testu mierzono czas wykonania algorytmu w milisekundach.
+
+\subsection{Testy wydajnościowe algorytmów aproksymacyjnych}
+
+Pierwsza seria testów dotyczy porównania wydajności wszystkich algorytmów aproksymacyjnych dla różnych typów grafów. Testowano 7 wariantów algorytmów: Aproksymacyjny v1 oraz Aproksymacyjny v2 z sześcioma różnymi heurystykami (stopień, kierunkowy, kierunkowy-ignoruj, histogram, struktura, zachłanny).
+
+\subsubsection{Grafy gęste}
+
+Na Rysunku~\ref{fig:approx_dense} przedstawiono wyniki dla grafów gęstych, gdzie gęstość krawędzi wynosi około 50\%. Rozmiar grafu wzorca rośnie od 5 do 50 wierzchołków, a rozmiar grafu celu jest trzykrotnie większy.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{01_approx_dense.png}
+    \caption{Czas wykonania algorytmów aproksymacyjnych dla grafów gęstych. Oś X pokazuje rozmiary grafów (wzorzec→cel), oś Y pokazuje czas w milisekundach (skala logarytmiczna).}
+    \label{fig:approx_dense}
+\end{figure}
+
+Algorytm Aproksymacyjny v1 wykazuje znacznie dłuższy czas wykonania (do 30 sekund dla największych grafów), podczas gdy wszystkie warianty v2 pozostają bardzo szybkie (10-30 ms).
+
+\subsubsection{Grafy rzadkie}
+
+Rysunek~\ref{fig:approx_sparse} przedstawia wyniki dla grafów rzadkich z gęstością krawędzi około 15\%.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{02_approx_sparse.png}
+    \caption{Czas wykonania algorytmów aproksymacyjnych dla grafów rzadkich.}
+    \label{fig:approx_sparse}
+\end{figure}
+
+Dla grafów rzadkich obserwujemy podobny wzorzec - algorytm v1 jest znacznie wolniejszy od wariantów v2.
+
+\subsubsection{Grafy mieszane}
+
+Rysunki~\ref{fig:approx_sparse_dense} i~\ref{fig:approx_dense_sparse} pokazują wyniki dla kombinacji grafów o różnych gęstościach.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{03_approx_sparse_dense.png}
+    \caption{Algorytmy aproksymacyjne: rzadki graf wzorca + gęsty graf celu.}
+    \label{fig:approx_sparse_dense}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{04_approx_dense_sparse.png}
+    \caption{Algorytmy aproksymacyjne: gęsty graf wzorca + rzadki graf celu.}
+    \label{fig:approx_dense_sparse}
+\end{figure}
+
+\subsubsection{Zmiana liczby szukanych podgrafów}
+
+Rysunek~\ref{fig:approx_subgraph_var} przedstawia wpływ liczby szukanych podgrafów na czas wykonania. Test przeprowadzono dla ustalonego grafu (wzorzec: 10 wierzchołków, cel: 60 wierzchołków).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{05_approx_subgraph_var.png}
+    \caption{Wpływ liczby szukanych podgrafów (1-10) na czas wykonania algorytmów aproksymacyjnych.}
+    \label{fig:approx_subgraph_var}
+\end{figure}
+
+Czas wykonania rośnie liniowo z liczbą szukanych podgrafów dla wszystkich algorytmów.
+
+\subsection{Porównanie algorytmu dokładnego z aproksymacyjnymi}
+
+Druga seria testów porównuje algorytm dokładny z algorytmami aproksymacyjnymi. Ze względu na wykładniczą złożoność algorytmu dokładnego, testy przeprowadzono tylko dla małych grafów (wzorzec 1-5 wierzchołków).
+
+\subsubsection{Grafy gęste - porównanie z algorytmem dokładnym}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{06_exact_dense.png}
+    \caption{Porównanie wszystkich algorytmów dla małych grafów gęstych. Algorytm dokładny wykazuje wykładniczy wzrost czasu.}
+    \label{fig:exact_dense}
+\end{figure}
+
+Na Rysunku~\ref{fig:exact_dense} widać dramatyczną różnicę w czasie wykonania. Algorytm dokładny dla grafu wzorca o 5 wierzchołkach potrzebuje około 1 sekundy, podczas gdy algorytmy aproksymacyjne wykonują się w 3-5 ms.
+
+\subsubsection{Grafy rzadkie - porównanie z algorytmem dokładnym}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{07_exact_sparse.png}
+    \caption{Porównanie wszystkich algorytmów dla małych grafów rzadkich.}
+    \label{fig:exact_sparse}
+\end{figure}
+
+\subsubsection{Grafy mieszane - porównanie z algorytmem dokładnym}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{08_exact_sparse_dense.png}
+    \caption{Wszystkie algorytmy: rzadki wzorzec + gęsty cel (małe grafy).}
+    \label{fig:exact_sparse_dense}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{09_exact_dense_sparse.png}
+    \caption{Wszystkie algorytmy: gęsty wzorzec + rzadki cel (małe grafy).}
+    \label{fig:exact_dense_sparse}
+\end{figure}
+
+\subsubsection{Zmiana liczby podgrafów - algorytm dokładny}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{10_exact_subgraph_var.png}
+    \caption{Wpływ liczby szukanych podgrafów na czas wykonania. Algorytm dokładny wykazuje wykładniczy wzrost (3→145 sekund dla 1-3 podgrafów).}
+    \label{fig:exact_subgraph_var}
+\end{figure}
+
+Rysunek~\ref{fig:exact_subgraph_var} pokazuje, że algorytm dokładny dla grafu 4×8 potrzebuje:
+\begin{itemize}
+    \item 1 podgraf: 5.8 ms
+    \item 2 podgrafy: 297 ms
+    \item 3 podgrafy: 144.7 sekundy (prawie 2.5 minuty)
+\end{itemize}
+
+Algorytmy aproksymacyjne wykonują się w czasie 3-4 ms niezależnie od liczby podgrafów.
+
+\subsection{Jakość rozszerzeń}
+
+Oprócz czasu wykonania, kluczowym kryterium oceny algorytmów jest jakość znajdowanych rozszerzeń, czyli liczba krawędzi, które należy dodać do grafu celu.
+
+\subsubsection{Test na małym grafie}
+
+Rysunek~\ref{fig:extension_quality} przedstawia porównanie jakości rozszerzeń dla małego grafu testowego (wzorzec: 6 wierzchołków, cel: 8 wierzchołków).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{extension_quality.png}
+    \caption{Jakość rozszerzeń: liczba dodanych krawędzi dla każdego algorytmu (mniej = lepiej). Algorytm dokładny znajduje optymalne rozwiązanie.}
+    \label{fig:extension_quality}
+\end{figure}
+
+Wyniki pokazują, że:
+\begin{itemize}
+    \item \textbf{Algorytm dokładny} znajduje optymalne rozwiązanie (3 i 5 krawędzi dla 1 i 2 podgrafów)
+    \item \textbf{Aproksymacyjny v1} daje wyniki bliskie optymalnym (3 i 7 krawędzi)
+    \item \textbf{Heurystyki v2} dają gorsze wyniki (6-9 krawędzi dla 1 podgrafu)
+\end{itemize}
+
+\subsubsection{Test na dużym grafie}
+
+Rysunek~\ref{fig:extension_quality_large} przedstawia porównanie jakości rozszerzeń dla większego grafu (wzorzec: 10 wierzchołków, cel: 30 wierzchołków), gdzie algorytm dokładny nie mógł być uruchomiony ze względu na zbyt długi czas wykonania.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{extension_quality_large.png}
+    \caption{Jakość rozszerzeń dla dużego grafu (tylko algorytmy aproksymacyjne). Aproks. v1 daje zdecydowanie najlepsze wyniki.}
+    \label{fig:extension_quality_large}
+\end{figure}
+
+Dla większych grafów różnice między algorytmami są jeszcze bardziej widoczne:
+\begin{itemize}
+    \item \textbf{Aproksymacyjny v1}: 16-79 krawędzi (dla 1-5 podgrafów)
+    \item \textbf{v2 (kier. ign.)}: 57-101 krawędzi (najlepszy z heurystyk v2)
+    \item \textbf{Pozostałe v2}: 56-159 krawędzi
+\end{itemize}
+
+\subsection{Wnioski z testów}
+
+\begin{enumerate}
+    \item \textbf{Złożoność czasowa}: Algorytm dokładny wykazuje wykładniczą złożoność i jest praktycznie użyteczny tylko dla bardzo małych grafów (do 5 wierzchołków wzorca). Algorytmy aproksymacyjne są wielomianowe i skalują się dobrze.
+
+    \item \textbf{Jakość rozszerzeń}: Algorytm dokładny znajduje optymalne rozwiązania. Wśród algorytmów aproksymacyjnych, v1 daje znacznie lepsze wyniki niż wszystkie heurystyki v2.
+
+    \item \textbf{Kompromis czas-jakość}: Algorytm v1 oferuje najlepszy kompromis - jest znacznie szybszy od dokładnego (tysiące razy) przy zachowaniu dobrej jakości rozszerzeń. Algorytmy v2 są najszybsze, ale jakość rozszerzeń jest znacznie gorsza.
+
+    \item \textbf{Rekomendacja}: Dla grafów wzorca do 5 wierzchołków warto użyć algorytmu dokładnego. Dla większych grafów zalecany jest algorytm aproksymacyjny v1 jako oferujący najlepszy stosunek jakości do czasu wykonania.
+\end{enumerate}
 
 
     \section{Bibliografia}
