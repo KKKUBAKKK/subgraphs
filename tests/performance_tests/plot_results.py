@@ -1,293 +1,236 @@
 #!/usr/bin/env python3
 """
-Plotting script for performance testing results.
-Generates three types of visualizations from timing data.
+Plotting script for POTRZEBNE.md requirements.
+Generates exactly 10 plots with Polish labels.
 """
 
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
+import matplotlib.ticker as ticker
 from pathlib import Path
-from typing import List, Dict
 
+plt.rcParams['font.family'] = 'DejaVu Sans'
+plt.rcParams['font.size'] = 12
+plt.rcParams['axes.titlesize'] = 14
+plt.rcParams['axes.labelsize'] = 12
+plt.rcParams['legend.fontsize'] = 9
+plt.rcParams['figure.dpi'] = 150
 
 RESULTS_FILE = Path('results/performance_results.csv')
 PLOTS_DIR = Path('plots')
 
-# Color palette for different algorithms
-COLORS = {
-    'exact': '#e74c3c',
-    'approx1': '#3498db',
-    'approx2_degree': '#2ecc71',
-    'approx2_directed': '#f39c12',
-    'approx2_directed_ignore': '#9b59b6',
-    'approx2_histogram': '#1abc9c',
-    'approx2_structure': '#e67e22',
-    'approx2_greedy': '#95a5a6'
+# Polish translations
+ALGO_NAMES = {
+    'exact': 'Dokładny',
+    'approx1': 'Aproksymacyjny v1',
+    'approx2_degree': 'Aproks. v2 (stopień)',
+    'approx2_directed': 'Aproks. v2 (kierunkowy)',
+    'approx2_directed_ignore': 'Aproks. v2 (kier. ignoruj)',
+    'approx2_histogram': 'Aproks. v2 (histogram)',
+    'approx2_structure': 'Aproks. v2 (struktura)',
 }
 
-# Markers for different graph sets
-MARKERS = {'dense_only': 'o', 'sparse_only': 's', 'dense_small_exact': '^',
-           'big_dense_small_sparse': 'D', 'small_dense_big_sparse': 'v',
-           'subgraph_variation': 'x'}
+COLORS = {
+    'exact': '#c0392b',
+    'approx1': '#2980b9',
+    'approx2_degree': '#27ae60',
+    'approx2_directed': '#f39c12',
+    'approx2_directed_ignore': '#8e44ad',
+    'approx2_histogram': '#16a085',
+    'approx2_structure': '#d35400',
+}
+
+MARKERS = ['o', 's', '^', 'D', 'v', 'p', 'h']
 
 
-def load_data() -> pd.DataFrame:
-    """Load performance results from CSV."""
-    if not RESULTS_FILE.exists():
-        raise FileNotFoundError(f"Results file not found: {RESULTS_FILE}")
-
+def load_data():
+    """Load and preprocess results."""
     df = pd.read_csv(RESULTS_FILE)
-
-    # Filter only successful runs
     df = df[df['status'] == 'success'].copy()
 
-    # Create algorithm_full column combining algorithm and heuristic
-    df['algorithm_full'] = df.apply(
-        lambda row: f"{row['algorithm']}_{row['heuristic']}"
-        if row['heuristic'] != 'N/A' else row['algorithm'],
-        axis=1
-    )
+    def get_algo_full(row):
+        if pd.isna(row['heuristic']) or str(row['heuristic']).strip() == '':
+            return row['algorithm']
+        return f"{row['algorithm']}_{row['heuristic']}"
 
+    df['algorithm_full'] = df.apply(get_algo_full, axis=1)
     return df
 
 
-def plot_type1_per_graph_set(df: pd.DataFrame):
-    """
-    Type 1: Per-graph-set comparison.
-    One plot per graph set, showing all algorithms.
-    """
-    print("\n📊 Generating Type 1 plots (per-graph-set comparison)...")
+def plot_size_variation(df, graph_set, title, filename, include_exact=False):
+    """Create plot showing execution time vs graph size."""
+    data = df[df['graph_set'] == graph_set].copy()
 
-    # Get size variation data only
-    size_df = df[df['test_type'] == 'size_variation'].copy()
-
-    graph_sets = size_df['graph_set'].unique()
-
-    for graph_set in graph_sets:
-        set_data = size_df[size_df['graph_set'] == graph_set]
-
-        if set_data.empty:
-            continue
-
-        fig, ax = plt.subplots(figsize=(12, 7))
-
-        algorithms = set_data['algorithm_full'].unique()
-
-        for algorithm in sorted(algorithms):
-            algo_data = set_data[set_data['algorithm_full'] == algorithm]
-            algo_data = algo_data.sort_values('pattern_size')
-
-            color = COLORS.get(algorithm, '#34495e')
-
-            ax.plot(
-                algo_data['pattern_size'],
-                algo_data['execution_time_ms'],
-                marker='o',
-                label=algorithm,
-                color=color,
-                linewidth=2,
-                markersize=8,
-                alpha=0.8
-            )
-
-        ax.set_xlabel('Pattern Graph Size (vertices)', fontsize=12, fontweight='bold')
-        ax.set_ylabel('Execution Time (ms)', fontsize=12, fontweight='bold')
-        ax.set_title(f'Algorithm Performance Comparison: {graph_set}',
-                     fontsize=14, fontweight='bold', pad=20)
-        ax.set_yscale('log')
-        ax.grid(True, alpha=0.3, linestyle='--')
-        ax.legend(loc='best', fontsize=10, framealpha=0.9)
-
-        plt.tight_layout()
-        output_file = PLOTS_DIR / f'comparison_{graph_set}.png'
-        plt.savefig(output_file, dpi=300, bbox_inches='tight')
-        plt.close()
-
-        print(f"  ✓ {output_file.name}")
-
-
-def plot_type2_per_algorithm(df: pd.DataFrame):
-    """
-    Type 2: Per-algorithm comparison.
-    One plot per algorithm, showing all graph sets.
-    """
-    print("\n📊 Generating Type 2 plots (per-algorithm comparison)...")
-
-    # Get size variation data only
-    size_df = df[df['test_type'] == 'size_variation'].copy()
-
-    algorithms = size_df['algorithm_full'].unique()
-
-    for algorithm in sorted(algorithms):
-        algo_data = size_df[size_df['algorithm_full'] == algorithm]
-
-        if algo_data.empty:
-            continue
-
-        fig, ax = plt.subplots(figsize=(12, 7))
-
-        graph_sets = algo_data['graph_set'].unique()
-
-        for graph_set in sorted(graph_sets):
-            set_data = algo_data[algo_data['graph_set'] == graph_set]
-            set_data = set_data.sort_values('pattern_size')
-
-            marker = MARKERS.get(graph_set, 'o')
-
-            ax.plot(
-                set_data['pattern_size'],
-                set_data['execution_time_ms'],
-                marker=marker,
-                label=graph_set,
-                linewidth=2,
-                markersize=8,
-                alpha=0.8
-            )
-
-        ax.set_xlabel('Pattern Graph Size (vertices)', fontsize=12, fontweight='bold')
-        ax.set_ylabel('Execution Time (ms)', fontsize=12, fontweight='bold')
-        ax.set_title(f'Graph Set Performance for: {algorithm}',
-                     fontsize=14, fontweight='bold', pad=20)
-        ax.set_yscale('log')
-        ax.grid(True, alpha=0.3, linestyle='--')
-        ax.legend(loc='best', fontsize=10, framealpha=0.9)
-
-        plt.tight_layout()
-        output_file = PLOTS_DIR / f'algorithm_{algorithm}.png'
-        plt.savefig(output_file, dpi=300, bbox_inches='tight')
-        plt.close()
-
-        print(f"  ✓ {output_file.name}")
-
-
-def plot_type3_subgraph_variation(df: pd.DataFrame):
-    """
-    Type 3: Subgraph count variation.
-    One plot per algorithm, showing execution time vs. number of subgraphs.
-    """
-    print("\n📊 Generating Type 3 plots (subgraph count variation)...")
-
-    # Get subgraph variation data only
-    subgraph_df = df[df['test_type'] == 'subgraph_variation'].copy()
-
-    if subgraph_df.empty:
-        print("  ⚠️  No subgraph variation data found")
+    if data.empty:
+        print(f"  ⚠️  No data for {graph_set}")
         return
 
-    algorithms = subgraph_df['algorithm_full'].unique()
+    fig, ax = plt.subplots(figsize=(12, 8))
 
-    for algorithm in sorted(algorithms):
-        algo_data = subgraph_df[subgraph_df['algorithm_full'] == algorithm]
+    algorithms = sorted(data['algorithm_full'].unique())
 
-        if algo_data.empty:
+    for i, algo in enumerate(algorithms):
+        if not include_exact and algo == 'exact':
             continue
 
-        algo_data = algo_data.sort_values('num_subgraphs')
+        algo_data = data[data['algorithm_full'] == algo].sort_values('pattern_size')
 
-        fig, ax = plt.subplots(figsize=(10, 7))
+        ax.plot(
+            algo_data['pattern_size'],
+            algo_data['execution_time_ms'],
+            marker=MARKERS[i % len(MARKERS)],
+            label=ALGO_NAMES.get(algo, algo),
+            color=COLORS.get(algo, '#34495e'),
+            linewidth=2.5,
+            markersize=10,
+            alpha=0.85
+        )
 
-        color = COLORS.get(algorithm, '#34495e')
+    ax.set_xlabel('Rozmiar grafu wzorca (liczba wierzchołków)', fontweight='bold')
+    ax.set_ylabel('Czas wykonania (ms)', fontweight='bold')
+    ax.set_title(title, fontsize=14, fontweight='bold', pad=15)
+
+    # Log scale if needed
+    if data['execution_time_ms'].max() / data['execution_time_ms'].min() > 20:
+        ax.set_yscale('log')
+
+    ax.grid(True, alpha=0.3, linestyle='--')
+    ax.legend(loc='upper left', fontsize=10, framealpha=0.95, title='Algorytm')
+
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / filename, dpi=200, bbox_inches='tight', facecolor='white')
+    plt.close()
+    print(f"  ✓ {filename}")
+
+
+def plot_subgraph_variation(df, graph_set, title, filename, include_exact=False):
+    """Create plot showing execution time vs number of subgraphs."""
+    data = df[df['graph_set'] == graph_set].copy()
+
+    if data.empty:
+        print(f"  ⚠️  No data for {graph_set}")
+        return
+
+    fig, ax = plt.subplots(figsize=(11, 7))
+
+    algorithms = sorted(data['algorithm_full'].unique())
+
+    for i, algo in enumerate(algorithms):
+        if not include_exact and algo == 'exact':
+            continue
+
+        algo_data = data[data['algorithm_full'] == algo].sort_values('num_subgraphs')
 
         ax.plot(
             algo_data['num_subgraphs'],
             algo_data['execution_time_ms'],
-            marker='o',
-            color=color,
+            marker=MARKERS[i % len(MARKERS)],
+            label=ALGO_NAMES.get(algo, algo),
+            color=COLORS.get(algo, '#34495e'),
             linewidth=2.5,
             markersize=10,
-            alpha=0.8
+            alpha=0.85
         )
 
-        ax.set_xlabel('Number of Subgraphs to Find', fontsize=12, fontweight='bold')
-        ax.set_ylabel('Execution Time (ms)', fontsize=12, fontweight='bold')
-        ax.set_title(f'Subgraph Count Scaling: {algorithm}\n(Pattern=10, Target=30, Dense)',
-                     fontsize=14, fontweight='bold', pad=20)
-        ax.set_xticks(algo_data['num_subgraphs'])
-        ax.grid(True, alpha=0.3, linestyle='--')
+    ax.set_xlabel('Liczba szukanych podgrafów', fontweight='bold')
+    ax.set_ylabel('Czas wykonania (ms)', fontweight='bold')
+    ax.set_title(title, fontsize=14, fontweight='bold', pad=15)
 
-        plt.tight_layout()
-        output_file = PLOTS_DIR / f'subgraphs_{algorithm}.png'
-        plt.savefig(output_file, dpi=300, bbox_inches='tight')
-        plt.close()
+    if data['execution_time_ms'].max() / data['execution_time_ms'].min() > 20:
+        ax.set_yscale('log')
 
-        print(f"  ✓ {output_file.name}")
+    ax.set_xticks(data['num_subgraphs'].unique())
+    ax.grid(True, alpha=0.3, linestyle='--')
+    ax.legend(loc='upper left', fontsize=10, framealpha=0.95, title='Algorytm')
 
-
-def generate_summary_stats(df: pd.DataFrame):
-    """Generate and print summary statistics."""
-    print("\n📈 Summary Statistics")
-    print("="*60)
-
-    # Overall stats
-    total_tests = len(df)
-
-    # Size variation stats
-    size_df = df[df['test_type'] == 'size_variation']
-
-    print(f"Total successful tests: {total_tests}")
-    print(f"  Size variation tests: {len(size_df)}")
-    print(f"  Subgraph variation tests: {len(df) - len(size_df)}")
-
-    # Fastest algorithm per graph set
-    if not size_df.empty:
-        print("\n🏆 Fastest Algorithm by Graph Set (median time):")
-        for graph_set in size_df['graph_set'].unique():
-            set_data = size_df[size_df['graph_set'] == graph_set]
-            median_times = set_data.groupby('algorithm_full')['execution_time_ms'].median()
-            fastest = median_times.idxmin()
-            fastest_time = median_times.min()
-            print(f"  {graph_set:30s} -> {fastest:25s} ({fastest_time:.2f}ms)")
-
-    # Execution time ranges
-    print(f"\n⏱️  Execution Time Range:")
-    print(f"  Min: {df['execution_time_ms'].min():.2f}ms")
-    print(f"  Max: {df['execution_time_ms'].max():.2f}ms")
-    print(f"  Mean: {df['execution_time_ms'].mean():.2f}ms")
-    print(f"  Median: {df['execution_time_ms'].median():.2f}ms")
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / filename, dpi=200, bbox_inches='tight', facecolor='white')
+    plt.close()
+    print(f"  ✓ {filename}")
 
 
 def main():
-    """Generate all plots from performance results."""
-    print("="*60)
-    print("PERFORMANCE RESULTS VISUALIZATION")
-    print("="*60)
+    print("=" * 60)
+    print("GENEROWANIE WYKRESÓW (POTRZEBNE.md)")
+    print("=" * 60)
 
-    # Create plots directory
     PLOTS_DIR.mkdir(exist_ok=True)
 
-    # Load data
-    print(f"\n📂 Loading results from {RESULTS_FILE}...")
+    print(f"\n📂 Wczytywanie z {RESULTS_FILE}...")
     try:
         df = load_data()
-        print(f"  ✓ Loaded {len(df)} successful test results")
-    except FileNotFoundError as e:
-        print(f"\n❌ ERROR: {e}")
-        print("Please run run_performance_tests.py first to generate results.")
-        return 1
+        print(f"  ✓ Wczytano {len(df)} wyników")
     except Exception as e:
-        print(f"\n❌ ERROR loading data: {e}")
+        print(f"❌ Błąd: {e}")
         return 1
 
-    if df.empty:
-        print("\n⚠️  No successful test results to plot")
-        return 1
+    # =========================================================================
+    # WYKRESY APROKSYMACYJNE (5)
+    # =========================================================================
+    print("\n" + "=" * 60)
+    print("WYKRESY APROKSYMACYJNE")
+    print("=" * 60)
 
-    # Generate all plot types
-    plot_type1_per_graph_set(df)
-    plot_type2_per_algorithm(df)
-    plot_type3_subgraph_variation(df)
+    print("\n📊 1. Aproksymacyjne na grafach gęstych")
+    plot_size_variation(df, 'approx_dense',
+        'Algorytmy aproksymacyjne: Grafy gęste',
+        '01_approx_dense.png', include_exact=False)
 
-    # Generate summary statistics
-    generate_summary_stats(df)
+    print("\n📊 2. Aproksymacyjne na grafach rzadkich")
+    plot_size_variation(df, 'approx_sparse',
+        'Algorytmy aproksymacyjne: Grafy rzadkie',
+        '02_approx_sparse.png', include_exact=False)
 
-    print(f"\n{'='*60}")
-    print(f"✓ All plots saved to {PLOTS_DIR}/")
-    print(f"{'='*60}")
+    print("\n📊 3. Aproksymacyjne: rzadki mały + gęsty duży")
+    plot_size_variation(df, 'approx_sparse_dense',
+        'Algorytmy aproksymacyjne: Rzadki wzorzec + Gęsty cel',
+        '03_approx_sparse_dense.png', include_exact=False)
 
-    # Count generated plots
-    plot_count = len(list(PLOTS_DIR.glob('*.png')))
-    print(f"Total plots generated: {plot_count}")
+    print("\n📊 4. Aproksymacyjne: gęsty mały + rzadki duży")
+    plot_size_variation(df, 'approx_dense_sparse',
+        'Algorytmy aproksymacyjne: Gęsty wzorzec + Rzadki cel',
+        '04_approx_dense_sparse.png', include_exact=False)
+
+    print("\n📊 5. Aproksymacyjne: zmiana liczby podgrafów")
+    plot_subgraph_variation(df, 'approx_subgraph_var',
+        'Algorytmy aproksymacyjne: Zmiana liczby podgrafów\n(wzorzec: 10, cel: 60 wierzchołków)',
+        '05_approx_subgraph_var.png', include_exact=False)
+
+    # =========================================================================
+    # WYKRESY DOKŁADNEGO + APROKSYMACYJNE (5)
+    # =========================================================================
+    print("\n" + "=" * 60)
+    print("WYKRESY DOKŁADNEGO + APROKSYMACYJNE")
+    print("=" * 60)
+
+    print("\n📊 6. Dokładny + Aproks: grafy gęste (max 15)")
+    plot_size_variation(df, 'exact_dense',
+        'Wszystkie algorytmy: Grafy gęste (max 15 wierzchołków)',
+        '06_exact_dense.png', include_exact=True)
+
+    print("\n📊 7. Dokładny + Aproks: grafy rzadkie (max 15)")
+    plot_size_variation(df, 'exact_sparse',
+        'Wszystkie algorytmy: Grafy rzadkie (max 15 wierzchołków)',
+        '07_exact_sparse.png', include_exact=True)
+
+    print("\n📊 8. Dokładny + Aproks: rzadki mały + gęsty duży (max 15)")
+    plot_size_variation(df, 'exact_sparse_dense',
+        'Wszystkie algorytmy: Rzadki wzorzec + Gęsty cel (max 15)',
+        '08_exact_sparse_dense.png', include_exact=True)
+
+    print("\n📊 9. Dokładny + Aproks: gęsty mały + rzadki duży (max 15)")
+    plot_size_variation(df, 'exact_dense_sparse',
+        'Wszystkie algorytmy: Gęsty wzorzec + Rzadki cel (max 15)',
+        '09_exact_dense_sparse.png', include_exact=True)
+
+    print("\n📊 10. Dokładny + Aproks: zmiana liczby podgrafów (p=4, t=8)")
+    plot_subgraph_variation(df, 'exact_subgraph_var',
+        'Wszystkie algorytmy: Zmiana liczby podgrafów\n(wzorzec: 4, cel: 8 wierzchołków)',
+        '10_exact_subgraph_var.png', include_exact=True)
+
+    print("\n" + "=" * 60)
+    print(f"✓ Wygenerowano {len(list(PLOTS_DIR.glob('*.png')))} wykresów w {PLOTS_DIR}/")
+    print("=" * 60)
 
     return 0
 

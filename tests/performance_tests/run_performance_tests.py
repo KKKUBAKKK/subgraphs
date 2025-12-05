@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Performance testing script for subgraph algorithms.
-Tests all algorithm variants across multiple graph sets and measures execution times.
+Performance testing script for specific plot requirements.
+Tests algorithms according to POTRZEBNE.md.
 """
 
 import subprocess
@@ -12,234 +12,139 @@ from pathlib import Path
 from typing import List, Dict, Tuple, Optional
 
 
-# Configuration
 EXECUTABLE_PATH = '../../build/bin/release/subgraphs'
 RESULTS_DIR = Path('results')
 RESULTS_FILE = RESULTS_DIR / 'performance_results.csv'
-TIMEOUT_EXACT = 60  # seconds
-TIMEOUT_APPROX = 120  # seconds
+TIMEOUT_EXACT = 120  # Longer timeout for exact
+TIMEOUT_APPROX = 60
 
-# Algorithm configuration
-ALGORITHMS = {
-    'exact': {'heuristics': [None], 'timeout': TIMEOUT_EXACT},
+# Approximation algorithms only (no exact)
+APPROX_ALGORITHMS = {
     'approx1': {'heuristics': [None], 'timeout': TIMEOUT_APPROX},
     'approx2': {
-        'heuristics': ['degree', 'directed', 'directed_ignore', 'histogram', 'structure', 'greedy'],
+        'heuristics': ['degree', 'directed', 'directed_ignore', 'histogram', 'structure'],
         'timeout': TIMEOUT_APPROX
     }
 }
 
-
-def should_run_exact(pattern_size: int, num_subgraphs: int) -> bool:
-    """Determine if exact algorithm should be run based on constraints."""
-    return pattern_size <= 15 and num_subgraphs <= 3
+# All algorithms including exact
+ALL_ALGORITHMS = {
+    'exact': {'heuristics': [None], 'timeout': TIMEOUT_EXACT},
+    **APPROX_ALGORITHMS
+}
 
 
 def parse_graph_filename(filename: str) -> Tuple[int, int]:
-    """Extract pattern and target sizes from filename like 'graph_p10_t20.txt'."""
+    """Extract pattern and target sizes from filename."""
     parts = filename.replace('.txt', '').split('_')
-    pattern_size = int(parts[1][1:])  # Remove 'p' prefix
-    target_size = int(parts[2][1:])    # Remove 't' prefix
+    pattern_size = int(parts[1][1:])
+    target_size = int(parts[2][1:])
     return pattern_size, target_size
 
 
 def run_algorithm(graph_file: Path, algorithm: str, heuristic: Optional[str],
                   num_subgraphs: int, timeout: int) -> Tuple[Optional[float], str]:
-    """
-    Run a single algorithm test and measure execution time.
-
-    Returns:
-        (execution_time_ms, status) where status is 'success', 'timeout', or 'error'
-    """
+    """Run algorithm and return (execution_time_ms, status)."""
     cmd = [EXECUTABLE_PATH, str(graph_file), str(num_subgraphs), algorithm]
     if heuristic:
         cmd.append(heuristic)
 
     try:
         start_time = time.time()
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            timeout=timeout,
-            text=True
-        )
+        result = subprocess.run(cmd, capture_output=True, timeout=timeout, text=True)
         end_time = time.time()
 
         if result.returncode == 0:
-            execution_time_ms = (end_time - start_time) * 1000
-            return execution_time_ms, 'success'
+            return (end_time - start_time) * 1000, 'success'
+        elif result.returncode < 0:
+            return None, f'crash_signal_{-result.returncode}'
         else:
             return None, f'error_code_{result.returncode}'
-
     except subprocess.TimeoutExpired:
         return None, 'timeout'
     except Exception as e:
-        return None, f'error_{str(e)}'
+        return None, f'exception'
 
 
-def test_graph_size_variation():
-    """Test performance across varying graph sizes."""
+def test_graph_set(set_name: str, algorithms: dict, num_subgraphs: int = 1) -> List[Dict]:
+    """Test a graph set with given algorithms."""
     results = []
-    test_graphs_dir = Path('test_graphs')
+    set_dir = Path('test_graphs') / set_name
 
-    # Graph sets to test (excluding subgraph_variation)
-    graph_sets = [
-        'dense_only',
-        'sparse_only',
-        'dense_small_exact',
-        'big_dense_small_sparse',
-        'small_dense_big_sparse'
-    ]
-
-    total_tests = 0
-    completed_tests = 0
-
-    # Count total tests for progress tracking
-    for set_name in graph_sets:
-        set_dir = test_graphs_dir / set_name
-        if not set_dir.exists():
-            continue
-        graph_files = sorted(set_dir.glob('*.txt'))
-        for algorithm in ALGORITHMS:
-            total_tests += len(graph_files) * len(ALGORITHMS[algorithm]['heuristics'])
-
-    print(f"\n{'='*60}")
-    print("Testing Graph Size Variation")
-    print(f"{'='*60}")
-    print(f"Total tests to run: {total_tests}\n")
-
-    for set_name in graph_sets:
-        set_dir = test_graphs_dir / set_name
-        if not set_dir.exists():
-            print(f"⚠️  Skipping {set_name} (directory not found)")
-            continue
-
-        print(f"\n📊 Testing {set_name}...")
-        graph_files = sorted(set_dir.glob('*.txt'))
-
-        for graph_file in graph_files:
-            pattern_size, target_size = parse_graph_filename(graph_file.name)
-            num_subgraphs = 1  # Default for size variation tests
-
-            print(f"  Graph: p={pattern_size}, t={target_size}")
-
-            for algorithm, config in ALGORITHMS.items():
-                for heuristic in config['heuristics']:
-                    # Skip exact algorithm if pattern too large
-                    if algorithm == 'exact' and not should_run_exact(pattern_size, num_subgraphs):
-                        print(f"    ⊘ Skipping {algorithm} (pattern too large)")
-                        results.append({
-                            'test_type': 'size_variation',
-                            'graph_set': set_name,
-                            'pattern_size': pattern_size,
-                            'target_size': target_size,
-                            'num_subgraphs': num_subgraphs,
-                            'algorithm': algorithm,
-                            'heuristic': heuristic or 'N/A',
-                            'execution_time_ms': None,
-                            'status': 'skipped'
-                        })
-                        completed_tests += 1
-                        continue
-
-                    algo_name = f"{algorithm}" + (f"_{heuristic}" if heuristic else "")
-                    print(f"    ▶︎ Running {algo_name}...", end=' ', flush=True)
-
-                    exec_time, status = run_algorithm(
-                        graph_file, algorithm, heuristic,
-                        num_subgraphs, config['timeout']
-                    )
-
-                    completed_tests += 1
-                    progress = (completed_tests / total_tests) * 100
-
-                    if status == 'success':
-                        print(f"✓ {exec_time:.2f}ms [{progress:.1f}%]")
-                    else:
-                        print(f"✗ {status} [{progress:.1f}%]")
-
-                    results.append({
-                        'test_type': 'size_variation',
-                        'graph_set': set_name,
-                        'pattern_size': pattern_size,
-                        'target_size': target_size,
-                        'num_subgraphs': num_subgraphs,
-                        'algorithm': algorithm,
-                        'heuristic': heuristic or 'N/A',
-                        'execution_time_ms': exec_time,
-                        'status': status
-                    })
-
-    return results
-
-
-def test_subgraph_count_variation():
-    """Test performance across varying number of subgraphs to find."""
-    results = []
-    graph_file = Path('test_graphs/subgraph_variation/graph_p10_t30.txt')
-
-    if not graph_file.exists():
-        print(f"⚠️  Subgraph variation test file not found: {graph_file}")
+    if not set_dir.exists():
+        print(f"  ⚠️  Skipping {set_name} (not found)")
         return results
 
-    pattern_size, target_size = 10, 30
-    subgraph_counts = [1, 2, 3, 4, 5]
+    graph_files = sorted(set_dir.glob('*.txt'), key=lambda x: parse_graph_filename(x.name)[0])
 
-    total_tests = sum(len(ALGORITHMS[alg]['heuristics']) for alg in ALGORITHMS) * len(subgraph_counts)
-    completed_tests = 0
+    for graph_file in graph_files:
+        pattern_size, target_size = parse_graph_filename(graph_file.name)
+        print(f"  Graph: p={pattern_size}, t={target_size}, subgraphs={num_subgraphs}")
 
-    print(f"\n{'='*60}")
-    print("Testing Subgraph Count Variation")
-    print(f"{'='*60}")
-    print(f"Graph: p={pattern_size}, t={target_size}")
-    print(f"Total tests to run: {total_tests}\n")
-
-    for num_subgraphs in subgraph_counts:
-        print(f"\n📊 Testing with {num_subgraphs} subgraph(s)...")
-
-        for algorithm, config in ALGORITHMS.items():
+        for algorithm, config in algorithms.items():
             for heuristic in config['heuristics']:
-                # Skip exact algorithm if subgraph count too high
-                if algorithm == 'exact' and not should_run_exact(pattern_size, num_subgraphs):
-                    print(f"  ⊘ Skipping {algorithm} (too many subgraphs)")
-                    results.append({
-                        'test_type': 'subgraph_variation',
-                        'graph_set': 'subgraph_variation',
-                        'pattern_size': pattern_size,
-                        'target_size': target_size,
-                        'num_subgraphs': num_subgraphs,
-                        'algorithm': algorithm,
-                        'heuristic': heuristic or 'N/A',
-                        'execution_time_ms': None,
-                        'status': 'skipped'
-                    })
-                    completed_tests += 1
-                    continue
-
                 algo_name = f"{algorithm}" + (f"_{heuristic}" if heuristic else "")
-                print(f"  ▶︎ Running {algo_name}...", end=' ', flush=True)
+                print(f"    ▶︎ {algo_name}...", end=' ', flush=True)
 
                 exec_time, status = run_algorithm(
-                    graph_file, algorithm, heuristic,
-                    num_subgraphs, config['timeout']
+                    graph_file, algorithm, heuristic, num_subgraphs, config['timeout']
                 )
 
-                completed_tests += 1
-                progress = (completed_tests / total_tests) * 100
-
                 if status == 'success':
-                    print(f"✓ {exec_time:.2f}ms [{progress:.1f}%]")
+                    print(f"✓ {exec_time:.2f}ms")
                 else:
-                    print(f"✗ {status} [{progress:.1f}%]")
+                    print(f"✗ {status}")
 
                 results.append({
-                    'test_type': 'subgraph_variation',
-                    'graph_set': 'subgraph_variation',
+                    'graph_set': set_name,
                     'pattern_size': pattern_size,
                     'target_size': target_size,
                     'num_subgraphs': num_subgraphs,
                     'algorithm': algorithm,
-                    'heuristic': heuristic or 'N/A',
+                    'heuristic': heuristic if heuristic else '',
+                    'execution_time_ms': exec_time,
+                    'status': status
+                })
+
+    return results
+
+
+def test_subgraph_variation(set_name: str, algorithms: dict, subgraph_counts: List[int]) -> List[Dict]:
+    """Test varying subgraph counts on a single graph."""
+    results = []
+    set_dir = Path('test_graphs') / set_name
+
+    if not set_dir.exists():
+        print(f"  ⚠️  Skipping {set_name} (not found)")
+        return results
+
+    graph_file = list(set_dir.glob('*.txt'))[0]
+    pattern_size, target_size = parse_graph_filename(graph_file.name)
+
+    for num_subgraphs in subgraph_counts:
+        print(f"  Subgraphs: {num_subgraphs}")
+
+        for algorithm, config in algorithms.items():
+            for heuristic in config['heuristics']:
+                algo_name = f"{algorithm}" + (f"_{heuristic}" if heuristic else "")
+                print(f"    ▶︎ {algo_name}...", end=' ', flush=True)
+
+                exec_time, status = run_algorithm(
+                    graph_file, algorithm, heuristic, num_subgraphs, config['timeout']
+                )
+
+                if status == 'success':
+                    print(f"✓ {exec_time:.2f}ms")
+                else:
+                    print(f"✗ {status}")
+
+                results.append({
+                    'graph_set': set_name,
+                    'pattern_size': pattern_size,
+                    'target_size': target_size,
+                    'num_subgraphs': num_subgraphs,
+                    'algorithm': algorithm,
+                    'heuristic': heuristic if heuristic else '',
                     'execution_time_ms': exec_time,
                     'status': status
                 })
@@ -248,60 +153,81 @@ def test_subgraph_count_variation():
 
 
 def save_results(results: List[Dict]):
-    """Save results to CSV file."""
+    """Save results to CSV."""
     RESULTS_DIR.mkdir(exist_ok=True)
 
-    if not results:
-        print("⚠️  No results to save")
-        return
+    fieldnames = ['graph_set', 'pattern_size', 'target_size', 'num_subgraphs',
+                  'algorithm', 'heuristic', 'execution_time_ms', 'status']
 
-    fieldnames = [
-        'test_type', 'graph_set', 'pattern_size', 'target_size',
-        'num_subgraphs', 'algorithm', 'heuristic', 'execution_time_ms', 'status'
-    ]
-
-    with open(RESULTS_FILE, 'w', newline='') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    with open(RESULTS_FILE, 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(results)
 
-    print(f"\n✓ Results saved to {RESULTS_FILE}")
-    print(f"  Total records: {len(results)}")
-    success_count = sum(1 for r in results if r['status'] == 'success')
-    print(f"  Successful runs: {success_count}")
-    print(f"  Failed/skipped: {len(results) - success_count}")
+    success = sum(1 for r in results if r['status'] == 'success')
+    print(f"\n✓ Results saved: {success}/{len(results)} successful")
 
 
 def main():
-    """Run all performance tests."""
-    print("="*60)
-    print("SUBGRAPH ALGORITHM PERFORMANCE TESTING")
-    print("="*60)
-    print(f"Executable: {EXECUTABLE_PATH}")
-    print(f"Timeout (exact): {TIMEOUT_EXACT}s")
-    print(f"Timeout (approx): {TIMEOUT_APPROX}s")
+    print("=" * 60)
+    print("PERFORMANCE TESTING (POTRZEBNE.md)")
+    print("=" * 60)
 
-    # Check if executable exists
     if not os.path.exists(EXECUTABLE_PATH):
-        print(f"\n❌ ERROR: Executable not found at {EXECUTABLE_PATH}")
-        print("Please build the project first using:")
-        print("  cd ../.. && ./scripts/build_release.sh")
+        print(f"❌ Executable not found: {EXECUTABLE_PATH}")
         return 1
 
     all_results = []
 
-    # Run graph size variation tests
-    all_results.extend(test_graph_size_variation())
+    # =========================================================================
+    # APPROXIMATION ONLY TESTS (5 scenarios)
+    # =========================================================================
+    print("\n" + "=" * 60)
+    print("WYKRESY APROKSYMACYJNE")
+    print("=" * 60)
 
-    # Run subgraph count variation tests
-    all_results.extend(test_subgraph_count_variation())
+    print("\n📊 1. Approx na grafach gęstych...")
+    all_results.extend(test_graph_set('approx_dense', APPROX_ALGORITHMS))
 
-    # Save all results
+    print("\n📊 2. Approx na grafach rzadkich...")
+    all_results.extend(test_graph_set('approx_sparse', APPROX_ALGORITHMS))
+
+    print("\n📊 3. Approx: rzadki mały + gęsty duży...")
+    all_results.extend(test_graph_set('approx_sparse_dense', APPROX_ALGORITHMS))
+
+    print("\n📊 4. Approx: gęsty mały + rzadki duży...")
+    all_results.extend(test_graph_set('approx_dense_sparse', APPROX_ALGORITHMS))
+
+    print("\n📊 5. Approx: zmiana liczby podgrafów...")
+    all_results.extend(test_subgraph_variation('approx_subgraph_var', APPROX_ALGORITHMS, [1, 2, 3, 4, 5, 6]))
+
+    # =========================================================================
+    # EXACT + APPROXIMATION TESTS (5 scenarios)
+    # =========================================================================
+    print("\n" + "=" * 60)
+    print("WYKRESY DOKŁADNEGO + APROKSYMACYJNE")
+    print("=" * 60)
+
+    print("\n📊 6. Exact + Approx na grafach gęstych (max 15)...")
+    all_results.extend(test_graph_set('exact_dense', ALL_ALGORITHMS))
+
+    print("\n📊 7. Exact + Approx na grafach rzadkich (max 15)...")
+    all_results.extend(test_graph_set('exact_sparse', ALL_ALGORITHMS))
+
+    print("\n📊 8. Exact + Approx: rzadki mały + gęsty duży (max 15)...")
+    all_results.extend(test_graph_set('exact_sparse_dense', ALL_ALGORITHMS))
+
+    print("\n📊 9. Exact + Approx: gęsty mały + rzadki duży (max 15)...")
+    all_results.extend(test_graph_set('exact_dense_sparse', ALL_ALGORITHMS))
+
+    print("\n📊 10. Exact + Approx: zmiana liczby podgrafów (p=4, t=8)...")
+    all_results.extend(test_subgraph_variation('exact_subgraph_var', ALL_ALGORITHMS, [1, 2]))
+
     save_results(all_results)
 
-    print(f"\n{'='*60}")
-    print("✓ Performance testing completed!")
-    print(f"{'='*60}")
+    print("\n" + "=" * 60)
+    print("✓ Testing completed!")
+    print("=" * 60)
 
     return 0
 
